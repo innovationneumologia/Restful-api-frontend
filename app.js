@@ -852,11 +852,6 @@ document.addEventListener('DOMContentLoaded', function() {
     return staff ? staff.full_name : 'Unknown Staff';
 };
                 
-                const getStaffName = (staffId) => {
-                    if (!staffId) return 'Unknown';
-                    const staff = medicalStaff.value.find(s => s.id === staffId);
-                    return staff ? staff.full_name : 'Unknown Staff';
-                };
                 
                 const getTrainingUnitName = (unitId) => {
                     if (!unitId) return 'Unknown Unit';
