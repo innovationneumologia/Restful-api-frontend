@@ -20,7 +20,7 @@ window.addEventListener('load', async function() {
         
         // ============ API CONFIGURATION ============
         // This will be your Railway backend URL
-        const API_BASE_URL = window.API_BASE_URL || 'https://bacend-production.up.railway.app';
+        const API_BASE_URL = window.API_BASE_URL || 'https://backend-production.up.railway.app';
         console.log('API Base URL:', API_BASE_URL);
         
         // ============ UTILITY FUNCTIONS ============
