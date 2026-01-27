@@ -2357,6 +2357,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     };
                     departmentModal.show = true;
                 };
+                const showAddMedicalStaffModal = () => {
+    medicalStaffModal.mode = 'add';
+    medicalStaffModal.show = true;
+    medicalStaffModal.form = {
+        full_name: '',
+        staff_type: 'medical_resident',
+        staff_id: '',
+        employment_status: 'active',
+        professional_email: '',
+        department_id: '',
+        resident_category: '',
+        training_level: '',
+        specialization: '',
+        years_experience: '',
+        biography: '',
+        office_phone: '',
+        mobile_phone: '',
+        medical_license: '',
+        date_of_birth: ''
+    };
+};
+
                 
                 const showAddClinicalUnitModal = () => {
                     clinicalUnitModal.mode = 'add';
