@@ -846,6 +846,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     const department = departments.value.find(d => d.id === departmentId);
                     return department ? department.name : 'Unknown Department';
                 };
+                const getStaffName = (staffId) => {
+    if (!staffId) return 'Unknown';
+    const staff = medicalStaff.value.find(s => s.id === staffId);
+    return staff ? staff.full_name : 'Unknown Staff';
+};
                 
                 const getStaffName = (staffId) => {
                     if (!staffId) return 'Unknown';
@@ -1272,6 +1277,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             staff.professional_email.toLowerCase().includes(searchTerm)
                         );
                     }
+                    const todaysOnCall = computed(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return onCallSchedule.value.filter(schedule => schedule.duty_date === today)
+        .map(schedule => ({
+            ...schedule,
+            physician_name: getStaffName(schedule.primary_physician_id),
+            role: schedule.shift_type === 'primary_call' ? 'Primary' : 'Backup'
+        }));
+});
                     
                     // Apply type filter
                     if (staffFilter.staff_type) {
@@ -2952,6 +2966,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Authentication Functions
                     handleLogin,
                     handleLogout,
+                    todaysOnCall,
                     
                     // UI Functions
                     removeToast,
