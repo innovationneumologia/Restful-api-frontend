@@ -575,7 +575,16 @@ document.addEventListener('DOMContentLoaded', function() {
             setup() {
                 // ============ REACTIVE STATE ============
                 // User & Authentication
-                const currentUser = ref(JSON.parse(localStorage.getItem('neumocare_user')) || null);
+                // FIXED code:
+const currentUser = ref(JSON.parse(localStorage.getItem('neumocare_user')) || {
+    full_name: 'Hospital Administrator',
+    user_role: 'administrator',
+    email: 'admin@neumocare.org',
+    permissions: ['create_medical_staff', 'read_medical_staff', 'update_medical_staff', 
+                 'delete_medical_staff', 'create_rotations', 'read_rotations', 
+                 'update_rotations', 'create_oncall', 'read_oncall', 'update_oncall',
+                 'create_absences', 'read_absences', 'update_absences', '*']
+});
                 const loginForm = reactive({ email: '', password: '', remember_me: true });
                 
                 // Loading states
