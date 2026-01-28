@@ -734,6 +734,86 @@ document.addEventListener('DOMContentLoaded', function() {
                         notes: ''
                     }
                 });
+                // ============ PERMISSION FUNCTIONS ============
+const hasPermission = (permission) => {
+    if (!currentUser.value) return false;
+    
+    // If user is admin, they have all permissions
+    if (currentUser.value.user_role === 'administrator') {
+        return true;
+    }
+    
+    // Check specific permissions (simplified for now)
+    const userPermissions = currentUser.value.permissions || [];
+    
+    // Wildcard permission
+    if (userPermissions.includes('*') || userPermissions.includes('all')) {
+        return true;
+    }
+    
+    // Check for specific permission
+    return userPermissions.includes(permission);
+};
+
+const canView = (module) => {
+    // Map modules to permissions
+    const permissionMap = {
+        'medical_staff': 'view_medical_staff',
+        'resident_rotations': 'view_rotations',
+        'staff_absence': 'view_absences',
+        'oncall_schedule': 'view_oncall',
+        'training_units': 'view_training_units',
+        'department_management': 'view_departments',
+        'communications': 'view_communications',
+        'audit_logs': 'view_audit_logs',
+        'system_settings': 'manage_settings'
+    };
+    
+    return hasPermission(permissionMap[module] || `view_${module}`);
+};
+
+const canEdit = (module) => {
+    // Map modules to edit permissions
+    const permissionMap = {
+        'medical_staff': 'edit_medical_staff',
+        'resident_rotations': 'edit_rotations',
+        'staff_absence': 'edit_absences',
+        'oncall_schedule': 'edit_oncall',
+        'training_units': 'edit_training_units',
+        'department_management': 'edit_departments',
+        'communications': 'edit_communications',
+        'audit_logs': 'edit_audit_logs',
+        'system_settings': 'manage_settings'
+    };
+    
+    return hasPermission(permissionMap[module] || `edit_${module}`);
+};
+
+const canDelete = (module) => {
+    // Map modules to delete permissions
+    const permissionMap = {
+        'medical_staff': 'delete_medical_staff',
+        'resident_rotations': 'delete_rotations',
+        'staff_absence': 'delete_absences',
+        'oncall_schedule': 'delete_oncall',
+        'training_units': 'delete_training_units',
+        'department_management': 'delete_departments',
+        'communications': 'delete_communications',
+        'audit_logs': 'delete_audit_logs',
+        'system_settings': 'manage_settings'
+    };
+    
+    return hasPermission(permissionMap[module] || `delete_${module}`);
+};
+
+// Helper function for checking multiple permissions
+const hasAnyPermission = (permissions) => {
+    return permissions.some(permission => hasPermission(permission));
+};
+
+const hasAllPermissions = (permissions) => {
+    return permissions.every(permission => hasPermission(permission));
+};
                 
                 const roleModal = reactive({
                     show: false,
@@ -2106,6 +2186,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Navigation & Auth
                     switchView, handleLogin, handleLogout,
+                      hasPermission,
+    canView,
+    canEdit,
+    canDelete,
+    hasAnyPermission,
+    hasAllPermissions,
                     
                     // UI Functions
                     removeToast, showToast, dismissAlert, toggleStatsSidebar, toggleSearchScope, handleSearch, 
