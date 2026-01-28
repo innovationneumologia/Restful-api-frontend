@@ -361,7 +361,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             },
             
-            
             async deleteAbsence(id) {
                 return await this.request(`/api/absences/${id}`, {
                     method: 'DELETE'
@@ -587,7 +586,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // ============ MODAL STATES - ALL INCLUDED ============
                 // Existing modals
-                const medicalStaffModal = reactive({ show: false, mode: 'add', form: {} });
+                const medicalStaffModal = reactive({ 
+                    show: false, 
+                    mode: 'add', 
+                    activeTab: 'basic',
+                    form: {} 
+                });
                 const departmentModal = reactive({ show: false, mode: 'add', form: {} });
                 const trainingUnitModal = reactive({ show: false, mode: 'add', form: {} });
                 const rotationModal = reactive({ show: false, mode: 'add', form: {} });
@@ -595,8 +599,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 const communicationsModal = reactive({ show: false, activeTab: 'announcement', form: {} });
                 const userProfileModal = reactive({ show: false, form: {} });
                 const systemSettingsModal = reactive({ show: false, settings: {} });
-                const confirmationModal = reactive({ show: false, title: '', message: '', icon: 'fa-question-circle', confirmButtonText: 'Confirm', confirmButtonClass: 'btn-primary', cancelButtonText: 'Cancel', onConfirm: null, onCancel: null, details: '', confirmButtonIcon: 'fa-check' });
-                const staffDetailsModal = reactive({ show: false, staff: null });
+                const confirmationModal = reactive({ 
+                    show: false, 
+                    title: '', 
+                    message: '', 
+                    icon: 'fa-question-circle', 
+                    confirmButtonText: 'Confirm', 
+                    confirmButtonClass: 'btn-primary', 
+                    cancelButtonText: 'Cancel', 
+                    onConfirm: null, 
+                    onCancel: null, 
+                    details: '', 
+                    confirmButtonIcon: 'fa-check' 
+                });
+                const staffDetailsModal = reactive({ 
+                    show: false, 
+                    staff: null, 
+                    activeTab: 'personal',
+                    stats: { completedRotations: 0, oncallShifts: 0, absenceDays: 0, supervisionCount: 0 },
+                    currentRotation: '',
+                    nextOncall: '',
+                    activityHistory: []
+                });
                 const absenceDetailsModal = reactive({ show: false, absence: null });
                 const rotationDetailsModal = reactive({ show: false, rotation: null });
                 const importExportModal = reactive({ 
@@ -734,86 +758,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         notes: ''
                     }
                 });
-                // ============ PERMISSION FUNCTIONS ============
-const hasPermission = (permission) => {
-    if (!currentUser.value) return false;
-    
-    // If user is admin, they have all permissions
-    if (currentUser.value.user_role === 'administrator') {
-        return true;
-    }
-    
-    // Check specific permissions (simplified for now)
-    const userPermissions = currentUser.value.permissions || [];
-    
-    // Wildcard permission
-    if (userPermissions.includes('*') || userPermissions.includes('all')) {
-        return true;
-    }
-    
-    // Check for specific permission
-    return userPermissions.includes(permission);
-};
-
-const canView = (module) => {
-    // Map modules to permissions
-    const permissionMap = {
-        'medical_staff': 'view_medical_staff',
-        'resident_rotations': 'view_rotations',
-        'staff_absence': 'view_absences',
-        'oncall_schedule': 'view_oncall',
-        'training_units': 'view_training_units',
-        'department_management': 'view_departments',
-        'communications': 'view_communications',
-        'audit_logs': 'view_audit_logs',
-        'system_settings': 'manage_settings'
-    };
-    
-    return hasPermission(permissionMap[module] || `view_${module}`);
-};
-
-const canEdit = (module) => {
-    // Map modules to edit permissions
-    const permissionMap = {
-        'medical_staff': 'edit_medical_staff',
-        'resident_rotations': 'edit_rotations',
-        'staff_absence': 'edit_absences',
-        'oncall_schedule': 'edit_oncall',
-        'training_units': 'edit_training_units',
-        'department_management': 'edit_departments',
-        'communications': 'edit_communications',
-        'audit_logs': 'edit_audit_logs',
-        'system_settings': 'manage_settings'
-    };
-    
-    return hasPermission(permissionMap[module] || `edit_${module}`);
-};
-
-const canDelete = (module) => {
-    // Map modules to delete permissions
-    const permissionMap = {
-        'medical_staff': 'delete_medical_staff',
-        'resident_rotations': 'delete_rotations',
-        'staff_absence': 'delete_absences',
-        'oncall_schedule': 'delete_oncall',
-        'training_units': 'delete_training_units',
-        'department_management': 'delete_departments',
-        'communications': 'delete_communications',
-        'audit_logs': 'delete_audit_logs',
-        'system_settings': 'manage_settings'
-    };
-    
-    return hasPermission(permissionMap[module] || `delete_${module}`);
-};
-
-// Helper function for checking multiple permissions
-const hasAnyPermission = (permissions) => {
-    return permissions.some(permission => hasPermission(permission));
-};
-
-const hasAllPermissions = (permissions) => {
-    return permissions.every(permission => hasPermission(permission));
-};
                 
                 const roleModal = reactive({
                     show: false,
@@ -843,21 +787,96 @@ const hasAllPermissions = (permissions) => {
                         { value: 'csv', label: 'CSV' }
                     ]
                 };
+                
+                // ============ PERMISSION FUNCTIONS ============
+                const hasPermission = (module, action = 'read') => {
+                    // Combine module and action for backward compatibility
+                    const permission = action ? `${action}_${module}` : module;
+                    
+                    if (!currentUser.value) return false;
+                    if (currentUser.value.user_role === 'administrator') return true;
+                    
+                    const userPermissions = currentUser.value.permissions || [];
+                    if (userPermissions.includes('*') || userPermissions.includes('all')) return true;
+                    
+                    return userPermissions.includes(permission);
+                };
+                
+                const canView = (module) => {
+                    // Map modules to permissions
+                    const permissionMap = {
+                        'medical_staff': 'view_medical_staff',
+                        'resident_rotations': 'view_rotations',
+                        'staff_absence': 'view_absences',
+                        'oncall_schedule': 'view_oncall',
+                        'training_units': 'view_training_units',
+                        'department_management': 'view_departments',
+                        'communications': 'view_communications',
+                        'audit_logs': 'view_audit_logs',
+                        'system_settings': 'manage_settings'
+                    };
+                    
+                    return hasPermission(permissionMap[module] || `view_${module}`);
+                };
+                
+                const canEdit = (module) => {
+                    // Map modules to edit permissions
+                    const permissionMap = {
+                        'medical_staff': 'edit_medical_staff',
+                        'resident_rotations': 'edit_rotations',
+                        'staff_absence': 'edit_absences',
+                        'oncall_schedule': 'edit_oncall',
+                        'training_units': 'edit_training_units',
+                        'department_management': 'edit_departments',
+                        'communications': 'edit_communications',
+                        'audit_logs': 'edit_audit_logs',
+                        'system_settings': 'manage_settings'
+                    };
+                    
+                    return hasPermission(permissionMap[module] || `edit_${module}`);
+                };
+                
+                const canDelete = (module) => {
+                    // Map modules to delete permissions
+                    const permissionMap = {
+                        'medical_staff': 'delete_medical_staff',
+                        'resident_rotations': 'delete_rotations',
+                        'staff_absence': 'delete_absences',
+                        'oncall_schedule': 'delete_oncall',
+                        'training_units': 'delete_training_units',
+                        'department_management': 'delete_departments',
+                        'communications': 'delete_communications',
+                        'audit_logs': 'delete_audit_logs',
+                        'system_settings': 'manage_settings'
+                    };
+                    
+                    return hasPermission(permissionMap[module] || `delete_${module}`);
+                };
+                
+                // Helper function for checking multiple permissions
+                const hasAnyPermission = (permissions) => {
+                    return permissions.some(permission => hasPermission(permission));
+                };
+                
+                const hasAllPermissions = (permissions) => {
+                    return permissions.every(permission => hasPermission(permission));
+                };
+                
                 // ============ USER ROLE DISPLAY FUNCTION ============
-const getUserRoleDisplay = (role) => {
-    const roleMap = {
-        'administrator': 'Administrator',
-        'department_head': 'Department Head',
-        'attending_physician': 'Attending Physician',
-        'medical_resident': 'Medical Resident',
-        'fellow': 'Fellow',
-        'nurse_practitioner': 'Nurse Practitioner',
-        'resident_coordinator': 'Resident Coordinator',
-        'viewing_doctor': 'Viewing Doctor',
-        'human_resources': 'Human Resources'
-    };
-    return roleMap[role] || role || 'Unknown Role';
-};
+                const getUserRoleDisplay = (role) => {
+                    const roleMap = {
+                        'administrator': 'Administrator',
+                        'department_head': 'Department Head',
+                        'attending_physician': 'Attending Physician',
+                        'medical_resident': 'Medical Resident',
+                        'fellow': 'Fellow',
+                        'nurse_practitioner': 'Nurse Practitioner',
+                        'resident_coordinator': 'Resident Coordinator',
+                        'viewing_doctor': 'Viewing Doctor',
+                        'human_resources': 'Human Resources'
+                    };
+                    return roleMap[role] || role || 'Unknown Role';
+                };
                 
                 // ============ TOAST SYSTEM ============
                 const showToast = (title, message, type = 'info', duration = 5000) => {
@@ -921,6 +940,27 @@ const getUserRoleDisplay = (role) => {
                 const getCurrentTitle = () => ({ daily_operations: 'Daily Operations', medical_staff: 'Medical Staff', resident_rotations: 'Resident Rotations', oncall_schedule: 'On-call Schedule', staff_absence: 'Staff Absence', training_units: 'Training Units', department_management: 'Department Management', communications: 'Communications', audit_logs: 'Audit Logs', system_settings: 'System Settings', login: 'Login' }[currentView.value] || 'NeumoCare');
                 
                 const getCurrentSubtitle = () => ({ daily_operations: 'Overview dashboard with real-time updates', medical_staff: 'Manage physicians, residents, and clinical staff', resident_rotations: 'Track and manage resident training rotations', oncall_schedule: 'View and manage on-call physician schedules', staff_absence: 'Track staff absences and coverage assignments', training_units: 'Manage clinical training units and assignments', department_management: 'Organizational structure and clinical units', communications: 'Department announcements and capacity updates', audit_logs: 'System activity and security audit trails', system_settings: 'Configure system preferences and behavior' }[currentView.value] || 'Hospital Management System');
+                
+                // ============ ADDITIONAL UTILITY FUNCTIONS ============
+                const formatTimeRange = (start, end) => `${start} - ${end}`;
+                const formatTrainingLevel = (level) => level ? level.toUpperCase().replace('PGY', 'PGY-') : 'N/A';
+                const formatFileSize = (bytes) => {
+                    if (!bytes) return '0 Bytes';
+                    const k = 1024;
+                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                };
+                const getRatingColor = (rating) => rating >= 4 ? 'var(--medical-green)' : rating >= 3 ? 'var(--medical-orange)' : 'var(--medical-red)';
+                const getProgressColor = (progress) => progress >= 75 ? 'var(--medical-green)' : progress >= 50 ? 'var(--medical-orange)' : 'var(--medical-blue)';
+                const getDocumentIcon = (type) => {
+                    const icons = { pdf: 'fa-file-pdf', doc: 'fa-file-word', xls: 'fa-file-excel', image: 'fa-file-image' };
+                    return icons[type] || 'fa-file';
+                };
+                const getDocumentIconClass = (type) => {
+                    const classes = { pdf: 'bg-red-500', doc: 'bg-blue-500', xls: 'bg-green-500', image: 'bg-purple-500' };
+                    return classes[type] || 'bg-gray-500';
+                };
                 
                 // ============ COMPUTED PROPERTIES ============
                 const residents = computed(() => medicalStaff.value.filter(staff => staff.staff_type === 'medical_resident'));
@@ -1015,6 +1055,20 @@ const getUserRoleDisplay = (role) => {
                     );
                 });
                 
+                const availablePhysicians = computed(() => {
+                    return medicalStaff.value.filter(staff => 
+                        staff.employment_status === 'active' && 
+                        (staff.staff_type === 'attending_physician' || staff.staff_type === 'medical_resident')
+                    );
+                });
+                
+                const availableHeadsOfDepartment = computed(() => {
+                    return medicalStaff.value.filter(staff => 
+                        staff.employment_status === 'active' && 
+                        staff.staff_type === 'attending_physician'
+                    );
+                });
+                
                 // ============ DATA LOADING FUNCTIONS ============
                 const loadMedicalStaff = async () => {
                     try {
@@ -1022,7 +1076,7 @@ const getUserRoleDisplay = (role) => {
                         const response = await API.getMedicalStaff();
                         medicalStaff.value = response.data || response || [];
                     } catch (error) {
-                        showToast('Error', 'Failed to load medical staff', 'error');
+                        console.error('Failed to load medical staff:', error);
                         medicalStaff.value = [];
                     } finally {
                         loadingStaff.value = false;
@@ -1033,7 +1087,8 @@ const getUserRoleDisplay = (role) => {
                     try { 
                         loading.value = true;
                         departments.value = await API.getDepartments(); 
-                    } catch { 
+                    } catch (error) { 
+                        console.error('Failed to load departments:', error);
                         departments.value = []; 
                     } finally {
                         loading.value = false;
@@ -1043,7 +1098,8 @@ const getUserRoleDisplay = (role) => {
                 const loadTrainingUnits = async () => {
                     try { 
                         trainingUnits.value = await API.getTrainingUnits(); 
-                    } catch { 
+                    } catch (error) { 
+                        console.error('Failed to load training units:', error);
                         trainingUnits.value = []; 
                     }
                 };
@@ -1053,7 +1109,8 @@ const getUserRoleDisplay = (role) => {
                         loadingRotations.value = true;
                         const response = await API.getRotations();
                         residentRotations.value = response.data || response || [];
-                    } catch { 
+                    } catch (error) { 
+                        console.error('Failed to load rotations:', error);
                         residentRotations.value = []; 
                     } finally {
                         loadingRotations.value = false;
@@ -1064,7 +1121,8 @@ const getUserRoleDisplay = (role) => {
                     try { 
                         loadingAbsences.value = true;
                         staffAbsences.value = await API.getAbsences(); 
-                    } catch { 
+                    } catch (error) { 
+                        console.error('Failed to load absences:', error);
                         staffAbsences.value = []; 
                     } finally {
                         loadingAbsences.value = false;
@@ -1075,7 +1133,8 @@ const getUserRoleDisplay = (role) => {
                     try { 
                         loadingSchedule.value = true;
                         onCallSchedule.value = await API.getOnCallSchedule(); 
-                    } catch { 
+                    } catch (error) { 
+                        console.error('Failed to load on-call schedule:', error);
                         onCallSchedule.value = []; 
                     } finally {
                         loadingSchedule.value = false;
@@ -1086,7 +1145,8 @@ const getUserRoleDisplay = (role) => {
                     try { 
                         loadingAnnouncements.value = true;
                         recentAnnouncements.value = await API.getAnnouncements(); 
-                    } catch { 
+                    } catch (error) { 
+                        console.error('Failed to load announcements:', error);
                         recentAnnouncements.value = []; 
                     } finally {
                         loadingAnnouncements.value = false;
@@ -1094,13 +1154,19 @@ const getUserRoleDisplay = (role) => {
                 };
                 
                 const loadSystemSettings = async () => {
-                    try { systemSettings.value = await API.getSystemSettings(); } catch { systemSettings.value = {}; }
+                    try { 
+                        systemSettings.value = await API.getSystemSettings(); 
+                    } catch (error) { 
+                        console.error('Failed to load system settings:', error);
+                        systemSettings.value = {}; 
+                    }
                 };
                 
                 const loadAvailableData = async () => {
                     try {
                         availableData.value = await API.getAvailableData();
-                    } catch {
+                    } catch (error) {
+                        console.error('Failed to load available data:', error);
                         availableData.value = {
                             departments: departments.value,
                             residents: medicalStaff.value.filter(s => s.staff_type === 'medical_resident'),
@@ -1115,7 +1181,8 @@ const getUserRoleDisplay = (role) => {
                         loadingAuditLogs.value = true;
                         const response = await API.getAuditLogs();
                         auditLogs.value = response.data || response || [];
-                    } catch { 
+                    } catch (error) { 
+                        console.error('Failed to load audit logs:', error);
                         auditLogs.value = []; 
                     } finally {
                         loadingAuditLogs.value = false;
@@ -1125,13 +1192,17 @@ const getUserRoleDisplay = (role) => {
                 const loadNotifications = async () => {
                     try {
                         unreadNotifications.value = await API.getUnreadNotificationCount();
-                    } catch { unreadNotifications.value = 0; }
+                    } catch (error) { 
+                        console.error('Failed to load notifications:', error);
+                        unreadNotifications.value = 0; 
+                    }
                 };
                 
                 const loadClinicalUnits = async () => {
                     try {
                         clinicalUnits.value = []; // Placeholder - no API endpoint
-                    } catch {
+                    } catch (error) {
+                        console.error('Failed to load clinical units:', error);
                         clinicalUnits.value = [];
                     }
                 };
@@ -1139,7 +1210,8 @@ const getUserRoleDisplay = (role) => {
                 const loadUserRoles = async () => {
                     try {
                         userRoles.value = []; // Placeholder - no API endpoint
-                    } catch {
+                    } catch (error) {
+                        console.error('Failed to load user roles:', error);
                         userRoles.value = [];
                     }
                 };
@@ -1147,31 +1219,36 @@ const getUserRoleDisplay = (role) => {
                 const loadAvailablePermissions = async () => {
                     try {
                         availablePermissions.value = []; // Placeholder - no API endpoint
-                    } catch {
+                    } catch (error) {
+                        console.error('Failed to load permissions:', error);
                         availablePermissions.value = [];
                     }
                 };
                 
                 const loadUsers = async () => {
                     try {
-                        users.value = await API.getUsers(); // Load if needed
-                    } catch { }
+                        users.value = await API.getUsers();
+                    } catch (error) { 
+                        console.error('Failed to load users:', error);
+                    }
                 };
                 
                 const loadDashboardStats = async () => {
                     try {
                         loadingStats.value = true;
-                        const [statsData, upcomingEventsData, todayOnCall] = await Promise.all([
+                        const [statsData, upcomingEventsData, todayOnCall] = await Promise.allSettled([
                             API.getDashboardStats(),
                             API.getDashboardUpcomingEvents(),
                             API.getOnCallToday()
                         ]);
-                        stats.value = statsData;
-                        upcomingEvents.value = upcomingEventsData;
-                        todaysOnCallData.value = todayOnCall || [];
+                        
+                        stats.value = statsData.status === 'fulfilled' ? statsData.value : {};
+                        upcomingEvents.value = upcomingEventsData.status === 'fulfilled' ? upcomingEventsData.value : { upcoming_rotations: [], upcoming_oncall: [], upcoming_absences: [] };
+                        todaysOnCallData.value = todayOnCall.status === 'fulfilled' ? todayOnCall.value : [];
+                        
                         showToast('Dashboard Updated', 'Dashboard data refreshed', 'success');
                     } catch (error) { 
-                        showToast('Error', 'Failed to load dashboard data', 'error'); 
+                        console.error('Failed to load dashboard stats:', error);
                     } finally {
                         loadingStats.value = false;
                     }
@@ -1180,12 +1257,23 @@ const getUserRoleDisplay = (role) => {
                 const loadInitialData = async () => {
                     loading.value = true;
                     try {
-                        await Promise.all([
-                            loadMedicalStaff(), loadDepartments(), loadTrainingUnits(),
-                            loadResidentRotations(), loadStaffAbsences(), loadOnCallSchedule(),
-                            loadAnnouncements(), loadSystemSettings(), loadAvailableData(),
-                            loadDashboardStats(), loadAuditLogs(), loadNotifications(),
-                            loadUsers(), loadClinicalUnits(), loadUserRoles(), loadAvailablePermissions()
+                        await Promise.allSettled([
+                            loadMedicalStaff(), 
+                            loadDepartments(), 
+                            loadTrainingUnits(),
+                            loadResidentRotations(), 
+                            loadStaffAbsences(), 
+                            loadOnCallSchedule(),
+                            loadAnnouncements(), 
+                            loadSystemSettings(), 
+                            loadAvailableData(),
+                            loadDashboardStats(), 
+                            loadAuditLogs(), 
+                            loadNotifications(),
+                            loadUsers(), 
+                            loadClinicalUnits(), 
+                            loadUserRoles(), 
+                            loadAvailablePermissions()
                         ]);
                         showToast('System Ready', 'All data loaded successfully', 'success');
                     } catch (error) {
@@ -1244,7 +1332,7 @@ const getUserRoleDisplay = (role) => {
                             return API.createRotation(rotationData);
                         });
                 
-                        await Promise.all(promises);
+                        await Promise.allSettled(promises);
                         showToast('Success', `${bulkAssignModal.selectedResidents.length} residents assigned successfully`, 'success');
                         bulkAssignModal.show = false;
                         loadResidentRotations();
@@ -2171,10 +2259,28 @@ const getUserRoleDisplay = (role) => {
                     getAbsenceStatusClass, getRotationStatusClass, getPriorityColor, getDepartmentName, getStaffName, getTrainingUnitName,
                     getUnitResidents, getCurrentTitle, getCurrentSubtitle,
                     
+                    // Additional Utility Functions
+                    getUserRoleDisplay,
+                    formatTimeRange,
+                    formatTrainingLevel,
+                    formatFileSize,
+                    getRatingColor,
+                    getProgressColor,
+                    getDocumentIcon,
+                    getDocumentIconClass,
+                    
                     // Computed Properties
                     residents, attendings, todaysOnCall, filteredMedicalStaff, filteredRotations, filteredAbsences, filteredAuditLogs,
                     availableResidents, availableTrainingUnits, availableTrainingUnitsWithCapacity, availableUnassignedResidents,
-                    availableStaff, availableCoverageStaff, availableSupervisors,
+                    availableStaff, availableCoverageStaff, availableSupervisors, availablePhysicians, availableHeadsOfDepartment,
+                    
+                    // Permission Functions
+                    hasPermission,
+                    canView,
+                    canEdit,
+                    canDelete,
+                    hasAnyPermission,
+                    hasAllPermissions,
                     
                     // Modal Functions
                     showConfirmation, confirmAction, cancelConfirmation, toggleActionMenu, toggleUserMenu,
@@ -2201,12 +2307,6 @@ const getUserRoleDisplay = (role) => {
                     
                     // Navigation & Auth
                     switchView, handleLogin, handleLogout,
-                      hasPermission,
-    canView,
-    canEdit,
-    canDelete,
-    hasAnyPermission,
-    hasAllPermissions,
                     
                     // UI Functions
                     removeToast, showToast, dismissAlert, toggleStatsSidebar, toggleSearchScope, handleSearch, 
