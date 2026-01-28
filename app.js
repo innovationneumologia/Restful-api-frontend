@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof Vue === 'undefined') throw new Error('Vue.js failed to load. Please refresh.');
         
         console.log('Vue.js loaded successfully:', Vue.version);
-        const { createApp, ref, reactive, computed, onMounted } = Vue;
+        const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
         const API_BASE_URL = window.API_BASE_URL || 'https://bacend-production.up.railway.app';
         
         // ============ UTILITIES ============
