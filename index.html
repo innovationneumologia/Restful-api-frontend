@@ -2527,16 +2527,16 @@
                                 </button>
                             </div>
                             
-                            <div class="search-filters">
-                                <button class="search-filter-btn" :class="{ active: searchFilter === 'all' }" 
-                                        @click="setSearchFilter('all')">All</button>
-                                <button class="search-filter-btn" :class="{ active: searchFilter === 'staff' }" 
-                                        @click="setSearchFilter('staff')">Staff</button>
-                                <button class="search-filter-btn" :class="{ active: searchFilter === 'patients' }" 
-                                        @click="setSearchFilter('patients')">Patients</button>
-                                <button class="search-filter-btn" :class="{ active: searchFilter === 'units' }" 
-                                        @click="setSearchFilter('units')">Units</button>
-                            </div>
+                           <div class="search-filters">
+    <button class="search-filter-btn" :class="{ active: searchFilter === 'all' }" 
+            @click="searchFilter = 'all'">All</button>
+    <button class="search-filter-btn" :class="{ active: searchFilter === 'staff' }" 
+            @click="searchFilter = 'staff'">Staff</button>
+    <button class="search-filter-btn" :class="{ active: searchFilter === 'patients' }" 
+            @click="searchFilter = 'patients'">Patients</button>
+    <button class="search-filter-btn" :class="{ active: searchFilter === 'units' }" 
+            @click="searchFilter = 'units'">Units</button>
+</div>
                         </div>
                         
                         <div class="navbar-actions" style="display: flex; align-items: center; gap: 12px;">
@@ -4688,10 +4688,9 @@
                             </div>
                             
                             <div v-if="absenceModal.form.approval_status === 'approved'" class="form-group">
-                                <label class="form-label">Approved By</label>
-                                <input type="text" class="form-control" v-model="absenceModal.form.approved_by" 
-                                       :value="currentUser.full_name" readonly>
-                            </div>
+    <label class="form-label">Approved By</label>
+    <input type="text" class="form-control" :value="absenceModal.form.approved_by || currentUser.full_name" readonly>
+</div>
                         </div>
                     </div>
                 </div>
