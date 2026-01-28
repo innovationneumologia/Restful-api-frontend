@@ -680,6 +680,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     importOptions: { updateExisting: false, createNew: true },
                     dateRange: { start: null, end: null }
                 });
+                const editRole = (role) => {
+    roleModal.mode = 'edit';
+    roleModal.form = { 
+        ...role,
+        permissions: role.permissions || []
+    };
+    roleModal.show = true;
+};
+
                 
                 // Additional modals
                 const bulkAssignModal = reactive({ 
@@ -2563,6 +2572,30 @@ document.addEventListener('DOMContentLoaded', function() {
                         saving.value = false; 
                     }
                 };
+                // ============ MISSING FUNCTIONS ============
+
+// Missing function 1: Edit Role
+const editRole = (role) => {
+    roleModal.mode = 'edit';
+    roleModal.form = { 
+        name: role.name || '',
+        description: role.description || '',
+        permissions: role.permissions || []
+    };
+    roleModal.show = true;
+};
+
+// Missing function 2: Show Permission Manager
+const showPermissionManager = () => {
+    currentView.value = 'permission_manager';
+};
+
+// Missing function 3: Show Add Role Modal
+const showAddRoleModal = () => {
+    roleModal.mode = 'add';
+    roleModal.form = { name: '', description: '', permissions: [] };
+    roleModal.show = true;
+};
                 
                 const saveDashboardCustomization = async () => {
                     saving.value = true;
@@ -3146,6 +3179,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     getCurrentTitle,
                     getCurrentSubtitle,
                     getUserRoleDisplay,
+                    editRole,
+                    showPermissionManager,
                     
                     // Additional Utility Functions
                     getSearchPlaceholder,
