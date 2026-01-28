@@ -2243,15 +2243,31 @@
                     <p class="login-subtitle">Pulmonology Department Management System</p>
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" class="form-control" v-model="loginForm.email" placeholder="admin@neumocare.org" aria-required="true">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" v-model="loginForm.password" placeholder="••••••••" aria-required="true">
-                </div>
+              <div class="form-group">
+    <label for="login-email" class="form-label">Email Address</label>
+    <input 
+        type="email" 
+        id="login-email" 
+        class="form-control" 
+        v-model="loginForm.email" 
+        placeholder="admin@neumocare.org" 
+        aria-required="true"
+        name="email"
+        autocomplete="email">
+</div>
+
+<div class="form-group">
+    <label for="login-password" class="form-label">Password</label>
+    <input 
+        type="password" 
+        id="login-password" 
+        class="form-control" 
+        v-model="loginForm.password" 
+        placeholder="••••••••" 
+        aria-required="true"
+        name="password"
+        autocomplete="current-password">
+</div>
                 
                 <div class="form-group">
                     <label class="form-check">
