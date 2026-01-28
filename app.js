@@ -1,3 +1,5 @@
+
+
 // ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM FRONTEND ============
 // COMPLETE PRODUCTION-READY FRONTEND v3.5 - FULLY INTEGRATED
 // ================================================================
@@ -9,8 +11,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof Vue === 'undefined') throw new Error('Vue.js failed to load. Please refresh.');
         
         console.log('Vue.js loaded successfully:', Vue.version);
+        
+        // IMPORT ALL NECESSARY VUE FUNCTIONS
         const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
+        
         const API_BASE_URL = window.API_BASE_URL || 'https://bacend-production.up.railway.app';
+        
+        // Rest of your code...
         
         // ============ UTILITIES ============
         const Utils = {
