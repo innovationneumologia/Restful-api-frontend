@@ -2576,18 +2576,6 @@ const editRole = (role) => {
     };
     roleModal.show = true;
 };
-
-// Missing function 2: Show Permission Manager
-const showPermissionManager = () => {
-    currentView.value = 'permission_manager';
-};
-
-// Missing function 3: Show Add Role Modal
-const showAddRoleModal = () => {
-    roleModal.mode = 'add';
-    roleModal.form = { name: '', description: '', permissions: [] };
-    roleModal.show = true;
-};
                 
                 const saveDashboardCustomization = async () => {
                     saving.value = true;
@@ -3268,7 +3256,6 @@ const showAddRoleModal = () => {
                     showBulkAssignModal,
                     showAdvancedSearchModal,
                     showAddRoleModal,
-                    showPermissionManager,
                     
                     // Export/Import Functions
                     exportData,
