@@ -680,14 +680,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     importOptions: { updateExisting: false, createNew: true },
                     dateRange: { start: null, end: null }
                 });
-                const editRole = (role) => {
-    roleModal.mode = 'edit';
-    roleModal.form = { 
-        ...role,
-        permissions: role.permissions || []
-    };
-    roleModal.show = true;
-};
 
                 
                 // Additional modals
@@ -3257,7 +3249,7 @@ const showAddRoleModal = () => {
                     viewAbsenceDetails,
                     viewRotationDetails,
                     assignResidentToUnit,
-                    editRole,
+                    
                     
                     // Modal Show Functions
                     showAddMedicalStaffModal,
