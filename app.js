@@ -1,5 +1,3 @@
-
-
 // ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM FRONTEND ============
 // COMPLETE PRODUCTION-READY FRONTEND v3.5 - FULLY INTEGRATED
 // ================================================================
@@ -8,33 +6,49 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('NeumoCare Hospital Management System Frontend v3.5 loading...');
     
     try {
-        if (typeof Vue === 'undefined') throw new Error('Vue.js failed to load. Please refresh.');
+        // Check if Vue.js is loaded
+        if (typeof Vue === 'undefined') throw new Error('Vue.js failed to load. Please refresh the page.');
         
         console.log('Vue.js loaded successfully:', Vue.version);
         
-        // IMPORT ALL NECESSARY VUE FUNCTIONS
+        // Import necessary Vue functions
         const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
         
+        // Set API base URL
         const API_BASE_URL = window.API_BASE_URL || 'https://bacend-production.up.railway.app';
-        
-        // Rest of your code...
         
         // ============ UTILITIES ============
         const Utils = {
+            // Format date to readable string
             formatDate: (dateString) => dateString ? new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+            
+            // Format date and time
             formatDateTime: (dateString) => dateString ? new Date(dateString).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '',
+            
+            // Format time difference in human-readable format
             formatTimeAgo: (dateString) => {
                 if (!dateString) return '';
-                const date = new Date(dateString), now = new Date(), diffMs = now - date;
-                const diffMins = Math.floor(diffMs / 60000), diffHours = Math.floor(diffMs / 3600000), diffDays = Math.floor(diffMs / 86400000);
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+                
                 if (diffMins < 1) return 'Just now';
                 if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
                 if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
                 if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
                 return Utils.formatDate(dateString);
             },
+            
+            // Get initials from name
             getInitials: (name) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??',
+            
+            // Generate unique ID
             generateID: () => Date.now().toString(36) + Math.random().toString(36).substr(2),
+            
+            // Download data as CSV file
             downloadCSV: (data, filename) => {
                 const blob = new Blob([data], { type: 'text/csv' });
                 const url = window.URL.createObjectURL(blob);
@@ -46,6 +60,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
             },
+            
+            // Download data as JSON file
             downloadJSON: (data, filename) => {
                 const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                 const url = window.URL.createObjectURL(blob);
@@ -57,6 +73,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
             },
+            
+            // Calculate days between two dates
             calculateDays: (start, end) => {
                 try {
                     const startDate = new Date(start);
@@ -72,12 +90,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // ============ API CLIENT ============
         const API = {
+            // Authentication token from localStorage
             token: ref(localStorage.getItem('neumocare_token')),
+            
+            // Generate request headers with authentication
             headers() {
                 const headers = { 'Content-Type': 'application/json' };
                 if (this.token.value) headers['Authorization'] = `Bearer ${this.token.value}`;
                 return headers;
             },
+            
+            // Generic request handler
             async request(endpoint, options = {}) {
                 const url = `${API_BASE_URL}${endpoint}`;
                 try {
@@ -89,6 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     };
                     const response = await fetch(url, config);
                     
+                    // Handle authentication errors
                     if (response.status === 401) {
                         localStorage.removeItem('neumocare_token');
                         localStorage.removeItem('neumocare_user');
@@ -96,15 +120,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         throw new Error('Session expired. Please login again.');
                     }
                     
+                    // Handle permission errors
                     if (response.status === 403) {
                         throw new Error('You do not have permission to perform this action.');
                     }
                     
+                    // Handle not found errors
                     if (response.status === 404) {
                         const errorData = await response.json().catch(() => ({}));
                         throw new Error(errorData.message || 'Resource not found');
                     }
                     
+                    // Handle other errors
                     if (!response.ok) {
                         const errorText = await response.text();
                         console.error(`API Error ${response.status}:`, errorText);
@@ -117,6 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
                     }
                     
+                    // Parse response based on content type
                     const contentType = response.headers.get('content-type');
                     if (contentType && contentType.includes('application/json')) {
                         const data = await response.json();
@@ -537,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const app = createApp({
             setup() {
                 // ============ REACTIVE STATE ============
-                // User & Auth
+                // User & Authentication
                 const currentUser = ref(JSON.parse(localStorage.getItem('neumocare_user')) || null);
                 const loginForm = reactive({ email: '', password: '', remember_me: true });
                 
@@ -561,6 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const searchQuery = ref('');
                 const searchScope = ref('All');
                 const searchFilter = ref('all');
+                const searchTimeout = ref(null);
                 
                 // ============ DATA STORES ============
                 const medicalStaff = ref([]);
@@ -591,14 +620,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const absenceFilter = reactive({ staff_member_id: '', approval_status: '', leave_start_date: '' });
                 const auditFilters = reactive({ dateRange: '', actionType: '', userId: '' });
                 
-                // ============ MODAL STATES - ALL INCLUDED ============
-                // Existing modals
+                // ============ MODAL STATES ============
                 const medicalStaffModal = reactive({ 
                     show: false, 
                     mode: 'add', 
                     activeTab: 'basic',
                     form: {} 
                 });
+                
                 const departmentModal = reactive({ show: false, mode: 'add', form: {} });
                 const trainingUnitModal = reactive({ show: false, mode: 'add', form: {} });
                 const rotationModal = reactive({ show: false, mode: 'add', form: {} });
@@ -619,6 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     details: '', 
                     confirmButtonIcon: 'fa-check' 
                 });
+                
                 const staffDetailsModal = reactive({ 
                     show: false, 
                     staff: null, 
@@ -628,8 +658,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     nextOncall: '',
                     activityHistory: []
                 });
+                
                 const absenceDetailsModal = reactive({ show: false, absence: null });
                 const rotationDetailsModal = reactive({ show: false, rotation: null });
+                
                 const importExportModal = reactive({ 
                     show: false, 
                     mode: 'export', 
@@ -640,7 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     dateRange: { start: null, end: null }
                 });
                 
-                // NEW MODALS - Added to fix missing references
+                // Additional modals
                 const bulkAssignModal = reactive({ 
                     show: false,
                     allSelected: false,
@@ -730,7 +762,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         supervisor_id: ''
                     }
                 });
-     
+                
                 const absenceModal = reactive({ 
                     show: false, 
                     mode: 'add', 
@@ -780,6 +812,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const availablePermissions = ref([]);
                 const users = ref([]);
                 
+                // Live stats for dashboard
+                const liveStats = reactive({
+                    occupancy: 0,
+                    availableBeds: 0,
+                    staffOnDuty: 0,
+                    emergencyCases: 0,
+                    lastUpdated: new Date()
+                });
+                
+                // Export/Import options
                 const exportImportOptions = {
                     tables: [
                         { value: 'medical_staff', label: 'Medical Staff' },
@@ -794,55 +836,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         { value: 'csv', label: 'CSV' }
                     ]
                 };
-                setSearchFilter(filter) {
-    try {
-        console.log(`[Search] Setting filter to: ${filter}`);
-        
-        // Validate input
-        const validFilters = ['all', 'staff', 'patients', 'units', 'rotations', 'departments'];
-        if (!validFilters.includes(filter)) {
-            console.warn(`Invalid filter: ${filter}. Defaulting to 'all'`);
-            filter = 'all';
-        }
-        
-        // Set the filter
-        this.searchFilter = filter;
-        
-        // Map filter to scope display
-        const scopeMap = {
-            'all': 'All',
-            'staff': 'Staff',
-            'patients': 'Patients', 
-            'units': 'Units',
-            'rotations': 'Rotations',
-            'departments': 'Departments'
-        };
-        
-        this.searchScope = scopeMap[filter] || 'All';
-        
-        // If we have a search query, perform search
-        if (this.searchQuery && this.searchQuery.trim().length > 2) {
-            this.debouncedSearch();
-        }
-        
-        // Log the change
-        this.logUserAction('search_filter_changed', {
-            filter: filter,
-            scope: this.searchScope,
-            query: this.searchQuery
-        });
-        
-    } catch (error) {
-        console.error('Error in setSearchFilter:', error);
-        this.showErrorToast('Failed to update search filter');
-    }
-},
-
-// Add debounced search for better performance
-debouncedSearch: _.debounce(function() {
-    this.handleSearch();
-}, 300),
-           
                 
                 // ============ PERMISSION FUNCTIONS ============
                 const hasPermission = (module, action = 'read') => {
@@ -909,7 +902,7 @@ debouncedSearch: _.debounce(function() {
                     return hasPermission(permissionMap[module] || `delete_${module}`);
                 };
                 
-                // Helper function for checking multiple permissions
+                // Helper functions for checking multiple permissions
                 const hasAnyPermission = (permissions) => {
                     return permissions.some(permission => hasPermission(permission));
                 };
@@ -918,7 +911,8 @@ debouncedSearch: _.debounce(function() {
                     return permissions.every(permission => hasPermission(permission));
                 };
                 
-                // ============ USER ROLE DISPLAY FUNCTION ============
+                // ============ FORMATTING FUNCTIONS ============
+                // User role display
                 const getUserRoleDisplay = (role) => {
                     const roleMap = {
                         'administrator': 'Administrator',
@@ -934,36 +928,75 @@ debouncedSearch: _.debounce(function() {
                     return roleMap[role] || role || 'Unknown Role';
                 };
                 
-                // ============ TOAST SYSTEM ============
-                const showToast = (title, message, type = 'info', duration = 5000) => {
-                    const icons = { info: 'fas fa-info-circle', success: 'fas fa-check-circle', error: 'fas fa-exclamation-circle', warning: 'fas fa-exclamation-triangle' };
-                    const toast = { id: Date.now(), title, message, type, icon: icons[type], duration };
-                    toasts.value.push(toast);
-                    if (duration > 0) setTimeout(() => removeToast(toast.id), duration);
-                };
+                // Staff type formatting
+                const formatStaffType = (type) => ({
+                    medical_resident: 'Medical Resident',
+                    attending_physician: 'Attending Physician',
+                    fellow: 'Fellow',
+                    nurse_practitioner: 'Nurse Practitioner'
+                }[type] || type);
                 
-                const removeToast = (id) => {
-                    const index = toasts.value.findIndex(t => t.id === id);
-                    if (index > -1) toasts.value.splice(index, 1);
-                };
+                const getStaffTypeClass = (type) => ({
+                    medical_resident: 'badge-primary',
+                    attending_physician: 'badge-success',
+                    fellow: 'badge-info',
+                    nurse_practitioner: 'badge-warning'
+                }[type] || 'badge-secondary');
                 
-                const dismissAlert = (id) => {
-                    const index = activeAlerts.value.findIndex(a => a.id === id);
-                    if (index > -1) activeAlerts.value.splice(index, 1);
-                };
+                // Employment status formatting
+                const formatEmploymentStatus = (status) => ({
+                    active: 'Active',
+                    on_leave: 'On Leave',
+                    inactive: 'Inactive'
+                }[status] || status);
                 
-                // ============ FORMATTING FUNCTIONS ============
-                const formatStaffType = (type) => ({ medical_resident: 'Medical Resident', attending_physician: 'Attending Physician', fellow: 'Fellow', nurse_practitioner: 'Nurse Practitioner' }[type] || type);
-                const formatEmploymentStatus = (status) => ({ active: 'Active', on_leave: 'On Leave', inactive: 'Inactive' }[status] || status);
-                const formatAbsenceReason = (reason) => ({ vacation: 'Vacation', sick_leave: 'Sick Leave', conference: 'Conference', personal: 'Personal', maternity_paternity: 'Maternity/Paternity', administrative: 'Administrative', other: 'Other' }[reason] || reason);
-                const formatAbsenceStatus = (status) => ({ pending: 'Pending', approved: 'Approved', rejected: 'Rejected' }[status] || status);
-                const formatRotationStatus = (status) => ({ active: 'Active', upcoming: 'Upcoming', completed: 'Completed', cancelled: 'Cancelled' }[status] || status);
-                const getStaffTypeClass = (type) => ({ medical_resident: 'badge-primary', attending_physician: 'badge-success', fellow: 'badge-info', nurse_practitioner: 'badge-warning' }[type] || 'badge-secondary');
-                const getAbsenceStatusClass = (status) => ({ pending: 'status-busy', approved: 'status-available', rejected: 'status-critical' }[status] || 'badge-secondary');
-                const getRotationStatusClass = (status) => ({ active: 'status-available', upcoming: 'status-busy', completed: 'status-oncall', cancelled: 'status-critical' }[status] || 'badge-secondary');
-                const getPriorityColor = (priority) => ({ high: 'danger', medium: 'warning', low: 'info', urgent: 'danger' }[priority] || 'primary');
-                const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
+                // Absence formatting
+                const formatAbsenceReason = (reason) => ({
+                    vacation: 'Vacation',
+                    sick_leave: 'Sick Leave',
+                    conference: 'Conference',
+                    personal: 'Personal',
+                    maternity_paternity: 'Maternity/Paternity',
+                    administrative: 'Administrative',
+                    other: 'Other'
+                }[reason] || reason);
                 
+                const formatAbsenceStatus = (status) => ({
+                    pending: 'Pending',
+                    approved: 'Approved',
+                    rejected: 'Rejected'
+                }[status] || status);
+                
+                const getAbsenceStatusClass = (status) => ({
+                    pending: 'status-busy',
+                    approved: 'status-available',
+                    rejected: 'status-critical'
+                }[status] || 'badge-secondary');
+                
+                // Rotation formatting
+                const formatRotationStatus = (status) => ({
+                    active: 'Active',
+                    upcoming: 'Upcoming',
+                    completed: 'Completed',
+                    cancelled: 'Cancelled'
+                }[status] || status);
+                
+                const getRotationStatusClass = (status) => ({
+                    active: 'status-available',
+                    upcoming: 'status-busy',
+                    completed: 'status-oncall',
+                    cancelled: 'status-critical'
+                }[status] || 'badge-secondary');
+                
+                // Priority formatting
+                const getPriorityColor = (priority) => ({
+                    high: 'danger',
+                    medium: 'warning',
+                    low: 'info',
+                    urgent: 'danger'
+                }[priority] || 'primary');
+                
+                // Data retrieval functions
                 const getDepartmentName = (departmentId) => {
                     if (!departmentId) return 'Unassigned';
                     const department = departments.value.find(d => d.id === departmentId);
@@ -993,11 +1026,169 @@ debouncedSearch: _.debounce(function() {
                     return residents;
                 };
                 
-                const getCurrentTitle = () => ({ daily_operations: 'Daily Operations', medical_staff: 'Medical Staff', resident_rotations: 'Resident Rotations', oncall_schedule: 'On-call Schedule', staff_absence: 'Staff Absence', training_units: 'Training Units', department_management: 'Department Management', communications: 'Communications', audit_logs: 'Audit Logs', system_settings: 'System Settings', login: 'Login' }[currentView.value] || 'NeumoCare');
+                // Current view titles
+                const getCurrentTitle = () => ({
+                    daily_operations: 'Daily Operations',
+                    medical_staff: 'Medical Staff',
+                    resident_rotations: 'Resident Rotations',
+                    oncall_schedule: 'On-call Schedule',
+                    staff_absence: 'Staff Absence',
+                    training_units: 'Training Units',
+                    department_management: 'Department Management',
+                    communications: 'Communications',
+                    audit_logs: 'Audit Logs',
+                    system_settings: 'System Settings',
+                    login: 'Login'
+                }[currentView.value] || 'NeumoCare');
                 
-                const getCurrentSubtitle = () => ({ daily_operations: 'Overview dashboard with real-time updates', medical_staff: 'Manage physicians, residents, and clinical staff', resident_rotations: 'Track and manage resident training rotations', oncall_schedule: 'View and manage on-call physician schedules', staff_absence: 'Track staff absences and coverage assignments', training_units: 'Manage clinical training units and assignments', department_management: 'Organizational structure and clinical units', communications: 'Department announcements and capacity updates', audit_logs: 'System activity and security audit trails', system_settings: 'Configure system preferences and behavior' }[currentView.value] || 'Hospital Management System');
+                const getCurrentSubtitle = () => ({
+                    daily_operations: 'Overview dashboard with real-time updates',
+                    medical_staff: 'Manage physicians, residents, and clinical staff',
+                    resident_rotations: 'Track and manage resident training rotations',
+                    oncall_schedule: 'View and manage on-call physician schedules',
+                    staff_absence: 'Track staff absences and coverage assignments',
+                    training_units: 'Manage clinical training units and assignments',
+                    department_management: 'Organizational structure and clinical units',
+                    communications: 'Department announcements and capacity updates',
+                    audit_logs: 'System activity and security audit trails',
+                    system_settings: 'Configure system preferences and behavior'
+                }[currentView.value] || 'Hospital Management System');
                 
                 // ============ ADDITIONAL UTILITY FUNCTIONS ============
+                // Search placeholder
+                const getSearchPlaceholder = () => {
+                    const placeholders = {
+                        'All': 'Search staff, patients, units...',
+                        'Staff': 'Search by name, ID, or email...',
+                        'Patients': 'Search patient records...',
+                        'Units': 'Search training units...',
+                        'Rotations': 'Search resident rotations...'
+                    };
+                    return placeholders[searchScope.value] || 'Search...';
+                };
+                
+                // Live stats update
+                const updateLiveStats = () => {
+                    try {
+                        // Calculate occupancy based on active staff vs capacity
+                        const totalCapacity = trainingUnits.value.reduce((sum, unit) => sum + (parseInt(unit.maximum_residents) || 10), 0);
+                        const currentResidents = residentRotations.value.filter(r => r.rotation_status === 'active').length;
+                        
+                        liveStats.occupancy = totalCapacity > 0 ? Math.round((currentResidents / totalCapacity) * 100) : 0;
+                        liveStats.availableBeds = Math.max(0, totalCapacity - currentResidents);
+                        liveStats.staffOnDuty = medicalStaff.value.filter(s => s.employment_status === 'active').length;
+                        liveStats.emergencyCases = 0; // This would come from an API
+                        liveStats.lastUpdated = new Date();
+                        console.log('Live stats updated:', liveStats);
+                    } catch (error) {
+                        console.error('Error updating live stats:', error);
+                        // Set default values
+                        liveStats.occupancy = 0;
+                        liveStats.availableBeds = 0;
+                        liveStats.staffOnDuty = 0;
+                        liveStats.emergencyCases = 0;
+                        liveStats.lastUpdated = new Date();
+                    }
+                };
+                
+                // Additional formatting utilities
+                const formatPhoneNumber = (phone) => {
+                    if (!phone) return '';
+                    const cleaned = phone.toString().replace(/\D/g, '');
+                    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+                    return match ? `(${match[1]}) ${match[2]}-${match[3]}` : phone;
+                };
+                
+                const formatCurrency = (amount) => {
+                    return new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: 'USD'
+                    }).format(amount || 0);
+                };
+                
+                const getStatusColor = (status) => {
+                    const colors = {
+                        'active': 'success',
+                        'pending': 'warning',
+                        'completed': 'info',
+                        'cancelled': 'danger',
+                        'approved': 'success',
+                        'rejected': 'danger',
+                        'upcoming': 'primary',
+                        'on_leave': 'warning',
+                        'inactive': 'secondary'
+                    };
+                    return colors[status] || 'secondary';
+                };
+                
+                const getBadgeVariant = (type) => {
+                    const variants = {
+                        'medical_resident': 'primary',
+                        'attending_physician': 'success',
+                        'fellow': 'info',
+                        'nurse_practitioner': 'warning',
+                        'administrator': 'dark',
+                        'department_head': 'secondary',
+                        'viewing_doctor': 'light',
+                        'resident_coordinator': 'info',
+                        'human_resources': 'warning'
+                    };
+                    return variants[type] || 'light';
+                };
+                
+                const calculateAge = (birthDate) => {
+                    if (!birthDate) return '';
+                    const today = new Date();
+                    const birth = new Date(birthDate);
+                    let age = today.getFullYear() - birth.getFullYear();
+                    const monthDiff = today.getMonth() - birth.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                        age--;
+                    }
+                    return age;
+                };
+                
+                const truncateText = (text, length = 50) => {
+                    if (!text) return '';
+                    return text.length > length ? text.substring(0, length) + '...' : text;
+                };
+                
+                const getTimeRemaining = (endDate) => {
+                    if (!endDate) return '';
+                    const now = new Date();
+                    const end = new Date(endDate);
+                    const diffMs = end - now;
+                    
+                    if (diffMs <= 0) return 'Completed';
+                    
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    
+                    if (diffDays > 0) return `${diffDays}d ${diffHours}h`;
+                    if (diffHours > 0) return `${diffHours}h`;
+                    
+                    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                    return `${diffMinutes}m`;
+                };
+                
+                const getCapacityColor = (percentage) => {
+                    if (percentage >= 90) return 'danger';
+                    if (percentage >= 75) return 'warning';
+                    if (percentage >= 50) return 'info';
+                    return 'success';
+                };
+                
+                const getPriorityBadge = (priority) => {
+                    const badges = {
+                        'urgent': 'danger',
+                        'high': 'warning',
+                        'medium': 'info',
+                        'low': 'success'
+                    };
+                    return badges[priority] || 'secondary';
+                };
+                
+                // Additional utility functions
                 const formatTimeRange = (start, end) => `${start} - ${end}`;
                 const formatTrainingLevel = (level) => level ? level.toUpperCase().replace('PGY', 'PGY-') : 'N/A';
                 const formatFileSize = (bytes) => {
@@ -1017,155 +1208,105 @@ debouncedSearch: _.debounce(function() {
                     const classes = { pdf: 'bg-red-500', doc: 'bg-blue-500', xls: 'bg-green-500', image: 'bg-purple-500' };
                     return classes[type] || 'bg-gray-500';
                 };
-                // ============ ADD THESE MISSING FUNCTIONS ============
-
-// Search placeholder function
-// ============ ADD THESE MISSING FUNCTIONS ============
-
-// Search placeholder function
-const getSearchPlaceholder = () => {
-    const placeholders = {
-        'All': 'Search staff, patients, units...',
-        'Staff': 'Search by name, ID, or email...',
-        'Patients': 'Search patient records...',
-        'Units': 'Search training units...',
-        'Rotations': 'Search resident rotations...'
-    };
-    return placeholders[searchScope.value] || 'Search...';
-};
-
-// Live stats for dashboard
-const liveStats = reactive({
-    occupancy: 0,
-    availableBeds: 0,
-    staffOnDuty: 0,
-    emergencyCases: 0,
-    lastUpdated: new Date()
-});
-
-// Initialize live stats
-const updateLiveStats = () => {
-    try {
-        // Calculate occupancy based on active staff vs capacity
-        const totalCapacity = trainingUnits.value.reduce((sum, unit) => sum + (parseInt(unit.maximum_residents) || 10), 0);
-        const currentResidents = residentRotations.value.filter(r => r.rotation_status === 'active').length;
-        
-        liveStats.occupancy = totalCapacity > 0 ? Math.round((currentResidents / totalCapacity) * 100) : 0;
-        liveStats.availableBeds = Math.max(0, totalCapacity - currentResidents);
-        liveStats.staffOnDuty = medicalStaff.value.filter(s => s.employment_status === 'active').length;
-        liveStats.emergencyCases = 0; // This would come from an API
-        liveStats.lastUpdated = new Date();
-        console.log('Live stats updated:', liveStats);
-    } catch (error) {
-        console.error('Error updating live stats:', error);
-        // Set default values
-        liveStats.occupancy = 0;
-        liveStats.availableBeds = 0;
-        liveStats.staffOnDuty = 0;
-        liveStats.emergencyCases = 0;
-        liveStats.lastUpdated = new Date();
-    }
-};
-
-// More missing utility functions
-const formatPhoneNumber = (phone) => {
-    if (!phone) return '';
-    const cleaned = phone.toString().replace(/\D/g, '');
-    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-    return match ? `(${match[1]}) ${match[2]}-${match[3]}` : phone;
-};
-
-const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
-    }).format(amount || 0);
-};
-
-const getStatusColor = (status) => {
-    const colors = {
-        'active': 'success',
-        'pending': 'warning',
-        'completed': 'info',
-        'cancelled': 'danger',
-        'approved': 'success',
-        'rejected': 'danger',
-        'upcoming': 'primary',
-        'on_leave': 'warning',
-        'inactive': 'secondary'
-    };
-    return colors[status] || 'secondary';
-};
-
-const getBadgeVariant = (type) => {
-    const variants = {
-        'medical_resident': 'primary',
-        'attending_physician': 'success',
-        'fellow': 'info',
-        'nurse_practitioner': 'warning',
-        'administrator': 'dark',
-        'department_head': 'secondary',
-        'viewing_doctor': 'light',
-        'resident_coordinator': 'info',
-        'human_resources': 'warning'
-    };
-    return variants[type] || 'light';
-};
-
-const calculateAge = (birthDate) => {
-    if (!birthDate) return '';
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-        age--;
-    }
-    return age;
-};
-
-const truncateText = (text, length = 50) => {
-    if (!text) return '';
-    return text.length > length ? text.substring(0, length) + '...' : text;
-};
-
-const getTimeRemaining = (endDate) => {
-    if (!endDate) return '';
-    const now = new Date();
-    const end = new Date(endDate);
-    const diffMs = end - now;
-    
-    if (diffMs <= 0) return 'Completed';
-    
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
-    if (diffDays > 0) return `${diffDays}d ${diffHours}h`;
-    if (diffHours > 0) return `${diffHours}h`;
-    
-    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    return `${diffMinutes}m`;
-};
-
-const getCapacityColor = (percentage) => {
-    if (percentage >= 90) return 'danger';
-    if (percentage >= 75) return 'warning';
-    if (percentage >= 50) return 'info';
-    return 'success';
-};
-
-const getPriorityBadge = (priority) => {
-    const badges = {
-        'urgent': 'danger',
-        'high': 'warning',
-        'medium': 'info',
-        'low': 'success'
-    };
-    return badges[priority] || 'secondary';
-};
+                
+                // Search filter function
+                const setSearchFilter = (filter) => {
+                    try {
+                        console.log(`[Search] Setting filter to: ${filter}`);
+                        
+                        // Validate input
+                        const validFilters = ['all', 'staff', 'patients', 'units', 'rotations', 'departments'];
+                        if (!validFilters.includes(filter)) {
+                            console.warn(`Invalid filter: ${filter}. Defaulting to 'all'`);
+                            filter = 'all';
+                        }
+                        
+                        // Set the filter
+                        searchFilter.value = filter;
+                        
+                        // Map filter to scope display
+                        const scopeMap = {
+                            'all': 'All',
+                            'staff': 'Staff',
+                            'patients': 'Patients', 
+                            'units': 'Units',
+                            'rotations': 'Rotations',
+                            'departments': 'Departments'
+                        };
+                        
+                        searchScope.value = scopeMap[filter] || 'All';
+                        
+                        // If we have a search query, perform search with debouncing
+                        if (searchQuery.value && searchQuery.value.trim().length > 2) {
+                            clearTimeout(searchTimeout.value);
+                            searchTimeout.value = setTimeout(() => {
+                                handleSearch();
+                            }, 300);
+                        }
+                        
+                        // Log the change
+                        logUserAction('search_filter_changed', {
+                            filter: filter,
+                            scope: searchScope.value,
+                            query: searchQuery.value
+                        });
+                        
+                    } catch (error) {
+                        console.error('Error in setSearchFilter:', error);
+                        showErrorToast('Failed to update search filter');
+                    }
+                };
+                
+                // Log user action (placeholder)
+                const logUserAction = (action, details) => {
+                    // For now, just log to console
+                    console.log(`[User Action] ${action}:`, details);
+                };
+                
+                // Show error toast
+                const showErrorToast = (message) => {
+                    showToast('Error', message, 'error');
+                };
+                
+                // ============ TOAST SYSTEM ============
+                const showToast = (title, message, type = 'info', duration = 5000) => {
+                    const icons = {
+                        info: 'fas fa-info-circle',
+                        success: 'fas fa-check-circle',
+                        error: 'fas fa-exclamation-circle',
+                        warning: 'fas fa-exclamation-triangle'
+                    };
+                    
+                    const toast = {
+                        id: Date.now(),
+                        title,
+                        message,
+                        type,
+                        icon: icons[type],
+                        duration
+                    };
+                    
+                    toasts.value.push(toast);
+                    
+                    if (duration > 0) {
+                        setTimeout(() => removeToast(toast.id), duration);
+                    }
+                };
+                
+                const removeToast = (id) => {
+                    const index = toasts.value.findIndex(t => t.id === id);
+                    if (index > -1) toasts.value.splice(index, 1);
+                };
+                
+                const dismissAlert = (id) => {
+                    const index = activeAlerts.value.findIndex(a => a.id === id);
+                    if (index > -1) activeAlerts.value.splice(index, 1);
+                };
+                
                 // ============ COMPUTED PROPERTIES ============
                 const residents = computed(() => medicalStaff.value.filter(staff => staff.staff_type === 'medical_resident'));
                 const attendings = computed(() => medicalStaff.value.filter(staff => staff.staff_type === 'attending_physician'));
+                
                 const todaysOnCall = computed(() => {
                     const today = new Date().toISOString().split('T')[0];
                     return todaysOnCallData.value.filter(schedule => schedule.duty_date === today)
@@ -1175,27 +1316,16 @@ const getPriorityBadge = (priority) => {
                             role: schedule.shift_type === 'primary_call' ? 'Primary' : 'Backup'
                         }));
                 });
-                // Watch for data changes to update live stats automatically
-watch([() => medicalStaff.value, () => residentRotations.value, () => trainingUnits.value], () => {
-    console.log('Data changed, updating live stats...');
-    updateLiveStats();
-}, { deep: true });
-
-// Also update live stats on mount if data is already loaded
-onMounted(() => {
-    if (currentUser.value) {
-        // Small delay to ensure data is loaded
-        setTimeout(() => {
-            updateLiveStats();
-        }, 1000);
-    }
-});
                 
                 const filteredMedicalStaff = computed(() => {
                     let filtered = medicalStaff.value;
                     if (staffSearch.value) {
                         const searchTerm = staffSearch.value.toLowerCase();
-                        filtered = filtered.filter(staff => staff.full_name.toLowerCase().includes(searchTerm) || staff.staff_id.toLowerCase().includes(searchTerm) || staff.professional_email.toLowerCase().includes(searchTerm));
+                        filtered = filtered.filter(staff => 
+                            staff.full_name.toLowerCase().includes(searchTerm) || 
+                            staff.staff_id.toLowerCase().includes(searchTerm) || 
+                            staff.professional_email.toLowerCase().includes(searchTerm)
+                        );
                     }
                     if (staffFilter.staff_type) filtered = filtered.filter(staff => staff.staff_type === staffFilter.staff_type);
                     if (staffFilter.employment_status) filtered = filtered.filter(staff => staff.employment_status === staffFilter.employment_status);
@@ -1226,7 +1356,7 @@ onMounted(() => {
                     return filtered;
                 });
                 
-                // NEW COMPUTED PROPERTIES - For missing references
+                // Additional computed properties
                 const availableResidents = computed(() => {
                     return medicalStaff.value.filter(staff => staff.staff_type === 'medical_resident');
                 });
@@ -1471,121 +1601,115 @@ onMounted(() => {
                 };
                 
                 const loadInitialData = async () => {
-    loading.value = true;
-    console.log('Starting to load initial data...');
-    
-    try {
-        // First, load essential data that other loads depend on
-        console.log('Loading essential data first...');
-        
-        // Load departments first (needed for staff filtering)
-        await loadDepartments();
-        console.log('Departments loaded:', departments.value.length);
-        
-        // Load medical staff
-        await loadMedicalStaff();
-        console.log('Medical staff loaded:', medicalStaff.value.length);
-        
-        // Load training units
-        await loadTrainingUnits();
-        console.log('Training units loaded:', trainingUnits.value.length);
-        
-        // Now load secondary data that depends on the above
-        console.log('Loading secondary data...');
-        
-        // Load rotations (depends on staff and units)
-        await loadResidentRotations();
-        console.log('Rotations loaded:', residentRotations.value.length);
-        
-        // Load announcements
-        await loadAnnouncements();
-        console.log('Announcements loaded:', recentAnnouncements.value.length);
-        
-        // Load system settings
-        await loadSystemSettings();
-        console.log('System settings loaded');
-        
-        // Load available data
-        await loadAvailableData();
-        console.log('Available data loaded');
-        
-        // Load dashboard stats
-        await loadDashboardStats();
-        console.log('Dashboard stats loaded');
-        
-        // Now load tertiary data (can fail without breaking the app)
-        console.log('Loading optional data (can fail gracefully)...');
-        
-        // Use Promise.allSettled for data that might fail
-        const optionalLoads = await Promise.allSettled([
-            loadStaffAbsences().catch(e => console.log('Absences load failed:', e.message)),
-            loadOnCallSchedule().catch(e => console.log('On-call schedule load failed:', e.message)),
-            loadAuditLogs().catch(e => console.log('Audit logs load failed:', e.message)),
-            loadNotifications().catch(e => console.log('Notifications load failed:', e.message)),
-            loadUsers().catch(e => console.log('Users load failed:', e.message)),
-            loadClinicalUnits().catch(e => console.log('Clinical units load failed:', e.message)),
-            loadUserRoles().catch(e => console.log('User roles load failed:', e.message)),
-            loadAvailablePermissions().catch(e => console.log('Permissions load failed:', e.message))
-        ]);
-        
-        // Log results of optional loads
-        optionalLoads.forEach((result, index) => {
-            const loadNames = ['Absences', 'On-call', 'Audit Logs', 'Notifications', 'Users', 'Clinical Units', 'User Roles', 'Permissions'];
-            if (result.status === 'fulfilled') {
-                console.log(`${loadNames[index]} loaded successfully`);
-            } else {
-                console.warn(`${loadNames[index]} failed:`, result.reason?.message || 'Unknown error');
-            }
-        });
-        
-        // Update live stats with loaded data
-        console.log('Updating live stats...');
-        updateLiveStats();
-        
-        // Load dashboard customization from localStorage
-        const savedCustomization = localStorage.getItem('dashboard_customization');
-        if (savedCustomization) {
-            try {
-                dashboardCustomizeModal.widgets = JSON.parse(savedCustomization);
-                console.log('Dashboard customization loaded from localStorage');
-            } catch (e) {
-                console.error('Failed to parse dashboard customization:', e);
-            }
-        }
-        
-        // Show success message
-        showToast('System Ready', 'All essential data loaded successfully', 'success');
-        
-        console.log('Initial data load complete!');
-        console.log('Summary:', {
-            staff: medicalStaff.value.length,
-            departments: departments.value.length,
-            trainingUnits: trainingUnits.value.length,
-            rotations: residentRotations.value.length,
-            announcements: recentAnnouncements.value.length,
-            absences: staffAbsences.value.length,
-            onCall: onCallSchedule.value.length,
-            auditLogs: auditLogs.value.length
-        });
-        
-    } catch (error) {
-        console.error('FATAL ERROR in loadInitialData:', error);
-        showToast('Data Load Error', 
-            `Failed to load essential system data: ${error.message}. Some features may be limited.`, 
-            'error');
-        
-        // Even if there's an error, try to update live stats with whatever data we have
-        try {
-            updateLiveStats();
-        } catch (e) {
-            console.error('Failed to update live stats after error:', e);
-        }
-    } finally {
-        loading.value = false;
-        console.log('Loading complete, loading set to false');
-    }
-};
-                // ============ NEW FUNCTIONS - For missing modal functionality ============
+                    loading.value = true;
+                    console.log('Starting to load initial data...');
+                    
+                    try {
+                        // Load essential data first
+                        console.log('Loading essential data first...');
+                        await loadDepartments();
+                        console.log('Departments loaded:', departments.value.length);
+                        
+                        await loadMedicalStaff();
+                        console.log('Medical staff loaded:', medicalStaff.value.length);
+                        
+                        await loadTrainingUnits();
+                        console.log('Training units loaded:', trainingUnits.value.length);
+                        
+                        // Load secondary data
+                        console.log('Loading secondary data...');
+                        await loadResidentRotations();
+                        console.log('Rotations loaded:', residentRotations.value.length);
+                        
+                        await loadAnnouncements();
+                        console.log('Announcements loaded:', recentAnnouncements.value.length);
+                        
+                        await loadSystemSettings();
+                        console.log('System settings loaded');
+                        
+                        await loadAvailableData();
+                        console.log('Available data loaded');
+                        
+                        await loadDashboardStats();
+                        console.log('Dashboard stats loaded');
+                        
+                        // Load optional data (can fail without breaking the app)
+                        console.log('Loading optional data...');
+                        const optionalLoads = await Promise.allSettled([
+                            loadStaffAbsences().catch(e => console.log('Absences load failed:', e.message)),
+                            loadOnCallSchedule().catch(e => console.log('On-call schedule load failed:', e.message)),
+                            loadAuditLogs().catch(e => console.log('Audit logs load failed:', e.message)),
+                            loadNotifications().catch(e => console.log('Notifications load failed:', e.message)),
+                            loadUsers().catch(e => console.log('Users load failed:', e.message)),
+                            loadClinicalUnits().catch(e => console.log('Clinical units load failed:', e.message)),
+                            loadUserRoles().catch(e => console.log('User roles load failed:', e.message)),
+                            loadAvailablePermissions().catch(e => console.log('Permissions load failed:', e.message))
+                        ]);
+                        
+                        // Log results
+                        optionalLoads.forEach((result, index) => {
+                            const loadNames = ['Absences', 'On-call', 'Audit Logs', 'Notifications', 'Users', 'Clinical Units', 'User Roles', 'Permissions'];
+                            if (result.status === 'fulfilled') {
+                                console.log(`${loadNames[index]} loaded successfully`);
+                            } else {
+                                console.warn(`${loadNames[index]} failed:`, result.reason?.message || 'Unknown error');
+                            }
+                        });
+                        
+                        // Update live stats
+                        console.log('Updating live stats...');
+                        updateLiveStats();
+                        
+                        // Load dashboard customization
+                        const savedCustomization = localStorage.getItem('dashboard_customization');
+                        if (savedCustomization) {
+                            try {
+                                dashboardCustomizeModal.widgets = JSON.parse(savedCustomization);
+                                console.log('Dashboard customization loaded from localStorage');
+                            } catch (e) {
+                                console.error('Failed to parse dashboard customization:', e);
+                            }
+                        }
+                        
+                        showToast('System Ready', 'All essential data loaded successfully', 'success');
+                        
+                        console.log('Initial data load complete!');
+                        console.log('Summary:', {
+                            staff: medicalStaff.value.length,
+                            departments: departments.value.length,
+                            trainingUnits: trainingUnits.value.length,
+                            rotations: residentRotations.value.length,
+                            announcements: recentAnnouncements.value.length,
+                            absences: staffAbsences.value.length,
+                            onCall: onCallSchedule.value.length,
+                            auditLogs: auditLogs.value.length
+                        });
+                        
+                    } catch (error) {
+                        console.error('FATAL ERROR in loadInitialData:', error);
+                        showToast('Data Load Error', 
+                            `Failed to load essential system data: ${error.message}. Some features may be limited.`, 
+                            'error');
+                        
+                        // Try to update live stats even if there's an error
+                        try {
+                            updateLiveStats();
+                        } catch (e) {
+                            console.error('Failed to update live stats after error:', e);
+                        }
+                    } finally {
+                        loading.value = false;
+                        console.log('Loading complete, loading set to false');
+                    }
+                };
+                
+                // Watch for data changes to update live stats
+                watch([() => medicalStaff.value, () => residentRotations.value, () => trainingUnits.value], () => {
+                    console.log('Data changed, updating live stats...');
+                    updateLiveStats();
+                }, { deep: true });
+                
+                // ============ MODAL FUNCTIONS ============
                 const showBulkAssignModal = () => {
                     bulkAssignModal.show = true;
                     bulkAssignModal.form.start_date = new Date().toISOString().split('T')[0];
@@ -2350,7 +2474,7 @@ onMounted(() => {
                     });
                 };
                 
-                // ============ OTHER FUNCTIONS ============
+                // ============ EDIT/VIEW FUNCTIONS ============
                 const viewStaffDetails = (staff) => { 
                     staffDetailsModal.staff = staff; 
                     staffDetailsModal.show = true; 
@@ -2468,6 +2592,8 @@ onMounted(() => {
                     if (!currentUser.value && view !== 'login') return;
                     currentView.value = view;
                     mobileMenuOpen.value = false;
+                    
+                    // Load data for specific views
                     switch (view) {
                         case 'medical_staff': loadMedicalStaff(); break;
                         case 'department_management': loadDepartments(); break;
@@ -2484,21 +2610,25 @@ onMounted(() => {
                 
                 // ============ UI FUNCTIONS ============
                 const toggleStatsSidebar = () => { statsSidebarOpen.value = !statsSidebarOpen.value; };
+                
                 const toggleSearchScope = () => {
                     const scopes = ['All', 'Staff', 'Patients', 'Units', 'Rotations'];
                     const currentIndex = scopes.indexOf(searchScope.value);
                     searchScope.value = scopes[(currentIndex + 1) % scopes.length];
                 };
+                
                 const handleSearch = () => {
                     if (searchQuery.value.trim()) {
                         showToast('Search', `Searching for "${searchQuery.value}" in ${searchScope.value}`, 'info');
                     }
                 };
+                
                 const showNotifications = async () => { 
                     const count = await API.getUnreadNotificationCount();
                     showToast('Notifications', `You have ${count} unread notifications`, 'info'); 
                     unreadNotifications.value = 0; 
                 };
+                
                 const refreshData = async () => {
                     loading.value = true;
                     try {
@@ -2515,12 +2645,19 @@ onMounted(() => {
                 onMounted(() => {
                     if (currentUser.value) {
                         loadInitialData();
+                        
                         // Load dashboard customization from localStorage
                         const savedCustomization = localStorage.getItem('dashboard_customization');
                         if (savedCustomization) {
-                            dashboardCustomizeModal.widgets = JSON.parse(savedCustomization);
+                            try {
+                                dashboardCustomizeModal.widgets = JSON.parse(savedCustomization);
+                            } catch (error) {
+                                console.error('Failed to load dashboard customization:', error);
+                            }
                         }
                     }
+                    
+                    // Close dropdowns when clicking outside
                     document.addEventListener('click', function(event) {
                         if (!event.target.closest('.user-menu')) userMenuOpen.value = false;
                         if (!event.target.closest('.action-dropdown')) {
@@ -2529,40 +2666,119 @@ onMounted(() => {
                     });
                 });
                 
-                // ============ RETURN STATEMENT - COMPLETE WITH ALL PROPERTIES ============
+                // Return all reactive data and functions
                 return {
                     // State
-                    currentUser, loginForm, loading, saving, loadingStats, loadingAnnouncements, loadingSchedule, 
-                    loadingStaff, loadingRotations, loadingAbsences, loadingAuditLogs,
-                    currentView, sidebarCollapsed, mobileMenuOpen, userMenuOpen, statsSidebarOpen, 
-                    searchQuery, searchScope, searchFilter,
+                    currentUser,
+                    loginForm,
+                    loading,
+                    saving,
+                    loadingStats,
+                    loadingAnnouncements,
+                    loadingSchedule,
+                    loadingStaff,
+                    loadingRotations,
+                    loadingAbsences,
+                    loadingAuditLogs,
+                    currentView,
+                    sidebarCollapsed,
+                    mobileMenuOpen,
+                    userMenuOpen,
+                    statsSidebarOpen,
+                    searchQuery,
+                    searchScope,
+                    searchFilter,
+                    searchTimeout,
                     
                     // All Modals
-                    medicalStaffModal, departmentModal, trainingUnitModal, rotationModal, 
-                    onCallModal, absenceModal, communicationsModal, quickPlacementModal,
-                    userProfileModal, systemSettingsModal, confirmationModal, staffDetailsModal, absenceDetailsModal, 
-                    rotationDetailsModal, importExportModal, dashboardCustomizeModal,
-                    bulkAssignModal, advancedSearchModal, clinicalUnitModal, roleModal,
+                    medicalStaffModal,
+                    departmentModal,
+                    trainingUnitModal,
+                    rotationModal,
+                    onCallModal,
+                    absenceModal,
+                    communicationsModal,
+                    quickPlacementModal,
+                    userProfileModal,
+                    systemSettingsModal,
+                    confirmationModal,
+                    staffDetailsModal,
+                    absenceDetailsModal,
+                    rotationDetailsModal,
+                    importExportModal,
+                    dashboardCustomizeModal,
+                    bulkAssignModal,
+                    advancedSearchModal,
+                    clinicalUnitModal,
+                    roleModal,
                     
                     // Data
-                    medicalStaff, departments, clinicalUnits, trainingUnits, residentRotations, staffAbsences, 
-                    onCallSchedule, recentAnnouncements, auditLogs, systemSettings, availableData, stats, 
-                    upcomingEvents, todaysOnCallData, userRoles, availablePermissions, users,
+                    medicalStaff,
+                    departments,
+                    clinicalUnits,
+                    trainingUnits,
+                    residentRotations,
+                    staffAbsences,
+                    onCallSchedule,
+                    recentAnnouncements,
+                    auditLogs,
+                    systemSettings,
+                    availableData,
+                    stats,
+                    upcomingEvents,
+                    todaysOnCallData,
+                    userRoles,
+                    availablePermissions,
+                    users,
+                    liveStats,
+                    exportImportOptions,
                     
                     // UI State
-                    toasts, activeAlerts, unreadNotifications,
+                    toasts,
+                    activeAlerts,
+                    unreadNotifications,
                     
                     // Filters
-                    staffFilter, staffSearch, rotationFilter, absenceFilter, auditFilters,
+                    staffFilter,
+                    staffSearch,
+                    rotationFilter,
+                    absenceFilter,
+                    auditFilters,
                     
                     // Formatting Functions
-                    formatDate: Utils.formatDate, formatDateTime: Utils.formatDateTime, formatTimeAgo: Utils.formatTimeAgo, getInitials,
-                    formatStaffType, getStaffTypeClass, formatEmploymentStatus, formatAbsenceReason, formatAbsenceStatus, formatRotationStatus, 
-                    getAbsenceStatusClass, getRotationStatusClass, getPriorityColor, getDepartmentName, getStaffName, getTrainingUnitName,
-                    getUnitResidents, getCurrentTitle, getCurrentSubtitle,
+                    formatDate: Utils.formatDate,
+                    formatDateTime: Utils.formatDateTime,
+                    formatTimeAgo: Utils.formatTimeAgo,
+                    getInitials: Utils.getInitials,
+                    formatStaffType,
+                    getStaffTypeClass,
+                    formatEmploymentStatus,
+                    formatAbsenceReason,
+                    formatAbsenceStatus,
+                    formatRotationStatus,
+                    getAbsenceStatusClass,
+                    getRotationStatusClass,
+                    getPriorityColor,
+                    getDepartmentName,
+                    getStaffName,
+                    getTrainingUnitName,
+                    getUnitResidents,
+                    getCurrentTitle,
+                    getCurrentSubtitle,
+                    getUserRoleDisplay,
                     
                     // Additional Utility Functions
-                    getUserRoleDisplay,
+                    getSearchPlaceholder,
+                    updateLiveStats,
+                    formatPhoneNumber,
+                    formatCurrency,
+                    getStatusColor,
+                    getBadgeVariant,
+                    calculateAge,
+                    truncateText,
+                    getTimeRemaining,
+                    getCapacityColor,
+                    getPriorityBadge,
                     formatTimeRange,
                     formatTrainingLevel,
                     formatFileSize,
@@ -2570,11 +2786,6 @@ onMounted(() => {
                     getProgressColor,
                     getDocumentIcon,
                     getDocumentIconClass,
-                    
-                    // Computed Properties
-                    residents, attendings, todaysOnCall, filteredMedicalStaff, filteredRotations, filteredAbsences, filteredAuditLogs,
-                    availableResidents, availableTrainingUnits, availableTrainingUnitsWithCapacity, availableUnassignedResidents,
-                    availableStaff, availableCoverageStaff, availableSupervisors, availablePhysicians, availableHeadsOfDepartment,
                     
                     // Permission Functions
                     hasPermission,
@@ -2584,61 +2795,126 @@ onMounted(() => {
                     hasAnyPermission,
                     hasAllPermissions,
                     
+                    // Computed Properties
+                    residents,
+                    attendings,
+                    todaysOnCall,
+                    filteredMedicalStaff,
+                    filteredRotations,
+                    filteredAbsences,
+                    filteredAuditLogs,
+                    availableResidents,
+                    availableTrainingUnits,
+                    availableTrainingUnitsWithCapacity,
+                    availableUnassignedResidents,
+                    availableStaff,
+                    availableCoverageStaff,
+                    availableSupervisors,
+                    availablePhysicians,
+                    availableHeadsOfDepartment,
+                    
                     // Modal Functions
-                    showConfirmation, confirmAction, cancelConfirmation, toggleActionMenu, toggleUserMenu,
+                    showConfirmation,
+                    confirmAction,
+                    cancelConfirmation,
+                    toggleActionMenu,
+                    toggleUserMenu,
                     
                     // Save Functions
-                    saveMedicalStaff, saveClinicalUnit, saveDepartment, saveTrainingUnit, saveRotation, saveOnCallSchedule, saveAbsence, saveCommunication, 
-                    saveUserProfile, saveSystemSettings, approveAbsence, saveQuickPlacement, saveBulkAssignment, saveRole,
+                    saveMedicalStaff,
+                    saveClinicalUnit,
+                    saveDepartment,
+                    saveTrainingUnit,
+                    saveRotation,
+                    saveOnCallSchedule,
+                    saveAbsence,
+                    saveCommunication,
+                    saveUserProfile,
+                    saveSystemSettings,
+                    approveAbsence,
+                    saveQuickPlacement,
+                    saveBulkAssignment,
+                    saveRole,
+                    saveDashboardCustomization,
                     
                     // Delete Functions
-                    deleteMedicalStaff, deleteTrainingUnit, deleteRotation, deleteOnCallSchedule, deleteAbsence, deleteAnnouncement,
+                    deleteMedicalStaff,
+                    deleteTrainingUnit,
+                    deleteRotation,
+                    deleteOnCallSchedule,
+                    deleteAbsence,
+                    deleteAnnouncement,
                     
                     // View/Edit Functions
-                    viewStaffDetails, editMedicalStaff, editDepartment, editClinicalUnit, editTrainingUnit, editRotation, editOnCallSchedule, 
-                    editAbsence, viewAbsenceDetails, viewRotationDetails, assignResidentToUnit, editRole,
+                    viewStaffDetails,
+                    editMedicalStaff,
+                    editDepartment,
+                    editClinicalUnit,
+                    editTrainingUnit,
+                    editRotation,
+                    editOnCallSchedule,
+                    editAbsence,
+                    viewAbsenceDetails,
+                    viewRotationDetails,
+                    assignResidentToUnit,
+                    editRole,
                     
                     // Modal Show Functions
-                    showAddMedicalStaffModal, showAddClinicalUnitModal, showAddDepartmentModal, showAddTrainingUnitModal, showAddRotationModal, 
-                    showAddOnCallModal, showAddAbsenceModal, showCommunicationsModal, showQuickPlacementModal,
-                    showUserProfile, showSystemSettingsModal, showImportExportModal, showDashboardCustomizeModal,
-                    showBulkAssignModal, showAdvancedSearchModal, showAddRoleModal, showPermissionManager,
+                    showAddMedicalStaffModal,
+                    showAddClinicalUnitModal,
+                    showAddDepartmentModal,
+                    showAddTrainingUnitModal,
+                    showAddRotationModal,
+                    showAddOnCallModal,
+                    showAddAbsenceModal,
+                    showCommunicationsModal,
+                    showQuickPlacementModal,
+                    showUserProfile,
+                    showSystemSettingsModal,
+                    showImportExportModal,
+                    showDashboardCustomizeModal,
+                    showBulkAssignModal,
+                    showAdvancedSearchModal,
+                    showAddRoleModal,
+                    showPermissionManager,
                     
                     // Export/Import Functions
                     exportData,
                     
-                    // Navigation & Auth
-                    switchView, handleLogin, handleLogout,
-                    
-                    // UI Functions
-                    removeToast, showToast, dismissAlert, toggleStatsSidebar, toggleSearchScope, handleSearch, 
-                    showNotifications, refreshData,
-                    
-                    // Utility Functions
-                    Utils,
-                    
                     // Bulk Assign Functions
-                    toggleSelectAllResidents, toggleResidentSelection, isResidentSelected,
+                    toggleSelectAllResidents,
+                    toggleResidentSelection,
+                    isResidentSelected,
                     
                     // Advanced Search Functions
-                    clearAdvancedSearch, performAdvancedSearch,
-                    getSearchPlaceholder,
-                        getSearchPlaceholder,
-    liveStats,
-    updateLiveStats,
-    formatPhoneNumber,
-    formatCurrency,
-    getStatusColor,
-    getBadgeVariant,
-    calculateAge,
-    truncateText,
-    getTimeRemaining,
-    getCapacityColor,
-    getPriorityBadge,
-    
+                    clearAdvancedSearch,
+                    performAdvancedSearch,
                     
-                    // Dashboard Customization Functions
-                    resetDashboardLayout, saveDashboardCustomization
+                    // Search Functions
+                    setSearchFilter,
+                    showErrorToast,
+                    logUserAction,
+                    
+                    // Navigation & Auth
+                    switchView,
+                    handleLogin,
+                    handleLogout,
+                    
+                    // UI Functions
+                    removeToast,
+                    showToast,
+                    dismissAlert,
+                    toggleStatsSidebar,
+                    toggleSearchScope,
+                    handleSearch,
+                    showNotifications,
+                    refreshData,
+                    
+                    // Dashboard Functions
+                    resetDashboardLayout,
+                    
+                    // Utility
+                    Utils
                 };
             }
         });
@@ -2649,11 +2925,15 @@ onMounted(() => {
         
     } catch (error) {
         console.error('FATAL ERROR: Frontend failed to initialize:', error);
+        
+        // Display error page if app fails to mount
         document.body.innerHTML = `
             <div style="padding: 40px; text-align: center; margin-top: 100px; color: #333; font-family: Arial, sans-serif;">
                 <h2 style="color: #dc3545;">System Error</h2>
                 <p style="margin: 20px 0; color: #666;">${error.message}</p>
-                <button onclick="window.location.reload()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Refresh Page</button>
+                <button onclick="window.location.reload()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Refresh Page
+                </button>
             </div>
         `;
     }
