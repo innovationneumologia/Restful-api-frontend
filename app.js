@@ -361,6 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             },
             
+            
             async deleteAbsence(id) {
                 return await this.request(`/api/absences/${id}`, {
                     method: 'DELETE'
@@ -555,6 +556,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // ============ DATA STORES ============
                 const medicalStaff = ref([]);
                 const departments = ref([]);
+                const clinicalUnits = ref([]);
                 const trainingUnits = ref([]);
                 const residentRotations = ref([]);
                 const staffAbsences = ref([]);
@@ -582,6 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // ============ MODAL STATES ============
                 const medicalStaffModal = reactive({ show: false, mode: 'add', form: {} });
+                const clinicalUnitModal = reactive({ show: false, mode: 'add', form: {} });
                 const departmentModal = reactive({ show: false, mode: 'add', form: {} });
                 const trainingUnitModal = reactive({ show: false, mode: 'add', form: {} });
                 const rotationModal = reactive({ show: false, mode: 'add', form: {} });
@@ -943,6 +946,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         date_of_birth: '' 
                     };
                 };
+const showAddClinicalUnitModal = () => {
+    clinicalUnitModal.mode = 'add';
+    clinicalUnitModal.show = true;
+    clinicalUnitModal.form = { 
+        name: '', 
+        code: '', 
+        department_id: '', 
+        unit_type: 'clinical', 
+        status: 'active', 
+        description: '', 
+        capacity: '', 
+        location: '' 
+    };
+};
                 
                 const showAddDepartmentModal = () => {
                     departmentModal.mode = 'add';
@@ -1095,6 +1112,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         saving.value = false; 
                     }
                 };
+                const saveClinicalUnit = async () => {
+    saving.value = true;
+    try {
+        showToast('Info', 'Clinical units functionality is not available', 'info');
+        clinicalUnitModal.show = false;
+    } catch (error) {
+        showToast('Error', error.message, 'error');
+    } finally { 
+        saving.value = false; 
+    }
+};
+
                 
                 const saveDepartment = async () => {
                     saving.value = true;
@@ -1473,6 +1502,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     departmentModal.form = { ...department }; 
                     departmentModal.show = true; 
                 };
+                const editClinicalUnit = (unit) => { 
+    clinicalUnitModal.mode = 'edit'; 
+    clinicalUnitModal.form = { ...unit }; 
+    clinicalUnitModal.show = true; 
+};
                 
                 const editTrainingUnit = (unit) => { 
                     trainingUnitModal.mode = 'edit'; 
@@ -1635,7 +1669,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     onCallModal, absenceModal, communicationsModal, quickPlacementModal,
                     userProfileModal, systemSettingsModal, confirmationModal, staffDetailsModal, absenceDetailsModal, 
                     rotationDetailsModal, importExportModal, dashboardCustomizeModal,
-                    exportImportOptions,
+                    exportImportOptions,showAddClinicalUnitModal,
+    saveClinicalUnit,          
+    editClinicalUnit, 
                     
                     // Data
                     medicalStaff, departments, trainingUnits, residentRotations, staffAbsences, 
@@ -1655,7 +1691,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     getUnitResidents, getCurrentTitle, getCurrentSubtitle,
                     
                     // Computed Properties
-                    residents, attendings, todaysOnCall, filteredMedicalStaff, filteredRotations, filteredAbsences, filteredAuditLogs,
+                    residents, attendings, todaysOnCall, filteredMedicalStaff, filteredRotations, filteredAbsences, filteredAuditLogs,clinicalUnitModal,  // Add this
+    clinicalUnits,  
                     
                     // Modal Functions
                     showConfirmation, confirmAction, cancelConfirmation, toggleActionMenu, toggleUserMenu,
