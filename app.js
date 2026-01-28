@@ -843,6 +843,21 @@ const hasAllPermissions = (permissions) => {
                         { value: 'csv', label: 'CSV' }
                     ]
                 };
+                // ============ USER ROLE DISPLAY FUNCTION ============
+const getUserRoleDisplay = (role) => {
+    const roleMap = {
+        'administrator': 'Administrator',
+        'department_head': 'Department Head',
+        'attending_physician': 'Attending Physician',
+        'medical_resident': 'Medical Resident',
+        'fellow': 'Fellow',
+        'nurse_practitioner': 'Nurse Practitioner',
+        'resident_coordinator': 'Resident Coordinator',
+        'viewing_doctor': 'Viewing Doctor',
+        'human_resources': 'Human Resources'
+    };
+    return roleMap[role] || role || 'Unknown Role';
+};
                 
                 // ============ TOAST SYSTEM ============
                 const showToast = (title, message, type = 'info', duration = 5000) => {
