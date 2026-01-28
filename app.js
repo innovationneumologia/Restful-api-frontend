@@ -961,7 +961,152 @@ document.addEventListener('DOMContentLoaded', function() {
                     const classes = { pdf: 'bg-red-500', doc: 'bg-blue-500', xls: 'bg-green-500', image: 'bg-purple-500' };
                     return classes[type] || 'bg-gray-500';
                 };
-                
+                // ============ ADD THESE MISSING FUNCTIONS ============
+
+// Search placeholder function
+// ============ ADD THESE MISSING FUNCTIONS ============
+
+// Search placeholder function
+const getSearchPlaceholder = () => {
+    const placeholders = {
+        'All': 'Search staff, patients, units...',
+        'Staff': 'Search by name, ID, or email...',
+        'Patients': 'Search patient records...',
+        'Units': 'Search training units...',
+        'Rotations': 'Search resident rotations...'
+    };
+    return placeholders[searchScope.value] || 'Search...';
+};
+
+// Live stats for dashboard
+const liveStats = reactive({
+    occupancy: 0,
+    availableBeds: 0,
+    staffOnDuty: 0,
+    emergencyCases: 0,
+    lastUpdated: new Date()
+});
+
+// Initialize live stats
+const updateLiveStats = () => {
+    try {
+        // Calculate occupancy based on active staff vs capacity
+        const totalCapacity = trainingUnits.value.reduce((sum, unit) => sum + (parseInt(unit.maximum_residents) || 10), 0);
+        const currentResidents = residentRotations.value.filter(r => r.rotation_status === 'active').length;
+        
+        liveStats.occupancy = totalCapacity > 0 ? Math.round((currentResidents / totalCapacity) * 100) : 0;
+        liveStats.availableBeds = Math.max(0, totalCapacity - currentResidents);
+        liveStats.staffOnDuty = medicalStaff.value.filter(s => s.employment_status === 'active').length;
+        liveStats.emergencyCases = 0; // This would come from an API
+        liveStats.lastUpdated = new Date();
+        console.log('Live stats updated:', liveStats);
+    } catch (error) {
+        console.error('Error updating live stats:', error);
+        // Set default values
+        liveStats.occupancy = 0;
+        liveStats.availableBeds = 0;
+        liveStats.staffOnDuty = 0;
+        liveStats.emergencyCases = 0;
+        liveStats.lastUpdated = new Date();
+    }
+};
+
+// More missing utility functions
+const formatPhoneNumber = (phone) => {
+    if (!phone) return '';
+    const cleaned = phone.toString().replace(/\D/g, '');
+    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+    return match ? `(${match[1]}) ${match[2]}-${match[3]}` : phone;
+};
+
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+    }).format(amount || 0);
+};
+
+const getStatusColor = (status) => {
+    const colors = {
+        'active': 'success',
+        'pending': 'warning',
+        'completed': 'info',
+        'cancelled': 'danger',
+        'approved': 'success',
+        'rejected': 'danger',
+        'upcoming': 'primary',
+        'on_leave': 'warning',
+        'inactive': 'secondary'
+    };
+    return colors[status] || 'secondary';
+};
+
+const getBadgeVariant = (type) => {
+    const variants = {
+        'medical_resident': 'primary',
+        'attending_physician': 'success',
+        'fellow': 'info',
+        'nurse_practitioner': 'warning',
+        'administrator': 'dark',
+        'department_head': 'secondary',
+        'viewing_doctor': 'light',
+        'resident_coordinator': 'info',
+        'human_resources': 'warning'
+    };
+    return variants[type] || 'light';
+};
+
+const calculateAge = (birthDate) => {
+    if (!birthDate) return '';
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+    }
+    return age;
+};
+
+const truncateText = (text, length = 50) => {
+    if (!text) return '';
+    return text.length > length ? text.substring(0, length) + '...' : text;
+};
+
+const getTimeRemaining = (endDate) => {
+    if (!endDate) return '';
+    const now = new Date();
+    const end = new Date(endDate);
+    const diffMs = end - now;
+    
+    if (diffMs <= 0) return 'Completed';
+    
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    if (diffDays > 0) return `${diffDays}d ${diffHours}h`;
+    if (diffHours > 0) return `${diffHours}h`;
+    
+    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${diffMinutes}m`;
+};
+
+const getCapacityColor = (percentage) => {
+    if (percentage >= 90) return 'danger';
+    if (percentage >= 75) return 'warning';
+    if (percentage >= 50) return 'info';
+    return 'success';
+};
+
+const getPriorityBadge = (priority) => {
+    const badges = {
+        'urgent': 'danger',
+        'high': 'warning',
+        'medium': 'info',
+        'low': 'success'
+    };
+    return badges[priority] || 'secondary';
+};
                 // ============ COMPUTED PROPERTIES ============
                 const residents = computed(() => medicalStaff.value.filter(staff => staff.staff_type === 'medical_resident'));
                 const attendings = computed(() => medicalStaff.value.filter(staff => staff.staff_type === 'attending_physician'));
@@ -974,6 +1119,21 @@ document.addEventListener('DOMContentLoaded', function() {
                             role: schedule.shift_type === 'primary_call' ? 'Primary' : 'Backup'
                         }));
                 });
+                // Watch for data changes to update live stats automatically
+watch([() => medicalStaff.value, () => residentRotations.value, () => trainingUnits.value], () => {
+    console.log('Data changed, updating live stats...');
+    updateLiveStats();
+}, { deep: true });
+
+// Also update live stats on mount if data is already loaded
+onMounted(() => {
+    if (currentUser.value) {
+        // Small delay to ensure data is loaded
+        setTimeout(() => {
+            updateLiveStats();
+        }, 1000);
+    }
+});
                 
                 const filteredMedicalStaff = computed(() => {
                     let filtered = medicalStaff.value;
@@ -1255,34 +1415,120 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 
                 const loadInitialData = async () => {
-                    loading.value = true;
-                    try {
-                        await Promise.allSettled([
-                            loadMedicalStaff(), 
-                            loadDepartments(), 
-                            loadTrainingUnits(),
-                            loadResidentRotations(), 
-                            loadStaffAbsences(), 
-                            loadOnCallSchedule(),
-                            loadAnnouncements(), 
-                            loadSystemSettings(), 
-                            loadAvailableData(),
-                            loadDashboardStats(), 
-                            loadAuditLogs(), 
-                            loadNotifications(),
-                            loadUsers(), 
-                            loadClinicalUnits(), 
-                            loadUserRoles(), 
-                            loadAvailablePermissions()
-                        ]);
-                        showToast('System Ready', 'All data loaded successfully', 'success');
-                    } catch (error) {
-                        showToast('Data Load Error', 'Failed to load system data: ' + error.message, 'error');
-                    } finally {
-                        loading.value = false;
-                    }
-                };
-                
+    loading.value = true;
+    console.log('Starting to load initial data...');
+    
+    try {
+        // First, load essential data that other loads depend on
+        console.log('Loading essential data first...');
+        
+        // Load departments first (needed for staff filtering)
+        await loadDepartments();
+        console.log('Departments loaded:', departments.value.length);
+        
+        // Load medical staff
+        await loadMedicalStaff();
+        console.log('Medical staff loaded:', medicalStaff.value.length);
+        
+        // Load training units
+        await loadTrainingUnits();
+        console.log('Training units loaded:', trainingUnits.value.length);
+        
+        // Now load secondary data that depends on the above
+        console.log('Loading secondary data...');
+        
+        // Load rotations (depends on staff and units)
+        await loadResidentRotations();
+        console.log('Rotations loaded:', residentRotations.value.length);
+        
+        // Load announcements
+        await loadAnnouncements();
+        console.log('Announcements loaded:', recentAnnouncements.value.length);
+        
+        // Load system settings
+        await loadSystemSettings();
+        console.log('System settings loaded');
+        
+        // Load available data
+        await loadAvailableData();
+        console.log('Available data loaded');
+        
+        // Load dashboard stats
+        await loadDashboardStats();
+        console.log('Dashboard stats loaded');
+        
+        // Now load tertiary data (can fail without breaking the app)
+        console.log('Loading optional data (can fail gracefully)...');
+        
+        // Use Promise.allSettled for data that might fail
+        const optionalLoads = await Promise.allSettled([
+            loadStaffAbsences().catch(e => console.log('Absences load failed:', e.message)),
+            loadOnCallSchedule().catch(e => console.log('On-call schedule load failed:', e.message)),
+            loadAuditLogs().catch(e => console.log('Audit logs load failed:', e.message)),
+            loadNotifications().catch(e => console.log('Notifications load failed:', e.message)),
+            loadUsers().catch(e => console.log('Users load failed:', e.message)),
+            loadClinicalUnits().catch(e => console.log('Clinical units load failed:', e.message)),
+            loadUserRoles().catch(e => console.log('User roles load failed:', e.message)),
+            loadAvailablePermissions().catch(e => console.log('Permissions load failed:', e.message))
+        ]);
+        
+        // Log results of optional loads
+        optionalLoads.forEach((result, index) => {
+            const loadNames = ['Absences', 'On-call', 'Audit Logs', 'Notifications', 'Users', 'Clinical Units', 'User Roles', 'Permissions'];
+            if (result.status === 'fulfilled') {
+                console.log(`${loadNames[index]} loaded successfully`);
+            } else {
+                console.warn(`${loadNames[index]} failed:`, result.reason?.message || 'Unknown error');
+            }
+        });
+        
+        // Update live stats with loaded data
+        console.log('Updating live stats...');
+        updateLiveStats();
+        
+        // Load dashboard customization from localStorage
+        const savedCustomization = localStorage.getItem('dashboard_customization');
+        if (savedCustomization) {
+            try {
+                dashboardCustomizeModal.widgets = JSON.parse(savedCustomization);
+                console.log('Dashboard customization loaded from localStorage');
+            } catch (e) {
+                console.error('Failed to parse dashboard customization:', e);
+            }
+        }
+        
+        // Show success message
+        showToast('System Ready', 'All essential data loaded successfully', 'success');
+        
+        console.log('Initial data load complete!');
+        console.log('Summary:', {
+            staff: medicalStaff.value.length,
+            departments: departments.value.length,
+            trainingUnits: trainingUnits.value.length,
+            rotations: residentRotations.value.length,
+            announcements: recentAnnouncements.value.length,
+            absences: staffAbsences.value.length,
+            onCall: onCallSchedule.value.length,
+            auditLogs: auditLogs.value.length
+        });
+        
+    } catch (error) {
+        console.error('FATAL ERROR in loadInitialData:', error);
+        showToast('Data Load Error', 
+            `Failed to load essential system data: ${error.message}. Some features may be limited.`, 
+            'error');
+        
+        // Even if there's an error, try to update live stats with whatever data we have
+        try {
+            updateLiveStats();
+        } catch (e) {
+            console.error('Failed to update live stats after error:', e);
+        }
+    } finally {
+        loading.value = false;
+        console.log('Loading complete, loading set to false');
+    }
+};
                 // ============ NEW FUNCTIONS - For missing modal functionality ============
                 const showBulkAssignModal = () => {
                     bulkAssignModal.show = true;
@@ -2320,6 +2566,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Advanced Search Functions
                     clearAdvancedSearch, performAdvancedSearch,
+                    getSearchPlaceholder,
+                        getSearchPlaceholder,
+    liveStats,
+    updateLiveStats,
+    formatPhoneNumber,
+    formatCurrency,
+    getStatusColor,
+    getBadgeVariant,
+    calculateAge,
+    truncateText,
+    getTimeRemaining,
+    getCapacityColor,
+    getPriorityBadge,
+    
                     
                     // Dashboard Customization Functions
                     resetDashboardLayout, saveDashboardCustomization
