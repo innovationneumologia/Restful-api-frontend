@@ -730,7 +730,54 @@ document.addEventListener('DOMContentLoaded', function() {
                         supervisor_id: ''
                     }
                 });
-                
+                setSearchFilter(filter) {
+        try {
+            console.log(`[Search] Setting filter to: ${filter}`);
+            
+            // Validate input
+            const validFilters = ['all', 'staff', 'patients', 'units', 'rotations', 'departments'];
+            if (!validFilters.includes(filter)) {
+                console.warn(`Invalid filter: ${filter}. Defaulting to 'all'`);
+                filter = 'all';
+            }
+            
+            // Set the filter
+            this.searchFilter = filter;
+            
+            // Map filter to scope display
+            const scopeMap = {
+                'all': 'All',
+                'staff': 'Staff',
+                'patients': 'Patients', 
+                'units': 'Units',
+                'rotations': 'Rotations',
+                'departments': 'Departments'
+            };
+            
+            this.searchScope = scopeMap[filter] || 'All';
+            
+            // If we have a search query, perform search
+            if (this.searchQuery && this.searchQuery.trim().length > 2) {
+                this.debouncedSearch();
+            }
+            
+            // Log the change
+            this.logUserAction('search_filter_changed', {
+                filter: filter,
+                scope: this.searchScope,
+                query: this.searchQuery
+            });
+            
+        } catch (error) {
+            console.error('Error in setSearchFilter:', error);
+            this.showErrorToast('Failed to update search filter');
+        }
+    },
+    
+    // Add debounced search for better performance
+    debouncedSearch: _.debounce(function() {
+        this.handleSearch();
+    }, 300),
                 const absenceModal = reactive({ 
                     show: false, 
                     mode: 'add', 
