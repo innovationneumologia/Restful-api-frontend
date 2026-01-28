@@ -1,9 +1,9 @@
 // ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM FRONTEND ============
-// COMPLETE PRODUCTION-READY FRONTEND v3.3 - FULLY INTEGRATED WITH BACKEND
+// COMPLETE PRODUCTION-READY FRONTEND v3.4 - CORRECTLY INTEGRATED WITH BACKEND
 // ================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('NeumoCare Hospital Management System Frontend v3.3 loading...');
+    console.log('NeumoCare Hospital Management System Frontend v3.4 loading...');
     
     try {
         if (typeof Vue === 'undefined') throw new Error('Vue.js failed to load. Please refresh.');
@@ -49,6 +49,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 a.click();
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
+            },
+            calculateDays: (start, end) => {
+                try {
+                    const startDate = new Date(start);
+                    const endDate = new Date(end);
+                    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return 0;
+                    const diffTime = Math.abs(endDate - startDate);
+                    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                } catch (error) {
+                    return 0;
+                }
             }
         };
         
@@ -63,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
             async request(endpoint, options = {}) {
                 const url = `${API_BASE_URL}${endpoint}`;
                 try {
-                    console.log(`API Request: ${url}`);
+                    console.log(`API Request: ${options.method || 'GET'} ${url}`);
                     const config = { 
                         ...options, 
                         headers: { ...this.headers(), ...options.headers },
@@ -146,16 +157,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request('/api/dashboard/stats');
             },
             
-            async getLiveStats() {
-                return await this.request('/api/live-stats');
+            async getDashboardUpcomingEvents() {
+                return await this.request('/api/dashboard/upcoming-events');
             },
             
+            // ===== ON-CALL =====
             async getOnCallToday() {
-                return await this.request('/api/dashboard/oncall-today');
+                return await this.request('/api/oncall/today');
             },
             
+            async getOnCallUpcoming() {
+                return await this.request('/api/oncall/upcoming');
+            },
+            
+            // ===== CALENDAR =====
             async getCalendarEvents(start, end) {
-                return await this.request(`/api/dashboard/calendar?start=${start}&end=${end}`);
+                return await this.request(`/api/calendar/events?start_date=${start}&end_date=${end}`);
             },
             
             // ===== MEDICAL STAFF =====
@@ -211,26 +228,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             },
             
-            async deleteDepartment(id) {
-                return await this.request(`/api/departments/${id}`, {
-                    method: 'DELETE'
-                });
-            },
-            
-            // ===== CLINICAL UNITS =====
-            async getClinicalUnits(filters = {}) {
-                const params = new URLSearchParams(filters).toString();
-                return await this.request(`/api/clinical-units${params ? '?' + params : ''}`);
-            },
-            
             // ===== TRAINING UNITS =====
             async getTrainingUnits(filters = {}) {
                 const params = new URLSearchParams(filters).toString();
                 return await this.request(`/api/training-units${params ? '?' + params : ''}`);
             },
             
-            async getTrainingUnitResidents(id) {
-                return await this.request(`/api/training-units/${id}/residents`);
+            async getTrainingUnitById(id) {
+                return await this.request(`/api/training-units/${id}`);
             },
             
             async createTrainingUnit(unitData) {
@@ -259,6 +264,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/rotations${params ? '?' + params : ''}`);
             },
             
+            async getCurrentRotations() {
+                return await this.request('/api/rotations/current');
+            },
+            
+            async getUpcomingRotations() {
+                return await this.request('/api/rotations/upcoming');
+            },
+            
             async getRotationById(id) {
                 return await this.request(`/api/rotations/${id}`);
             },
@@ -267,20 +280,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request('/api/rotations', {
                     method: 'POST',
                     body: JSON.stringify(rotationData)
-                });
-            },
-            
-            async quickPlacement(placementData) {
-                return await this.request('/api/rotations/quick-placement', {
-                    method: 'POST',
-                    body: JSON.stringify(placementData)
-                });
-            },
-            
-            async bulkAssign(assignData) {
-                return await this.request('/api/rotations/bulk-assign', {
-                    method: 'POST',
-                    body: JSON.stringify(assignData)
                 });
             },
             
@@ -329,6 +328,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/absences${params ? '?' + params : ''}`);
             },
             
+            async getUpcomingAbsences() {
+                return await this.request('/api/absences/upcoming');
+            },
+            
+            async getPendingAbsences() {
+                return await this.request('/api/absences/pending');
+            },
+            
             async getAbsenceById(id) {
                 return await this.request(`/api/absences/${id}`);
             },
@@ -347,17 +354,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             },
             
-            async approveAbsence(id, approved, rejectionReason = '') {
+            async approveAbsence(id, approved, reviewNotes = '') {
                 return await this.request(`/api/absences/${id}/approve`, {
                     method: 'PUT',
-                    body: JSON.stringify({ approved, rejection_reason: rejectionReason })
-                });
-            },
-            
-            async updateAbsenceCoverage(id, coverageData) {
-                return await this.request(`/api/absences/${id}/coverage`, {
-                    method: 'PUT',
-                    body: JSON.stringify(coverageData)
+                    body: JSON.stringify({ approved, review_notes: reviewNotes })
                 });
             },
             
@@ -372,9 +372,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request('/api/announcements');
             },
             
+            async getUrgentAnnouncements() {
+                return await this.request('/api/announcements/urgent');
+            },
+            
             async createAnnouncement(announcementData) {
                 return await this.request('/api/announcements', {
                     method: 'POST',
+                    body: JSON.stringify(announcementData)
+                });
+            },
+            
+            async updateAnnouncement(id, announcementData) {
+                return await this.request(`/api/announcements/${id}`, {
+                    method: 'PUT',
                     body: JSON.stringify(announcementData)
                 });
             },
@@ -420,9 +431,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/audit-logs${params ? '?' + params : ''}`);
             },
             
+            async getAuditLogsByUser(userId) {
+                return await this.request(`/api/audit-logs/user/${userId}`);
+            },
+            
             // ===== NOTIFICATIONS =====
             async getNotifications() {
                 return await this.request('/api/notifications');
+            },
+            
+            async getUnreadNotificationCount() {
+                const result = await this.request('/api/notifications/unread');
+                return result.unread_count || 0;
             },
             
             async markNotificationRead(id) {
@@ -431,9 +451,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             },
             
-            // ===== PERMISSIONS =====
-            async getPermissions() {
-                return await this.request('/api/permissions');
+            async markAllNotificationsRead() {
+                return await this.request('/api/notifications/mark-all-read', {
+                    method: 'PUT'
+                });
+            },
+            
+            async deleteNotification(id) {
+                return await this.request(`/api/notifications/${id}`, {
+                    method: 'DELETE'
+                });
+            },
+            
+            async createNotification(notificationData) {
+                return await this.request('/api/notifications', {
+                    method: 'POST',
+                    body: JSON.stringify(notificationData)
+                });
             },
             
             // ===== USERS =====
@@ -441,11 +475,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request('/api/users');
             },
             
+            async getUserById(id) {
+                return await this.request(`/api/users/${id}`);
+            },
+            
+            async createUser(userData) {
+                return await this.request('/api/users', {
+                    method: 'POST',
+                    body: JSON.stringify(userData)
+                });
+            },
+            
+            async updateUser(id, userData) {
+                return await this.request(`/api/users/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(userData)
+                });
+            },
+            
+            async deleteUser(id) {
+                return await this.request(`/api/users/${id}`, {
+                    method: 'DELETE'
+                });
+            },
+            
+            async changePassword(passwordData) {
+                return await this.request('/api/users/change-password', {
+                    method: 'PUT',
+                    body: JSON.stringify(passwordData)
+                });
+            },
+            
             // ===== EXPORT =====
             async exportData(table, format = 'csv', startDate = null, endDate = null) {
-                let url = `/api/export/${table}?format=${format}`;
+                let url = `/api/export/csv?type=${table}`;
                 if (startDate && endDate) {
-                    url += `&start_date=${startDate}&end_date=${endDate}`;
+                    url += `&start=${startDate}&end=${endDate}`;
                 }
                 return await this.request(url);
             },
@@ -453,6 +518,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // ===== HEALTH CHECK =====
             async checkHealth() {
                 return await this.request('/health');
+            },
+            
+            // ===== DEBUG =====
+            async debugTables() {
+                return await this.request('/api/debug/tables');
             }
         };
         
@@ -472,7 +542,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const loadingRotations = ref(false);
                 const loadingAbsences = ref(false);
                 const loadingAuditLogs = ref(false);
-                const loadingClinicalUnits = ref(false);
                 
                 const currentView = ref(currentUser.value ? 'daily_operations' : 'login');
                 const sidebarCollapsed = ref(false);
@@ -486,7 +555,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // ============ DATA STORES ============
                 const medicalStaff = ref([]);
                 const departments = ref([]);
-                const clinicalUnits = ref([]);
                 const trainingUnits = ref([]);
                 const residentRotations = ref([]);
                 const staffAbsences = ref([]);
@@ -497,8 +565,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const availableData = ref({ departments: [], residents: [], attendings: [], trainingUnits: [] });
                 
                 const stats = ref({ totalStaff: 0, activeStaff: 0, activeResidents: 0, todayOnCall: 0, pendingAbsences: 0, activeAlerts: 0 });
-                const liveStats = ref({ occupancy: 0, occupancyTrend: 0, onDutyStaff: 0, staffTrend: 0, pendingRequests: 0, erCapacity: { current: 0, max: 0, status: 'normal' }, icuCapacity: { current: 0, max: 0, status: 'normal' }, todayOnCall: 0 });
-                const currentCapacity = reactive({ er: { current: 0, max: 24, status: 'low' }, icu: { current: 0, max: 16, status: 'low' } });
+                const upcomingEvents = ref({ upcoming_rotations: [], upcoming_oncall: [], upcoming_absences: [] });
+                const todaysOnCallData = ref([]);
                 
                 // ============ UI STATE ============
                 const toasts = ref([]);
@@ -508,13 +576,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // ============ FILTER STATES ============
                 const staffFilter = reactive({ staff_type: '', employment_status: '', department_id: '' });
                 const staffSearch = ref('');
-                const rotationFilter = reactive({ resident_id: '', status: '' });
-                const absenceFilter = reactive({ staff_id: '', status: '', start_date: '' });
+                const rotationFilter = reactive({ resident_id: '', rotation_status: '' });
+                const absenceFilter = reactive({ staff_member_id: '', approval_status: '', leave_start_date: '' });
                 const auditFilters = reactive({ dateRange: '', actionType: '', userId: '' });
                 
-                // ============ MODAL STATES - ALL MODALS DEFINED ============
+                // ============ MODAL STATES ============
                 const medicalStaffModal = reactive({ show: false, mode: 'add', form: {} });
-                const clinicalUnitModal = reactive({ show: false, mode: 'add', form: {} });
                 const departmentModal = reactive({ show: false, mode: 'add', form: {} });
                 const trainingUnitModal = reactive({ show: false, mode: 'add', form: {} });
                 const rotationModal = reactive({ show: false, mode: 'add', form: {} });
@@ -522,14 +589,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const absenceModal = reactive({ show: false, mode: 'add', form: {} });
                 const communicationsModal = reactive({ show: false, activeTab: 'announcement', form: {} });
                 const quickPlacementModal = reactive({ show: false, resident_id: '', training_unit_id: '', start_date: new Date().toISOString().split('T')[0], duration: 4, supervisor_id: '', notes: '' });
-                const bulkAssignModal = reactive({ show: false, selectedResidents: [], training_unit_id: '', start_date: new Date().toISOString().split('T')[0], duration: 4, supervisor_id: '' });
                 const userProfileModal = reactive({ show: false, form: {} });
                 const systemSettingsModal = reactive({ show: false, settings: {} });
                 const confirmationModal = reactive({ show: false, title: '', message: '', icon: 'fa-question-circle', confirmButtonText: 'Confirm', confirmButtonClass: 'btn-primary', cancelButtonText: 'Cancel', onConfirm: null, onCancel: null, details: '', confirmButtonIcon: 'fa-check' });
                 const staffDetailsModal = reactive({ show: false, staff: null });
                 const absenceDetailsModal = reactive({ show: false, absence: null });
                 const rotationDetailsModal = reactive({ show: false, rotation: null });
-                const roleModal = reactive({ show: false, mode: 'add', form: {} });
                 const importExportModal = reactive({ 
                     show: false, 
                     mode: 'export', 
@@ -540,7 +605,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     dateRange: { start: null, end: null }
                 });
                 
-                // ADD MISSING MODALS FROM TEMPLATE
                 const dashboardCustomizeModal = reactive({ 
                     show: false, 
                     widgets: [
@@ -551,16 +615,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         { id: 'alerts', label: 'Alerts', enabled: true },
                         { id: 'calendar', label: 'Calendar', enabled: true }
                     ]
-                });
-                
-                const advancedSearchModal = reactive({ 
-                    show: false, 
-                    filters: {}, 
-                    searchType: 'staff', 
-                    dateRange: { start: null, end: null },
-                    departments: [],
-                    statuses: [],
-                    searchText: ''
                 });
                 
                 const exportImportOptions = {
@@ -577,11 +631,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         { value: 'csv', label: 'CSV' }
                     ]
                 };
-                
-                // ============ PERMISSION SYSTEM ============
-                const userRoles = ref([]);
-                const availablePermissions = ref([]);
-                const users = ref([]);
                 
                 // ============ TOAST SYSTEM ============
                 const showToast = (title, message, type = 'info', duration = 5000) => {
@@ -603,14 +652,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const formatStaffType = (type) => ({ medical_resident: 'Medical Resident', attending_physician: 'Attending Physician', fellow: 'Fellow', nurse_practitioner: 'Nurse Practitioner' }[type] || type);
                 const formatEmploymentStatus = (status) => ({ active: 'Active', on_leave: 'On Leave', inactive: 'Inactive' }[status] || status);
                 const formatAbsenceReason = (reason) => ({ vacation: 'Vacation', sick_leave: 'Sick Leave', conference: 'Conference', personal: 'Personal', maternity_paternity: 'Maternity/Paternity', administrative: 'Administrative', other: 'Other' }[reason] || reason);
-                const formatAbsenceStatus = (status) => ({ pending: 'Pending', approved: 'Approved', rejected: 'Rejected', completed: 'Completed' }[status] || status);
+                const formatAbsenceStatus = (status) => ({ pending: 'Pending', approved: 'Approved', rejected: 'Rejected' }[status] || status);
                 const formatRotationStatus = (status) => ({ active: 'Active', upcoming: 'Upcoming', completed: 'Completed', cancelled: 'Cancelled' }[status] || status);
-                const formatTrainingLevel = (level) => ({ pgy1: 'PGY-1', pgy2: 'PGY-2', pgy3: 'PGY-3', pgy4: 'PGY-4', pgy5: 'PGY-5', other: 'Other', senior: 'Senior', junior: 'Junior', intermediate: 'Intermediate' }[level] || level);
                 const getStaffTypeClass = (type) => ({ medical_resident: 'badge-primary', attending_physician: 'badge-success', fellow: 'badge-info', nurse_practitioner: 'badge-warning' }[type] || 'badge-secondary');
-                const getAbsenceStatusClass = (status) => ({ pending: 'status-busy', approved: 'status-available', rejected: 'status-critical', completed: 'status-oncall' }[status] || 'badge-secondary');
+                const getAbsenceStatusClass = (status) => ({ pending: 'status-busy', approved: 'status-available', rejected: 'status-critical' }[status] || 'badge-secondary');
                 const getRotationStatusClass = (status) => ({ active: 'status-available', upcoming: 'status-busy', completed: 'status-oncall', cancelled: 'status-critical' }[status] || 'badge-secondary');
                 const getPriorityColor = (priority) => ({ high: 'danger', medium: 'warning', low: 'info', urgent: 'danger' }[priority] || 'primary');
-                const formatTimeRange = (start, end) => `${start} - ${end}`;
                 const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
                 const getDepartmentName = (departmentId) => {
                     if (!departmentId) return 'Unassigned';
@@ -627,86 +674,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     const unit = trainingUnits.value.find(u => u.id === unitId);
                     return unit ? (unit.unit_name || unit.name) : 'Unknown Training Unit';
                 };
-                const getResidentName = (residentId) => getStaffName(residentId);
-                const getSupervisorName = (supervisorId) => getStaffName(supervisorId);
-                const getUserName = (userId) => getStaffName(userId);
-                const getUserRoleDisplay = (role) => ({ administrator: 'Administrator', department_head: 'Department Head', attending_physician: 'Attending Physician', resident: 'Resident', nurse_practitioner: 'Nurse Practitioner', staff: 'Staff', system_admin: 'System Administrator' }[role] || role);
-                const getDepartmentUnits = (departmentId) => clinicalUnits.value.filter(unit => unit.department_id === departmentId);
                 const getUnitResidents = (unitId) => {
                     const residents = [];
                     residentRotations.value.forEach(rotation => {
-                        if (rotation.training_unit_id === unitId && rotation.status === 'active') {
+                        if (rotation.training_unit_id === unitId && rotation.rotation_status === 'active') {
                             const resident = medicalStaff.value.find(s => s.id === rotation.resident_id);
-                            if (resident) residents.push({ id: resident.id, full_name: resident.full_name, training_level: resident.training_level || 'Unknown' });
+                            if (resident) residents.push({ id: resident.id, full_name: resident.full_name });
                         }
                     });
                     return residents;
                 };
-                const calculateAbsenceDuration = (startDate, endDate) => {
-                    const start = new Date(startDate), end = new Date(endDate), diffTime = Math.abs(end - start);
-                    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                };
-                const formatAuditAction = (action) => {
-                    const actions = {
-                        create: 'Created',
-                        update: 'Updated',
-                        delete: 'Deleted',
-                        login: 'Logged in',
-                        logout: 'Logged out',
-                        approve: 'Approved',
-                        reject: 'Rejected',
-                        assign: 'Assigned',
-                        schedule: 'Scheduled'
-                    };
-                    return actions[action] || action;
-                };
-                const getCurrentTitle = () => ({ daily_operations: 'Daily Operations', medical_staff: 'Medical Staff', resident_rotations: 'Resident Rotations', oncall_schedule: 'On-call Schedule', staff_absence: 'Staff Absence', training_units: 'Training Units', department_management: 'Department Management', communications: 'Communications', audit_logs: 'Audit Logs', system_settings: 'System Settings', permission_manager: 'Permission Manager', login: 'Login' }[currentView.value] || 'NeumoCare');
-                const getCurrentSubtitle = () => ({ daily_operations: 'Overview dashboard with real-time updates', medical_staff: 'Manage physicians, residents, and clinical staff', resident_rotations: 'Track and manage resident training rotations', oncall_schedule: 'View and manage on-call physician schedules', staff_absence: 'Track staff absences and coverage assignments', training_units: 'Manage clinical training units and assignments', department_management: 'Organizational structure and clinical units', communications: 'Department announcements and capacity updates', audit_logs: 'System activity and security audit trails', system_settings: 'Configure system preferences and behavior', permission_manager: 'Manage user roles and access permissions' }[currentView.value] || 'Hospital Management System');
-                const getSearchPlaceholder = () => ({ daily_operations: 'Search staff, patients, or units...', medical_staff: 'Search medical staff by name, ID, or email...', resident_rotations: 'Search rotations by resident or unit...', oncall_schedule: 'Search on-call schedules...', staff_absence: 'Search absences by staff name or reason...', training_units: 'Search training units...', department_management: 'Search departments or clinical units...', communications: 'Search announcements...', audit_logs: 'Search audit logs...', system_settings: 'Search settings...', permission_manager: 'Search roles or permissions...' }[currentView.value] || 'Search...');
-                
-                // ============ PERMISSION FUNCTIONS ============
-                const hasPermission = (module, action) => {
-                    if (!currentUser.value) return false;
-                    if (currentUser.value.user_role === 'administrator' || currentUser.value.user_role === 'system_admin') return true;
-                    const permissionString = `${module}.${action}`;
-                    const role = userRoles.value.find(r => r.name.toLowerCase() === currentUser.value.user_role.toLowerCase());
-                    if (!role) return false;
-                    return role.permissions.includes('all') || role.permissions.includes(permissionString);
-                };
-                const roleHasPermission = (roleId, permissionId) => {
-                    const role = userRoles.value.find(r => r.id === roleId);
-                    const permission = availablePermissions.value.find(p => p.id === permissionId);
-                    if (!role || !permission) return false;
-                    return role.permissions.includes(permission.name) || role.permissions.includes('all');
-                };
-                const toggleRolePermission = (roleId, permissionId) => {
-                    const role = userRoles.value.find(r => r.id === roleId);
-                    const permission = availablePermissions.value.find(p => p.id === permissionId);
-                    if (!role || !permission || role.name === 'Administrator') return;
-                    const index = role.permissions.indexOf(permission.name);
-                    if (index > -1) role.permissions.splice(index, 1);
-                    else role.permissions.push(permission.name);
-                    showToast('Permission Updated', `${permission.description} updated for ${role.name}`, 'success');
-                };
-                const formatPermissionName = (name) => {
-                    const parts = name.split('.');
-                    const module = parts[0].replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    const action = parts[1].replace(/\b\w/g, l => l.toUpperCase());
-                    return `${module} - ${action}`;
-                };
-                const getUserPermissions = (userId) => {
-                    const user = users.value.find(u => u.id === userId);
-                    if (!user) return [];
-                    const role = userRoles.value.find(r => r.name === user.user_role);
-                    return role ? role.permissions.slice(0, 3) : [];
-                };
+                const getCurrentTitle = () => ({ daily_operations: 'Daily Operations', medical_staff: 'Medical Staff', resident_rotations: 'Resident Rotations', oncall_schedule: 'On-call Schedule', staff_absence: 'Staff Absence', training_units: 'Training Units', department_management: 'Department Management', communications: 'Communications', audit_logs: 'Audit Logs', system_settings: 'System Settings', login: 'Login' }[currentView.value] || 'NeumoCare');
+                const getCurrentSubtitle = () => ({ daily_operations: 'Overview dashboard with real-time updates', medical_staff: 'Manage physicians, residents, and clinical staff', resident_rotations: 'Track and manage resident training rotations', oncall_schedule: 'View and manage on-call physician schedules', staff_absence: 'Track staff absences and coverage assignments', training_units: 'Manage clinical training units and assignments', department_management: 'Organizational structure and clinical units', communications: 'Department announcements and capacity updates', audit_logs: 'System activity and security audit trails', system_settings: 'Configure system preferences and behavior' }[currentView.value] || 'Hospital Management System');
                 
                 // ============ COMPUTED PROPERTIES ============
                 const residents = computed(() => medicalStaff.value.filter(staff => staff.staff_type === 'medical_resident'));
                 const attendings = computed(() => medicalStaff.value.filter(staff => staff.staff_type === 'attending_physician'));
                 const todaysOnCall = computed(() => {
                     const today = new Date().toISOString().split('T')[0];
-                    return onCallSchedule.value.filter(schedule => schedule.duty_date === today)
+                    return todaysOnCallData.value.filter(schedule => schedule.duty_date === today)
                         .map(schedule => ({
                             ...schedule,
                             physician_name: getStaffName(schedule.primary_physician_id),
@@ -727,14 +713,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const filteredRotations = computed(() => {
                     let filtered = residentRotations.value;
                     if (rotationFilter.resident_id) filtered = filtered.filter(rotation => rotation.resident_id === rotationFilter.resident_id);
-                    if (rotationFilter.status) filtered = filtered.filter(rotation => rotation.status === rotationFilter.status);
+                    if (rotationFilter.rotation_status) filtered = filtered.filter(rotation => rotation.rotation_status === rotationFilter.rotation_status);
                     return filtered;
                 });
                 const filteredAbsences = computed(() => {
                     let filtered = staffAbsences.value;
-                    if (absenceFilter.staff_id) filtered = filtered.filter(absence => absence.staff_member_id === absenceFilter.staff_id);
-                    if (absenceFilter.status) filtered = filtered.filter(absence => absence.approval_status === absenceFilter.status);
-                    if (absenceFilter.start_date) filtered = filtered.filter(absence => absence.leave_start_date >= absenceFilter.start_date);
+                    if (absenceFilter.staff_member_id) filtered = filtered.filter(absence => absence.staff_member_id === absenceFilter.staff_member_id);
+                    if (absenceFilter.approval_status) filtered = filtered.filter(absence => absence.approval_status === absenceFilter.approval_status);
+                    if (absenceFilter.leave_start_date) filtered = filtered.filter(absence => absence.leave_start_date >= absenceFilter.leave_start_date);
                     return filtered;
                 });
                 const filteredAuditLogs = computed(() => {
@@ -751,8 +737,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         loadingStaff.value = true;
                         const response = await API.getMedicalStaff();
                         medicalStaff.value = response.data || response || [];
-                        users.value = medicalStaff.value.map(staff => ({ id: staff.id, full_name: staff.full_name, user_role: staff.staff_type === 'attending_physician' ? 'Attending Physician' : staff.staff_type === 'medical_resident' ? 'Resident' : 'Staff', email: staff.professional_email }));
-                        if (currentUser.value) users.value.push({ id: currentUser.value.id, full_name: currentUser.value.full_name, user_role: currentUser.value.user_role, email: currentUser.value.email });
                     } catch (error) {
                         showToast('Error', 'Failed to load medical staff', 'error');
                         medicalStaff.value = [];
@@ -768,16 +752,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         departments.value = []; 
                     } finally {
                         loading.value = false;
-                    }
-                };
-                const loadClinicalUnits = async () => {
-                    try { 
-                        loadingClinicalUnits.value = true;
-                        clinicalUnits.value = await API.getClinicalUnits(); 
-                    } catch { 
-                        clinicalUnits.value = []; 
-                    } finally {
-                        loadingClinicalUnits.value = false;
                     }
                 };
                 const loadTrainingUnits = async () => {
@@ -856,49 +830,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 const loadNotifications = async () => {
                     try {
-                        const notifications = await API.getNotifications();
-                        unreadNotifications.value = notifications.length || 0;
+                        unreadNotifications.value = await API.getUnreadNotificationCount();
                     } catch { unreadNotifications.value = 0; }
-                };
-                const loadPermissions = async () => {
-                    try {
-                        const response = await API.getPermissions();
-                        userRoles.value = response.roles || [];
-                        availablePermissions.value = response.availablePermissions || [];
-                    } catch {
-                        userRoles.value = [];
-                        availablePermissions.value = [];
-                    }
                 };
                 const loadUsers = async () => {
                     try {
-                        users.value = await API.getUsers();
-                    } catch { users.value = []; }
+                        await API.getUsers(); // Load if needed
+                    } catch { }
                 };
                 const loadDashboardStats = async () => {
                     try {
                         loadingStats.value = true;
-                        const [statsData, liveStatsData, onCallToday] = await Promise.all([
+                        const [statsData, upcomingEventsData, todayOnCall] = await Promise.all([
                             API.getDashboardStats(),
-                            API.getLiveStats(),
+                            API.getDashboardUpcomingEvents(),
                             API.getOnCallToday()
                         ]);
                         stats.value = statsData;
-                        liveStats.value = liveStatsData;
-                        if (liveStatsData.erCapacity) {
-                            currentCapacity.er.current = liveStatsData.erCapacity.current;
-                            currentCapacity.er.max = liveStatsData.erCapacity.max;
-                            currentCapacity.er.status = liveStatsData.erCapacity.status;
-                        }
-                        if (liveStatsData.icuCapacity) {
-                            currentCapacity.icu.current = liveStatsData.icuCapacity.current;
-                            currentCapacity.icu.max = liveStatsData.icuCapacity.max;
-                            currentCapacity.icu.status = liveStatsData.icuCapacity.status;
-                        }
-                        if (onCallToday && onCallToday.length > 0) {
-                            onCallSchedule.value = [...onCallSchedule.value.filter(s => s.duty_date !== new Date().toISOString().split('T')[0]), ...onCallToday];
-                        }
-                    } catch { 
+                        upcomingEvents.value = upcomingEventsData;
+                        todaysOnCallData.value = todayOnCall || [];
+                        showToast('Dashboard Updated', 'Dashboard data refreshed', 'success');
+                    } catch (error) { 
                         showToast('Error', 'Failed to load dashboard data', 'error'); 
                     } finally {
                         loadingStats.value = false;
@@ -908,11 +860,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     loading.value = true;
                     try {
                         await Promise.all([
-                            loadMedicalStaff(), loadDepartments(), loadClinicalUnits(), loadTrainingUnits(),
+                            loadMedicalStaff(), loadDepartments(), loadTrainingUnits(),
                             loadResidentRotations(), loadStaffAbsences(), loadOnCallSchedule(),
                             loadAnnouncements(), loadSystemSettings(), loadAvailableData(),
                             loadDashboardStats(), loadAuditLogs(), loadNotifications(),
-                            loadPermissions(), loadUsers()
+                            loadUsers()
                         ]);
                         showToast('System Ready', 'All data loaded successfully', 'success');
                     } catch (error) {
@@ -920,45 +872,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     } finally {
                         loading.value = false;
                     }
-                };
-                
-                // ============ FILTER FUNCTIONS ============
-                const resetStaffFilters = () => { 
-                    staffFilter.staff_type = ''; 
-                    staffFilter.employment_status = ''; 
-                    staffFilter.department_id = ''; 
-                    staffSearch.value = ''; 
-                    showToast('Filters Reset', 'Staff filters have been reset', 'info');
-                };
-                const applyStaffFilters = () => showToast('Filters Applied', 'Staff filters have been applied', 'success');
-                const resetRotationFilters = () => { 
-                    rotationFilter.resident_id = ''; 
-                    rotationFilter.status = ''; 
-                    showToast('Filters Reset', 'Rotation filters have been reset', 'info');
-                };
-                const applyRotationFilters = () => showToast('Filters Applied', 'Rotation filters have been applied', 'success');
-                const resetAbsenceFilters = () => { 
-                    absenceFilter.staff_id = ''; 
-                    absenceFilter.status = ''; 
-                    absenceFilter.start_date = ''; 
-                    showToast('Filters Reset', 'Absence filters have been reset', 'info');
-                };
-                const applyAbsenceFilters = () => showToast('Filters Applied', 'Absence filters have been applied', 'success');
-                const resetAuditFilters = () => { 
-                    auditFilters.dateRange = ''; 
-                    auditFilters.actionType = ''; 
-                    auditFilters.userId = ''; 
-                    showToast('Filters Reset', 'Audit filters have been reset', 'info');
-                };
-                const applyAuditFilters = () => showToast('Filters Applied', 'Audit filters have been applied', 'success');
-                const clearAdvancedSearch = () => { 
-                    searchQuery.value = ''; 
-                    searchScope.value = 'All';
-                    showToast('Search Cleared', 'All search filters have been cleared', 'info'); 
-                };
-                const performAdvancedSearch = () => {
-                    showToast('Advanced Search', 'Performing advanced search...', 'info');
-                    // Implementation would go here
                 };
                 
                 // ============ CONFIRMATION MODAL ============
@@ -1021,16 +934,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         professional_email: '', 
                         department_id: '', 
                         resident_category: '', 
-                        training_level: '', 
+                        training_year: '', 
                         specialization: '', 
                         years_experience: '', 
                         biography: '', 
-                        office_phone: '', 
                         mobile_phone: '', 
                         medical_license: '', 
                         date_of_birth: '' 
                     };
                 };
+                
                 const showAddDepartmentModal = () => {
                     departmentModal.mode = 'add';
                     departmentModal.show = true;
@@ -1042,20 +955,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         head_of_department_id: '' 
                     };
                 };
-                const showAddClinicalUnitModal = () => {
-                    clinicalUnitModal.mode = 'add';
-                    clinicalUnitModal.show = true;
-                    clinicalUnitModal.form = { 
-                        name: '', 
-                        code: '', 
-                        department_id: '', 
-                        unit_type: 'clinical', 
-                        status: 'active', 
-                        description: '', 
-                        capacity: '', 
-                        location: '' 
-                    };
-                };
+                
                 const showAddTrainingUnitModal = () => {
                     trainingUnitModal.mode = 'add';
                     trainingUnitModal.show = true;
@@ -1063,12 +963,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         unit_name: '', 
                         unit_code: '', 
                         department_id: '', 
+                        department_name: '', 
+                        maximum_residents: 10, 
+                        unit_description: '', 
                         supervisor_id: '', 
-                        max_capacity: 10, 
-                        status: 'active', 
-                        description: '' 
+                        unit_status: 'active', 
+                        specialty: '', 
+                        location_building: '', 
+                        location_floor: '' 
                     };
                 };
+                
                 const showAddRotationModal = () => {
                     rotationModal.mode = 'add';
                     rotationModal.show = true;
@@ -1077,12 +982,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         training_unit_id: '', 
                         start_date: new Date().toISOString().split('T')[0], 
                         end_date: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
-                        supervisor_id: '', 
-                        status: 'active', 
+                        supervising_attending_id: '', 
+                        rotation_status: 'active', 
                         goals: '', 
-                        notes: '' 
+                        notes: '', 
+                        rotation_category: 'clinical_rotation' 
                     };
                 };
+                
                 const showAddOnCallModal = () => {
                     onCallModal.mode = 'add';
                     onCallModal.show = true;
@@ -1094,22 +1001,25 @@ document.addEventListener('DOMContentLoaded', function() {
                         primary_physician_id: '', 
                         backup_physician_id: '', 
                         coverage_notes: '', 
-                        status: 'scheduled' 
+                        schedule_id: '' 
                     };
                 };
+                
                 const showAddAbsenceModal = () => {
                     absenceModal.mode = 'add';
                     absenceModal.show = true;
                     absenceModal.form = { 
                         staff_member_id: '', 
-                        absence_reason: '', 
-                        start_date: new Date().toISOString().split('T')[0], 
-                        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
-                        notes: '', 
-                        replacement_staff_id: '', 
-                        coverage_instructions: '' 
+                        leave_category: 'vacation', 
+                        leave_start_date: new Date().toISOString().split('T')[0], 
+                        leave_end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+                        leave_reason: '', 
+                        coverage_required: true, 
+                        approval_status: 'pending', 
+                        review_notes: '' 
                     };
                 };
+                
                 const showCommunicationsModal = () => {
                     communicationsModal.show = true;
                     communicationsModal.form = { 
@@ -1118,44 +1028,38 @@ document.addEventListener('DOMContentLoaded', function() {
                         publish_start_date: new Date().toISOString().split('T')[0], 
                         publish_end_date: '', 
                         priority_level: 'medium', 
-                        target_audience: 'all' 
+                        announcement_type: 'department', 
+                        target_audience: 'all', 
+                        visible_to_roles: ['viewing_doctor'] 
                     };
                 };
+                
                 const showQuickPlacementModal = () => {
                     quickPlacementModal.show = true;
                     quickPlacementModal.start_date = new Date().toISOString().split('T')[0];
                 };
-                const showBulkAssignModal = () => {
-                    bulkAssignModal.show = true;
-                    bulkAssignModal.start_date = new Date().toISOString().split('T')[0];
-                };
+                
                 const showUserProfile = () => {
                     userProfileModal.show = true;
                     userProfileModal.form = { 
                         full_name: currentUser.value?.full_name || '', 
                         email: currentUser.value?.email || '', 
-                        phone: currentUser.value?.phone || '', 
+                        phone_number: currentUser.value?.phone_number || '', 
                         department_id: currentUser.value?.department_id || '', 
+                        user_role: currentUser.value?.user_role || '', 
                         notifications_enabled: currentUser.value?.notifications_enabled || true, 
                         absence_notifications: currentUser.value?.absence_notifications || true, 
                         announcement_notifications: currentUser.value?.announcement_notifications || true 
                     };
                     userMenuOpen.value = false;
                 };
+                
                 const showSystemSettingsModal = () => {
                     systemSettingsModal.show = true;
                     systemSettingsModal.settings = { ...systemSettings.value };
                     userMenuOpen.value = false;
                 };
-                const showPermissionManager = () => { 
-                    switchView('permission_manager'); 
-                    userMenuOpen.value = false; 
-                };
-                const showAddRoleModal = () => { 
-                    roleModal.mode = 'add'; 
-                    roleModal.form = { name: '', description: '', permissions: [] }; 
-                    roleModal.show = true; 
-                };
+                
                 const showImportExportModal = (mode = 'export') => {
                     importExportModal.mode = mode;
                     importExportModal.selectedTable = '';
@@ -1163,98 +1067,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     importExportModal.show = true;
                 };
                 
-                // MISSING MODAL FUNCTIONS FROM TEMPLATE
                 const showDashboardCustomizeModal = () => {
                     dashboardCustomizeModal.show = true;
-                };
-                
-                const showAdvancedSearchModal = () => {
-                    advancedSearchModal.show = true;
-                };
-                
-                const editRole = (role) => { 
-                    roleModal.mode = 'edit'; 
-                    roleModal.form = { ...role }; 
-                    roleModal.show = true; 
-                };
-                const editUserPermissions = (user) => showToast('Edit User', `Editing permissions for ${user.full_name}`, 'info');
-                const getCommunicationIcon = (tab) => ({ announcement: 'fa-bullhorn', capacity: 'fa-bed', alert: 'fa-exclamation-triangle' }[tab] || 'fa-comments');
-                const getCommunicationButtonText = (tab) => ({ announcement: 'Post Announcement', capacity: 'Update Capacity', alert: 'Send Alert' }[tab] || 'Send Communication');
-                
-                // ============ EXPORT/IMPORT FUNCTIONS ============
-                const exportData = async () => {
-                    if (!importExportModal.selectedTable) {
-                        showToast('Error', 'Please select a table to export', 'error');
-                        return;
-                    }
-                    
-                    saving.value = true;
-                    try {
-                        showToast('Export Started', `Exporting ${importExportModal.selectedTable} data...`, 'info');
-                        
-                        let startDate = null, endDate = null;
-                        if (importExportModal.dateRange.start && importExportModal.dateRange.end) {
-                            startDate = importExportModal.dateRange.start;
-                            endDate = importExportModal.dateRange.end;
-                        }
-                        
-                        const data = await API.exportData(importExportModal.selectedTable, importExportModal.exportFormat, startDate, endDate);
-                        
-                        if (importExportModal.exportFormat === 'csv') {
-                            const filename = `${importExportModal.selectedTable}_export_${Date.now()}.csv`;
-                            Utils.downloadCSV(data, filename);
-                            showToast('Export Complete', `Data exported to ${filename}`, 'success');
-                        } else {
-                            const filename = `${importExportModal.selectedTable}_export_${Date.now()}.json`;
-                            Utils.downloadJSON(data, filename);
-                            showToast('Export Complete', `Data exported successfully`, 'success');
-                        }
-                        
-                        importExportModal.show = false;
-                    } catch (error) {
-                        showToast('Export Failed', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const importData = async () => {
-                    if (!importExportModal.selectedTable || !importExportModal.selectedFile) {
-                        showToast('Error', 'Please select a table and file to import', 'error');
-                        return;
-                    }
-                    
-                    saving.value = true;
-                    try {
-                        showToast('Import Started', `Importing data to ${importExportModal.selectedTable}...`, 'info');
-                        
-                        const formData = new FormData();
-                        formData.append('file', importExportModal.selectedFile);
-                        formData.append('table', importExportModal.selectedTable);
-                        formData.append('options', JSON.stringify(importExportModal.importOptions));
-                        
-                        // Note: You'll need to implement this endpoint in your backend
-                        // const response = await fetch(`${API_BASE_URL}/api/import`, {
-                        //     method: 'POST',
-                        //     headers: API.headers(),
-                        //     body: formData
-                        // });
-                        
-                        // For now, just simulate success
-                        setTimeout(() => {
-                            importExportModal.show = false;
-                            showToast('Import Complete', `${importExportModal.selectedTable} data imported successfully`, 'success');
-                        }, 1000);
-                    } catch (error) {
-                        showToast('Import Failed', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const handleFileSelect = (event) => {
-                    importExportModal.selectedFile = event.target.files[0];
-                    showToast('File Selected', `${importExportModal.selectedFile.name} selected for import`, 'info');
                 };
                 
                 // ============ DATA SAVE FUNCTIONS ============
@@ -1296,20 +1110,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             showToast('Success', 'Department updated successfully', 'success');
                         }
                         departmentModal.show = false;
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally { 
-                        saving.value = false; 
-                    }
-                };
-                
-                const saveClinicalUnit = async () => {
-                    saving.value = true;
-                    try {
-                        // Note: Clinical units endpoint might not exist in your backend yet
-                        // This is a placeholder
-                        showToast('Info', 'Clinical unit functionality coming soon', 'info');
-                        clinicalUnitModal.show = false;
                     } catch (error) {
                         showToast('Error', error.message, 'error');
                     } finally { 
@@ -1385,8 +1185,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const saveAbsence = async () => {
                     saving.value = true;
                     try {
-                        const startDate = new Date(absenceModal.form.start_date);
-                        const endDate = new Date(absenceModal.form.end_date);
+                        const startDate = new Date(absenceModal.form.leave_start_date);
+                        const endDate = new Date(absenceModal.form.leave_end_date);
                         if (endDate <= startDate) throw new Error('End date must be after start date');
                         
                         if (absenceModal.mode === 'add') {
@@ -1407,10 +1207,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                const approveAbsence = async (absenceId, approved, rejectionReason = '') => {
+                const approveAbsence = async (absenceId, approved, reviewNotes = '') => {
                     saving.value = true;
                     try {
-                        const result = await API.approveAbsence(absenceId, approved, rejectionReason);
+                        const result = await API.approveAbsence(absenceId, approved, reviewNotes);
                         const index = staffAbsences.value.findIndex(a => a.id === absenceId);
                         if (index !== -1) staffAbsences.value[index] = { ...staffAbsences.value[index], ...result };
                         showToast('Success', `Absence request ${approved ? 'approved' : 'rejected'} successfully`, 'success');
@@ -1467,51 +1267,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                const saveRole = async () => {
-                    saving.value = true;
-                    try {
-                        // Note: Role save endpoint might not exist in your backend yet
-                        // This is a placeholder
-                        showToast('Success', 'Role saved successfully', 'success');
-                        roleModal.show = false;
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally { 
-                        saving.value = false; 
-                    }
-                };
-                
-                // Functions for missing modals from template
-                const saveDashboardCustomization = async () => {
-                    saving.value = true;
-                    try {
-                        // Save dashboard customization to localStorage or backend
-                        localStorage.setItem('dashboard_widgets', JSON.stringify(dashboardCustomizeModal.widgets));
-                        dashboardCustomizeModal.show = false;
-                        showToast('Success', 'Dashboard layout saved successfully', 'success');
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const resetDashboardLayout = () => {
-                    dashboardCustomizeModal.widgets = [
-                        { id: 'stats', label: 'Statistics', enabled: true },
-                        { id: 'oncall', label: 'Today\'s On-Call', enabled: true },
-                        { id: 'announcements', label: 'Announcements', enabled: true },
-                        { id: 'capacity', label: 'Capacity Overview', enabled: true },
-                        { id: 'alerts', label: 'Alerts', enabled: true },
-                        { id: 'calendar', label: 'Calendar', enabled: true }
-                    ];
-                    showToast('Dashboard Reset', 'Dashboard layout reset to default', 'info');
-                };
-                
                 const saveQuickPlacement = async () => {
                     saving.value = true;
                     try {
-                        const result = await API.quickPlacement(quickPlacementModal);
+                        // Convert quick placement to regular rotation
+                        const rotationData = {
+                            resident_id: quickPlacementModal.resident_id,
+                            training_unit_id: quickPlacementModal.training_unit_id,
+                            start_date: quickPlacementModal.start_date,
+                            end_date: new Date(new Date(quickPlacementModal.start_date).getTime() + 
+                                quickPlacementModal.duration * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                            supervising_attending_id: quickPlacementModal.supervisor_id,
+                            rotation_status: 'active',
+                            notes: quickPlacementModal.notes
+                        };
+                        
+                        const result = await API.createRotation(rotationData);
                         residentRotations.value.unshift(result);
                         quickPlacementModal.show = false;
                         showToast('Success', 'Resident placed successfully', 'success');
@@ -1522,30 +1293,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                const saveBulkAssignment = async () => {
-                    saving.value = true;
-                    try {
-                        const result = await API.bulkAssign(bulkAssignModal);
-                        residentRotations.value = [...residentRotations.value, ...result.rotations];
-                        bulkAssignModal.show = false;
-                        showToast('Success', result.message, 'success');
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
+                // ============ EXPORT/IMPORT FUNCTIONS ============
+                const exportData = async () => {
+                    if (!importExportModal.selectedTable) {
+                        showToast('Error', 'Please select a table to export', 'error');
+                        return;
                     }
-                };
-                
-                const generateRotationReport = async (rotation) => {
+                    
                     saving.value = true;
                     try {
-                        showToast('Report Generation', 'Generating rotation report...', 'info');
-                        // Implement report generation logic
-                        setTimeout(() => {
-                            showToast('Success', 'Rotation report generated successfully', 'success');
-                        }, 1000);
+                        showToast('Export Started', `Exporting ${importExportModal.selectedTable} data...`, 'info');
+                        
+                        let startDate = null, endDate = null;
+                        if (importExportModal.dateRange.start && importExportModal.dateRange.end) {
+                            startDate = importExportModal.dateRange.start;
+                            endDate = importExportModal.dateRange.end;
+                        }
+                        
+                        const data = await API.exportData(importExportModal.selectedTable, importExportModal.exportFormat, startDate, endDate);
+                        
+                        if (importExportModal.exportFormat === 'csv') {
+                            const filename = `${importExportModal.selectedTable}_export_${Date.now()}.csv`;
+                            Utils.downloadCSV(data, filename);
+                            showToast('Export Complete', `Data exported to ${filename}`, 'success');
+                        } else {
+                            const filename = `${importExportModal.selectedTable}_export_${Date.now()}.json`;
+                            Utils.downloadJSON(data, filename);
+                            showToast('Export Complete', `Data exported successfully`, 'success');
+                        }
+                        
+                        importExportModal.show = false;
                     } catch (error) {
-                        showToast('Error', error.message, 'error');
+                        showToast('Export Failed', error.message, 'error');
                     } finally {
                         saving.value = false;
                     }
@@ -1554,7 +1333,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // ============ DELETE FUNCTIONS ============
                 const deleteMedicalStaff = (staff) => {
                     showConfirmation({
-                        title: 'Delete Medical Staff', 
+                        title: 'Deactivate Medical Staff', 
                         message: `Are you sure you want to deactivate ${staff.full_name}?`, 
                         icon: 'fa-trash', 
                         confirmButtonText: 'Deactivate', 
@@ -1564,56 +1343,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 await API.deleteMedicalStaff(staff.id);
                                 const index = medicalStaff.value.findIndex(s => s.id === staff.id);
                                 if (index !== -1) {
-                                    medicalStaff.value.splice(index, 1);
+                                    medicalStaff.value[index].employment_status = 'inactive';
                                 }
-                                showToast('Deleted', `${staff.full_name} has been deactivated`, 'success');
-                            } catch (error) { 
-                                showToast('Error', error.message, 'error'); 
-                            }
-                        }
-                    });
-                };
-                
-                const deleteDepartment = (departmentId) => {
-                    const department = departments.value.find(d => d.id === departmentId);
-                    if (!department) return;
-                    
-                    showConfirmation({
-                        title: 'Delete Department', 
-                        message: `Are you sure you want to delete ${department.name}?`, 
-                        icon: 'fa-trash', 
-                        confirmButtonText: 'Delete', 
-                        confirmButtonClass: 'btn-danger',
-                        onConfirm: async () => {
-                            try {
-                                await API.deleteDepartment(departmentId);
-                                const index = departments.value.findIndex(d => d.id === departmentId);
-                                if (index !== -1) departments.value.splice(index, 1);
-                                showToast('Deleted', `${department.name} has been removed`, 'success');
-                            } catch (error) { 
-                                showToast('Error', error.message, 'error'); 
-                            }
-                        }
-                    });
-                };
-                
-                const deleteClinicalUnit = (unitId) => {
-                    const unit = clinicalUnits.value.find(u => u.id === unitId);
-                    if (!unit) return;
-                    
-                    showConfirmation({
-                        title: 'Delete Clinical Unit', 
-                        message: `Are you sure you want to delete ${unit.name}?`, 
-                        icon: 'fa-trash', 
-                        confirmButtonText: 'Delete', 
-                        confirmButtonClass: 'btn-danger',
-                        onConfirm: async () => {
-                            try {
-                                // Note: Clinical units delete endpoint might not exist
-                                // This is a placeholder
-                                const index = clinicalUnits.value.findIndex(u => u.id === unitId);
-                                if (index !== -1) clinicalUnits.value.splice(index, 1);
-                                showToast('Deleted', `${unit.name} has been removed`, 'success');
+                                showToast('Deactivated', `${staff.full_name} has been deactivated`, 'success');
                             } catch (error) { 
                                 showToast('Error', error.message, 'error'); 
                             }
@@ -1646,17 +1378,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const deleteRotation = (rotation) => {
                     showConfirmation({
-                        title: 'Delete Rotation', 
-                        message: 'Are you sure you want to delete this rotation?', 
+                        title: 'Cancel Rotation', 
+                        message: 'Are you sure you want to cancel this rotation?', 
                         icon: 'fa-trash', 
-                        confirmButtonText: 'Delete', 
+                        confirmButtonText: 'Cancel Rotation', 
                         confirmButtonClass: 'btn-danger',
                         onConfirm: async () => {
                             try {
                                 await API.deleteRotation(rotation.id);
                                 const index = residentRotations.value.findIndex(r => r.id === rotation.id);
-                                if (index !== -1) residentRotations.value.splice(index, 1);
-                                showToast('Deleted', 'Rotation has been removed', 'success');
+                                if (index !== -1) residentRotations.value[index].rotation_status = 'cancelled';
+                                showToast('Cancelled', 'Rotation has been cancelled', 'success');
                             } catch (error) { 
                                 showToast('Error', error.message, 'error'); 
                             }
@@ -1724,144 +1456,71 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 };
                 
-                const deleteRole = (roleId) => {
-                    const role = userRoles.value.find(r => r.id === roleId);
-                    if (!role || role.name === 'Administrator') return;
-                    
-                    showConfirmation({
-                        title: 'Delete Role', 
-                        message: `Are you sure you want to delete the ${role.name} role?`, 
-                        icon: 'fa-trash', 
-                        confirmButtonText: 'Delete', 
-                        confirmButtonClass: 'btn-danger',
-                        onConfirm: async () => {
-                            try {
-                                // Note: Role delete endpoint might not exist
-                                // This is a placeholder
-                                const index = userRoles.value.findIndex(r => r.id === roleId);
-                                if (index !== -1) userRoles.value.splice(index, 1);
-                                showToast('Deleted', `${role.name} role has been removed`, 'success');
-                            } catch (error) { 
-                                showToast('Error', error.message, 'error'); 
-                            }
-                        }
-                    });
-                };
-                
                 // ============ OTHER FUNCTIONS ============
                 const viewStaffDetails = (staff) => { 
                     staffDetailsModal.staff = staff; 
                     staffDetailsModal.show = true; 
                 };
+                
                 const editMedicalStaff = (staff) => { 
                     medicalStaffModal.mode = 'edit'; 
                     medicalStaffModal.form = { ...staff }; 
                     medicalStaffModal.show = true; 
                 };
+                
                 const editDepartment = (department) => { 
                     departmentModal.mode = 'edit'; 
                     departmentModal.form = { ...department }; 
                     departmentModal.show = true; 
                 };
-                const editClinicalUnit = (unit) => { 
-                    clinicalUnitModal.mode = 'edit'; 
-                    clinicalUnitModal.form = { ...unit }; 
-                    clinicalUnitModal.show = true; 
-                };
+                
                 const editTrainingUnit = (unit) => { 
                     trainingUnitModal.mode = 'edit'; 
                     trainingUnitModal.form = { ...unit }; 
                     trainingUnitModal.show = true; 
                 };
+                
                 const editRotation = (rotation) => { 
                     rotationModal.mode = 'edit'; 
                     rotationModal.form = { ...rotation }; 
                     rotationModal.show = true; 
                 };
+                
                 const editOnCallSchedule = (schedule) => { 
                     onCallModal.mode = 'edit'; 
                     onCallModal.form = { ...schedule }; 
                     onCallModal.show = true; 
                 };
+                
                 const editAbsence = (absence) => {
                     absenceModal.mode = 'edit';
                     absenceModal.form = { 
                         id: absence.id, 
                         staff_member_id: absence.staff_member_id, 
-                        absence_reason: absence.leave_category || absence.absence_reason, 
-                        start_date: absence.leave_start_date || absence.start_date, 
-                        end_date: absence.leave_end_date || absence.end_date, 
-                        notes: absence.notes, 
-                        replacement_staff_id: absence.replacement_staff_id, 
-                        coverage_instructions: absence.coverage_instructions 
+                        leave_category: absence.leave_category, 
+                        leave_start_date: absence.leave_start_date, 
+                        leave_end_date: absence.leave_end_date, 
+                        leave_reason: absence.leave_reason, 
+                        coverage_required: absence.coverage_required, 
+                        approval_status: absence.approval_status, 
+                        review_notes: absence.review_notes 
                     };
                     absenceModal.show = true;
                 };
+                
                 const viewAbsenceDetails = (absence) => { 
                     absenceDetailsModal.absence = absence; 
                     absenceDetailsModal.show = true; 
                 };
+                
                 const viewRotationDetails = (rotation) => { 
                     rotationDetailsModal.rotation = rotation; 
                     rotationDetailsModal.show = true; 
                 };
-                const viewDepartmentDetails = (department) => { 
-                    switchView('department_management'); 
-                    setTimeout(() => { 
-                        showToast('Department Details', `Viewing ${department.name}`, 'info'); 
-                    }, 100); 
-                };
-                const assignRotationToStaff = (staff) => { 
-                    if (staff.staff_type === 'medical_resident') { 
-                        rotationModal.form.resident_id = staff.id; 
-                        rotationModal.mode = 'add'; 
-                        rotationModal.show = true; 
-                    } 
-                };
+                
                 const assignResidentToUnit = (unit) => { 
                     quickPlacementModal.training_unit_id = unit.id; 
                     quickPlacementModal.show = true; 
-                };
-                const assignCoverage = (absence) => {
-                    absenceModal.mode = 'edit';
-                    absenceModal.form = { 
-                        id: absence.id, 
-                        staff_member_id: absence.staff_member_id, 
-                        absence_reason: absence.leave_category || absence.absence_reason, 
-                        start_date: absence.leave_start_date || absence.start_date, 
-                        end_date: absence.leave_end_date || absence.end_date, 
-                        notes: absence.notes, 
-                        replacement_staff_id: absence.replacement_staff_id || '', 
-                        coverage_instructions: absence.coverage_instructions || '' 
-                    };
-                    absenceModal.show = true;
-                    showToast('Assign Coverage', 'Select a replacement staff member from the dropdown', 'info');
-                };
-                const removeResidentFromUnit = (residentId, unitId) => {
-                    showConfirmation({
-                        title: 'Remove Resident', 
-                        message: 'Are you sure you want to remove this resident from the training unit?', 
-                        icon: 'fa-user-times', 
-                        confirmButtonText: 'Remove', 
-                        confirmButtonClass: 'btn-danger',
-                        onConfirm: async () => {
-                            try {
-                                // Note: Remove resident endpoint might not exist
-                                // This is a placeholder
-                                const rotationIndex = residentRotations.value.findIndex(r => r.resident_id === residentId && r.training_unit_id === unitId && r.status === 'active');
-                                if (rotationIndex !== -1) {
-                                    residentRotations.value[rotationIndex].status = 'cancelled';
-                                    const unitIndex = trainingUnits.value.findIndex(u => u.id === unitId);
-                                    if (unitIndex !== -1 && trainingUnits.value[unitIndex].current_residents > 0) {
-                                        trainingUnits.value[unitIndex].current_residents--;
-                                    }
-                                    showToast('Removed', 'Resident has been removed from the training unit', 'success');
-                                }
-                            } catch (error) { 
-                                showToast('Error', error.message, 'error'); 
-                            }
-                        }
-                    });
                 };
                 
                 // ============ AUTHENTICATION ============
@@ -1911,7 +1570,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     mobileMenuOpen.value = false;
                     switch (view) {
                         case 'medical_staff': loadMedicalStaff(); break;
-                        case 'department_management': loadDepartments(); loadClinicalUnits(); break;
+                        case 'department_management': loadDepartments(); break;
                         case 'training_units': loadTrainingUnits(); loadResidentRotations(); break;
                         case 'resident_rotations': loadResidentRotations(); break;
                         case 'staff_absence': loadStaffAbsences(); break;
@@ -1919,7 +1578,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         case 'communications': loadAnnouncements(); break;
                         case 'audit_logs': loadAuditLogs(); break;
                         case 'system_settings': loadSystemSettings(); break;
-                        case 'permission_manager': loadPermissions(); loadUsers(); break;
                         case 'daily_operations': loadDashboardStats(); loadAnnouncements(); loadOnCallSchedule(); break;
                     }
                 };
@@ -1931,30 +1589,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     const currentIndex = scopes.indexOf(searchScope.value);
                     searchScope.value = scopes[(currentIndex + 1) % scopes.length];
                 };
-                const setSearchFilter = (filter) => { 
-                    searchFilter.value = filter; 
-                    showToast('Search Filter', `Searching in ${filter}`, 'info'); 
-                };
                 const handleSearch = () => {
                     if (searchQuery.value.trim()) {
                         showToast('Search', `Searching for "${searchQuery.value}" in ${searchScope.value}`, 'info');
                     }
                 };
-                const showNotifications = () => { 
-                    showToast('Notifications', `You have ${unreadNotifications.value} unread notifications`, 'info'); 
+                const showNotifications = async () => { 
+                    const count = await API.getUnreadNotificationCount();
+                    showToast('Notifications', `You have ${count} unread notifications`, 'info'); 
                     unreadNotifications.value = 0; 
-                    loadNotifications();
-                };
-                const updateCapacity = () => { 
-                    showToast('Capacity Updated', 'Emergency Room and ICU capacities have been updated', 'success'); 
-                };
-                const exportAuditLogs = () => { 
-                    importExportModal.mode = 'export';
-                    importExportModal.selectedTable = 'audit_logs';
-                    importExportModal.show = true;
-                };
-                const showAbsenceCalendar = (view) => { 
-                    showToast('Calendar View', `Switched to ${view} view`, 'info'); 
                 };
                 const refreshData = async () => {
                     loading.value = true;
@@ -1983,21 +1626,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 return {
                     // State
                     currentUser, loginForm, loading, saving, loadingStats, loadingAnnouncements, loadingSchedule, 
-                    loadingStaff, loadingRotations, loadingAbsences, loadingAuditLogs, loadingClinicalUnits,
+                    loadingStaff, loadingRotations, loadingAbsences, loadingAuditLogs,
                     currentView, sidebarCollapsed, mobileMenuOpen, userMenuOpen, statsSidebarOpen, 
                     searchQuery, searchScope, searchFilter,
                     
                     // Modals
-                    medicalStaffModal, clinicalUnitModal, departmentModal, trainingUnitModal, rotationModal, 
-                    onCallModal, absenceModal, communicationsModal, quickPlacementModal, bulkAssignModal, 
+                    medicalStaffModal, departmentModal, trainingUnitModal, rotationModal, 
+                    onCallModal, absenceModal, communicationsModal, quickPlacementModal,
                     userProfileModal, systemSettingsModal, confirmationModal, staffDetailsModal, absenceDetailsModal, 
-                    rotationDetailsModal, roleModal, importExportModal, dashboardCustomizeModal, advancedSearchModal,
+                    rotationDetailsModal, importExportModal, dashboardCustomizeModal,
                     exportImportOptions,
                     
                     // Data
-                    medicalStaff, departments, clinicalUnits, trainingUnits, residentRotations, staffAbsences, 
+                    medicalStaff, departments, trainingUnits, residentRotations, staffAbsences, 
                     onCallSchedule, recentAnnouncements, auditLogs, systemSettings, availableData, stats, 
-                    liveStats, currentCapacity,
+                    upcomingEvents, todaysOnCallData,
                     
                     // UI State
                     toasts, activeAlerts, unreadNotifications,
@@ -2005,61 +1648,43 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Filters
                     staffFilter, staffSearch, rotationFilter, absenceFilter, auditFilters,
                     
-                    // Permissions
-                    userRoles, availablePermissions, users,
-                    
                     // Formatting Functions
                     formatDate: Utils.formatDate, formatDateTime: Utils.formatDateTime, formatTimeAgo: Utils.formatTimeAgo, getInitials,
                     formatStaffType, getStaffTypeClass, formatEmploymentStatus, formatAbsenceReason, formatAbsenceStatus, formatRotationStatus, 
-                    formatTrainingLevel, getAbsenceStatusClass, getRotationStatusClass, getPriorityColor, formatTimeRange, 
-                    getDepartmentName, getStaffName, getTrainingUnitName, getResidentName, getSupervisorName, getUserName, getUserRoleDisplay, 
-                    getDepartmentUnits, getUnitResidents, calculateAbsenceDuration, formatAuditAction,
-                    getCurrentTitle, getCurrentSubtitle, getSearchPlaceholder,
-                    
-                    // Permission Functions
-                    hasPermission, roleHasPermission, toggleRolePermission, formatPermissionName, getUserPermissions,
+                    getAbsenceStatusClass, getRotationStatusClass, getPriorityColor, getDepartmentName, getStaffName, getTrainingUnitName,
+                    getUnitResidents, getCurrentTitle, getCurrentSubtitle,
                     
                     // Computed Properties
                     residents, attendings, todaysOnCall, filteredMedicalStaff, filteredRotations, filteredAbsences, filteredAuditLogs,
-                    
-                    // Filter Functions
-                    resetStaffFilters, applyStaffFilters, resetRotationFilters, applyRotationFilters, resetAbsenceFilters, applyAbsenceFilters, 
-                    resetAuditFilters, applyAuditFilters, clearAdvancedSearch, performAdvancedSearch,
                     
                     // Modal Functions
                     showConfirmation, confirmAction, cancelConfirmation, toggleActionMenu, toggleUserMenu,
                     
                     // Save Functions
-                    saveMedicalStaff, saveDepartment, saveClinicalUnit, saveTrainingUnit, saveRotation, saveOnCallSchedule, saveAbsence, saveCommunication, 
-                    saveUserProfile, saveSystemSettings, saveRole, approveAbsence, saveDashboardCustomization, saveQuickPlacement, saveBulkAssignment,
+                    saveMedicalStaff, saveDepartment, saveTrainingUnit, saveRotation, saveOnCallSchedule, saveAbsence, saveCommunication, 
+                    saveUserProfile, saveSystemSettings, approveAbsence, saveQuickPlacement,
                     
                     // Delete Functions
-                    deleteMedicalStaff, deleteDepartment, deleteClinicalUnit, deleteTrainingUnit, deleteRotation, deleteOnCallSchedule, 
-                    deleteAbsence, deleteAnnouncement, deleteRole,
+                    deleteMedicalStaff, deleteTrainingUnit, deleteRotation, deleteOnCallSchedule, deleteAbsence, deleteAnnouncement,
                     
                     // View/Edit Functions
-                    viewStaffDetails, editMedicalStaff, editDepartment, editClinicalUnit, editTrainingUnit, editRotation, editOnCallSchedule, 
-                    editAbsence, viewAbsenceDetails, viewRotationDetails, viewDepartmentDetails, assignRotationToStaff, assignResidentToUnit, 
-                    assignCoverage, removeResidentFromUnit, editRole, editUserPermissions,
+                    viewStaffDetails, editMedicalStaff, editDepartment, editTrainingUnit, editRotation, editOnCallSchedule, 
+                    editAbsence, viewAbsenceDetails, viewRotationDetails, assignResidentToUnit,
                     
                     // Modal Show Functions
-                    showAddMedicalStaffModal, showAddDepartmentModal, showAddClinicalUnitModal, showAddTrainingUnitModal, showAddRotationModal, 
-                    showAddOnCallModal, showAddAbsenceModal, showCommunicationsModal, showQuickPlacementModal, showBulkAssignModal, 
-                    showUserProfile, showSystemSettingsModal, showPermissionManager, showAddRoleModal, showImportExportModal,
-                    showDashboardCustomizeModal, showAdvancedSearchModal,
+                    showAddMedicalStaffModal, showAddDepartmentModal, showAddTrainingUnitModal, showAddRotationModal, 
+                    showAddOnCallModal, showAddAbsenceModal, showCommunicationsModal, showQuickPlacementModal,
+                    showUserProfile, showSystemSettingsModal, showImportExportModal, showDashboardCustomizeModal,
                     
                     // Export/Import Functions
-                    exportData, importData, handleFileSelect, generateRotationReport, resetDashboardLayout,
-                    
-                    // Communication Functions
-                    getCommunicationIcon, getCommunicationButtonText,
+                    exportData,
                     
                     // Navigation & Auth
                     switchView, handleLogin, handleLogout,
                     
                     // UI Functions
-                    removeToast, showToast, dismissAlert, toggleStatsSidebar, toggleSearchScope, setSearchFilter, handleSearch, 
-                    showNotifications, updateCapacity, exportAuditLogs, showAbsenceCalendar, refreshData,
+                    removeToast, showToast, dismissAlert, toggleStatsSidebar, toggleSearchScope, handleSearch, 
+                    showNotifications, refreshData,
                     
                     // Utility Functions
                     Utils
@@ -2069,7 +1694,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // ============ MOUNT THE APP ============
         app.mount('#app');
-        console.log('NeumoCare Frontend v3.3 mounted successfully');
+        console.log('NeumoCare Frontend v3.4 mounted successfully - NOW USING CORRECT ENDPOINTS!');
         
     } catch (error) {
         console.error('FATAL ERROR: Frontend failed to initialize:', error);
