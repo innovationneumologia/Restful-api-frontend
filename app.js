@@ -894,7 +894,43 @@ document.addEventListener('DOMContentLoaded', function() {
                     };
                     return roleMap[role] || role || 'Unknown Role';
                 };
-                
+                // Add this in the setup() function with other reactive state:
+const liveStats = reactive({
+    occupancy: 0,
+    occupancyTrend: 0,
+    onDutyStaff: 0,
+    staffTrend: 0,
+    pendingRequests: 0,
+    erCapacity: { current: 0, max: 0, status: 'normal' },
+    icuCapacity: { current: 0, max: 0, status: 'normal' },
+    lastUpdated: new Date()
+});
+
+// Then add updateLiveStats function:
+const updateLiveStats = () => {
+    try {
+        // Calculate occupancy based on active staff vs capacity
+        const totalCapacity = trainingUnits.value.reduce((sum, unit) => 
+            sum + (parseInt(unit.maximum_residents) || 10), 0);
+        const currentResidents = residentRotations.value.filter(r => 
+            r.rotation_status === 'active').length;
+        
+        liveStats.occupancy = totalCapacity > 0 ? 
+            Math.round((currentResidents / totalCapacity) * 100) : 0;
+        liveStats.onDutyStaff = medicalStaff.value.filter(s => 
+            s.employment_status === 'active').length;
+        liveStats.pendingRequests = staffAbsences.value.filter(a => 
+            a.approval_status === 'pending').length;
+        liveStats.lastUpdated = new Date();
+    } catch (error) {
+        console.error('Error updating live stats:', error);
+    }
+};
+
+// Call updateLiveStats when data changes
+watch([() => medicalStaff.value, () => residentRotations.value], () => {
+    updateLiveStats();
+}, { deep: true });
                 // Staff type formatting
                 const formatStaffType = (type) => {
                     const typeMap = {
