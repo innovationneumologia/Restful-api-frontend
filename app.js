@@ -2429,7 +2429,7 @@ watch([() => medicalStaff.value, () => residentRotations.value], () => {
                     availableResidents,
                     availableTrainingUnits,
                     availableStaff,
-                    liveStatsf,
+                    liveStats,
                     
                     // Toast Functions
                     showToast,
