@@ -926,7 +926,34 @@ const updateLiveStats = () => {
         console.error('Error updating live stats:', error);
     }
 };
+// Add these definitions in your setup() function
 
+// Modal for quick placement
+const quickPlacementModal = reactive({ 
+    show: false,
+    form: {
+        resident_id: '',
+        training_unit_id: '',
+        start_date: '',
+        duration_weeks: '4',
+        custom_duration: '',
+        supervisor_id: '',
+        notes: ''
+    }
+});
+
+// Function to show notifications
+const showNotifications = async () => { 
+    const count = await API.getUnreadNotificationCount();
+    showToast('Notifications', `You have ${count} unread notifications`, 'info'); 
+    unreadNotifications.value = 0; 
+};
+
+// Function to show quick placement modal
+const showQuickPlacementModal = () => {
+    quickPlacementModal.show = true;
+    quickPlacementModal.form.start_date = new Date().toISOString().split('T')[0];
+};
 // Call updateLiveStats when data changes
 watch([() => medicalStaff.value, () => residentRotations.value], () => {
     updateLiveStats();
