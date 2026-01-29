@@ -1094,6 +1094,131 @@ watch([() => medicalStaff.value, () => residentRotations.value], () => {
                     };
                     return titleMap[currentView.value] || 'NeumoCare';
                 };
+                // Add this in your setup() function before the return statement:
+
+// Define bulkAssignModal
+const bulkAssignModal = reactive({ 
+    show: false,
+    allSelected: false,
+    selectedResidents: [],
+    form: {
+        training_unit_id: '',
+        start_date: '',
+        duration_weeks: '4',
+        supervisor_id: ''
+    }
+});
+
+// Define advancedSearchModal
+const advancedSearchModal = reactive({
+    show: false,
+    activeTab: 'staff',
+    filters: {
+        staff: { 
+            name: '',
+            staff_type: '',
+            department_id: '',
+            status: '',
+            specialization: '',
+            min_experience: '',
+            max_experience: ''
+        },
+        rotations: {
+            resident_name: '',
+            training_unit_id: '',
+            status: '',
+            supervisor_id: '',
+            start_date_from: '',
+            start_date_to: '',
+            end_date_from: '',
+            end_date_to: ''
+        },
+        documents: {
+            title: '',
+            type: '',
+            uploaded_by: '',
+            module: '',
+            upload_date_from: '',
+            upload_date_to: '',
+            min_size: '',
+            max_size: '',
+            content: ''
+        },
+        schedule: {
+            physician_name: '',
+            role: '',
+            coverage_area: '',
+            status: '',
+            date_from: '',
+            date_to: '',
+            time_from: '',
+            time_to: ''
+        }
+    },
+    sortBy: 'relevance',
+    sortOrder: 'asc',
+    resultsPerPage: 10
+});
+
+// Define dashboardCustomizeModal
+const dashboardCustomizeModal = reactive({
+    show: false,
+    widgets: [
+        { id: 'stats', label: 'Statistics', enabled: true },
+        { id: 'oncall', label: 'Today\'s On-Call', enabled: true },
+        { id: 'announcements', label: 'Announcements', enabled: true },
+        { id: 'capacity', label: 'Capacity Overview', enabled: true },
+        { id: 'alerts', label: 'Alerts', enabled: true },
+        { id: 'calendar', label: 'Calendar', enabled: true }
+    ],
+    settings: {}
+});
+
+// Define clinicalUnitModal
+const clinicalUnitModal = reactive({ 
+    show: false, 
+    mode: 'add', 
+    form: {
+        name: '',
+        code: '',
+        department_id: '',
+        unit_type: 'clinical',
+        status: 'active',
+        description: '',
+        supervisor_id: ''
+    }
+});
+
+// Define roleModal
+const roleModal = reactive({
+    show: false,
+    mode: 'add',
+    form: {
+        name: '',
+        description: '',
+        permissions: []
+    }
+});
+
+// Define related functions
+const showBulkAssignModal = () => {
+    bulkAssignModal.show = true;
+    bulkAssignModal.form.start_date = new Date().toISOString().split('T')[0];
+};
+
+const showAdvancedSearchModal = () => {
+    advancedSearchModal.show = true;
+};
+
+const showDashboardCustomizeModal = () => {
+    dashboardCustomizeModal.show = true;
+};
+
+const showAddRoleModal = () => {
+    roleModal.mode = 'add';
+    roleModal.form = { name: '', description: '', permissions: [] };
+    roleModal.show = true;
+};
                 
                 const getCurrentSubtitle = () => {
                     const subtitleMap = {
