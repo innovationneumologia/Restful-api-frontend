@@ -1,10 +1,10 @@
 // ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM FRONTEND ============
-// COMPLETE & COMPREHENSIVE VERSION - NOTHING MISSING
+// COMPLETE & COMPREHENSIVE VERSION - FIXED
 // Version 5.0 - FULLY COMPLETE PRODUCTION READY
 // ================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 NeumoCare Hospital Management System v5.0 - COMPLETE VERSION loading...');
+    console.log('🚀 NeumoCare Hospital Management System v5.0 - COMPLETE FIXED VERSION loading...');
     
     try {
         // CRITICAL: Verify Vue is loaded
@@ -2526,7 +2526,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     return filtered;
                 });
-                const stats = computed(() => dashboardStats.value);
+                
+                // FIXED: Properly define the stats computed property
+                const stats = computed(() => {
+                    return dashboardStats.value;
+                });
                 
                 const filteredOncall = computed(() => {
                     let filtered = onCallSchedule.value;
@@ -2783,6 +2787,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     activeTrainingUnits,
                     filteredMedicalStaff,
                     filteredRotations,
+                    stats, // FIXED: Now properly defined
                     filteredOncall,
                     filteredAbsences,
                     filteredAuditLogs,
@@ -2909,7 +2914,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // ============ MOUNT APP ============
         app.mount('#app');
         
-        console.log('🎉 NeumoCare v5.0 - COMPLETE VERSION mounted successfully!');
+        console.log('🎉 NeumoCare v5.0 - COMPLETE FIXED VERSION mounted successfully!');
         console.log('✅ EVERYTHING is implemented - no missing functions');
         console.log('🚀 Ready for production use');
         
