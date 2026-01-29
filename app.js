@@ -2366,7 +2366,21 @@ watch([() => medicalStaff.value, () => residentRotations.value], () => {
                     toasts,
                     activeAlerts,
                     unreadNotifications,
-                    
+                     quickPlacementModal,  // Add this
+    bulkAssignModal,      // You might need this too
+    advancedSearchModal,  // And this
+    dashboardCustomizeModal, // And this
+    clinicalUnitModal,    // And this
+    roleModal,           // And this
+    
+    // Functions
+    showNotifications,    // Add this
+    showQuickPlacementModal, // Add this
+    showBulkAssignModal,  // You might need this
+    showAdvancedSearchModal, // And this
+    showDashboardCustomizeModal, // And this
+    showAddRoleModal,     // And this
+    
                     // Filters
                     staffFilter,
                     staffSearch,
