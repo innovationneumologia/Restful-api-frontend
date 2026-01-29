@@ -2526,6 +2526,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     return filtered;
                 });
+                const stats = computed(() => dashboardStats.value);
                 
                 const filteredOncall = computed(() => {
                     let filtered = onCallSchedule.value;
