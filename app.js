@@ -2393,6 +2393,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     availableResidents,
                     availableTrainingUnits,
                     availableStaff,
+                    liveStatsf,
                     
                     // Toast Functions
                     showToast,
