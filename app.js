@@ -159,86 +159,110 @@ document.addEventListener('DOMContentLoaded', function() {
     if (token && token.trim()) {
         headers['Authorization'] = `Bearer ${token}`;
     }
-            
+    
+    return headers;
+}
 
-            async request(endpoint, options = {}) {
-                const requestId = EnhancedUtils.generateID('req_');
-                const url = `${CONFIG.API_BASE_URL}${endpoint}`;
-                
-                this.pendingRequests.set(endpoint, requestId);
-                
-                try {
-                    if (CONFIG.DEBUG) {
-                        console.log(`🌐 [${requestId}] ${options.method || 'GET'} ${url}`);
-                    }
-                    
-                    const config = {
-                        ...options,
-                        headers: { ...this.getHeaders(), ...options.headers },
-                        credentials: 'include',
-                        mode: 'cors'
-                    };
-                    
-                    const response = await fetch(url, config);
-                    
-                    this.pendingRequests.delete(endpoint);
-                    
-                    if (CONFIG.DEBUG) {
-                        console.log(`📥 [${requestId}] Response ${response.status}`);
-                    }
-                    
-                    switch (response.status) {
-                        case 401:
-                            this.handleUnauthorized();
-                            throw new Error('Session expired. Please login again.');
-                        case 403:
-                            throw new Error('Access denied. Insufficient permissions.');
-                        case 404:
-                            throw new Error('Resource not found');
-                        case 500:
-                            throw new Error('Server error. Please try again later.');
-                    }
-                    
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        let errorData;
-                        try {
-                            errorData = JSON.parse(errorText);
-                        } catch {
-                            errorData = { message: errorText || `HTTP ${response.status}` };
-                        }
-                        throw new Error(errorData.message || `Request failed with status ${response.status}`);
-                    }
-                    
-                    const contentType = response.headers.get('content-type');
-                    if (contentType?.includes('application/json')) {
-                        return await response.json();
-                    }
-                    
-                    return await response.text();
-                    
-                } catch (error) {
-                    this.pendingRequests.delete(endpoint);
-                    console.error(`💥 [${requestId}] Request failed:`, error);
-                    throw error;
+async request(endpoint, options = {}) {
+    const requestId = EnhancedUtils.generateID('req_');
+    const url = `${CONFIG.API_BASE_URL}${endpoint}`;
+    
+    this.pendingRequests.set(endpoint, requestId);
+    
+    try {
+        if (CONFIG.DEBUG) {
+            console.log(`🌐 [${requestId}] ${options.method || 'GET'} ${url}`);
+        }
+        
+        // Get base headers
+        const baseHeaders = this.getHeaders();
+        
+        // Merge headers carefully - ensure no x-fallback-token
+        const allHeaders = { ...baseHeaders };
+        
+        // Only add valid headers from options
+        if (options.headers) {
+            Object.keys(options.headers).forEach(key => {
+                // Skip x-fallback-token if it exists
+                if (key.toLowerCase() !== 'x-fallback-token') {
+                    allHeaders[key] = options.headers[key];
                 }
+            });
+        }
+        
+        const config = {
+            ...options,
+            headers: allHeaders,
+            credentials: 'include',
+            mode: 'cors'
+        };
+        
+        const response = await fetch(url, config);
+        
+        this.pendingRequests.delete(endpoint);
+        
+        if (CONFIG.DEBUG) {
+            console.log(`📥 [${requestId}] Response ${response.status}`);
+        }
+        
+        // Handle specific status codes
+        if (response.status === 401) {
+            this.handleUnauthorized();
+            throw new Error('Session expired. Please login again.');
+        }
+        
+        if (response.status === 403) {
+            throw new Error('Access denied. Insufficient permissions.');
+        }
+        
+        if (response.status === 404) {
+            throw new Error('Resource not found');
+        }
+        
+        if (response.status === 500) {
+            throw new Error('Server error. Please try again later.');
+        }
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorData;
+            try {
+                errorData = JSON.parse(errorText);
+            } catch {
+                errorData = { message: errorText || `HTTP ${response.status}` };
             }
-            
-            handleUnauthorized() {
-                this.token.value = null;
-                localStorage.removeItem(CONFIG.TOKEN_KEY);
-                localStorage.removeItem(CONFIG.USER_KEY);
-            }
-            
-            async verifyToken() {
-                try {
-                    await this.request('/api/users/profile', { method: 'GET' });
-                    return true;
-                } catch (error) {
-                    console.warn('Token verification failed:', error.message);
-                    return false;
-                }
-            }
+            throw new Error(errorData.message || `Request failed with status ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('application/json')) {
+            return await response.json();
+        }
+        
+        return await response.text();
+        
+    } catch (error) {
+        this.pendingRequests.delete(endpoint);
+        console.error(`💥 [${requestId}] Request failed:`, error.message);
+        throw error;
+    }
+}
+
+handleUnauthorized() {
+    this.token.value = null;
+    localStorage.removeItem(CONFIG.TOKEN_KEY);
+    localStorage.removeItem(CONFIG.USER_KEY);
+}
+
+async verifyToken() {
+    try {
+        await this.request('/api/users/profile', { method: 'GET' });
+        return true;
+    } catch (error) {
+        console.warn('Token verification failed:', error.message);
+        return false;
+    }
+}
             
             // ===== AUTHENTICATION =====
             async login(email, password, rememberMe = true) {
