@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // ============ CONFIGURATION ============
         const CONFIG = {
-            API_BASE_URL: 'https://bacend-production.up.railway.app',
+            API_BASE_URL: 'https://backend-neumac.up.railway.app',
             TOKEN_KEY: 'neumocare_token',
             USER_KEY: 'neumocare_user',
             APP_VERSION: '5.0',
