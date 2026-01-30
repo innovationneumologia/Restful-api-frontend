@@ -151,24 +151,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.pendingRequests = new Map();
             }
             
-            getHeaders() {
-                const headers = { 
-                    'Content-Type': 'application/json'
-                };
-                
-                const token = this.token.value;
-                if (token && token.trim()) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-                
-                // Add fallback token for development
-                if (CONFIG.DEBUG && !token) {
-                    headers['x-fallback-token'] = 'development';
-                }
-                
-                return headers;
-            }
-            
+         getHeaders() {
+    const headers = { 
+        'Content-Type': 'application/json'
+    };
+    
+    const token = this.token.value;
+    if (token && token.trim()) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
             async request(endpoint, options = {}) {
                 const requestId = EnhancedUtils.generateID('req_');
                 const url = `${CONFIG.API_BASE_URL}${endpoint}`;
