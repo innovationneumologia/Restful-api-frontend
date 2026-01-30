@@ -3010,6 +3010,73 @@ document.addEventListener('DOMContentLoaded', function() {
                     saveUserProfile,
                     saveSystemSettings,
                     saveRole,
+                        staffModal: {
+      show: false,
+      mode: 'add',
+      activeTab: 'basic',
+      form: {
+        id: null,
+        name: '',
+        category: '',
+        physician_type: '',
+        year: '',
+        role: '',
+        department_id: '',
+        email: '',
+        clinical_unit_id: '',
+        status: 'active',
+        specializations: []
+      }
+    },
+                     // Also add any other missing modals you might need
+    departmentModal: {
+      show: false,
+      mode: 'add',
+      activeTab: 'basic',
+      form: {
+        id: null,
+        name: '',
+        code: '',
+        status: 'active',
+        units: [{
+          name: '',
+          code: '',
+          type: 'clinical',
+          capacity: 10
+        }]
+      }
+    },
+    
+    rotationModal: {
+      show: false,
+      mode: 'add',
+      form: {
+        id: null,
+        resident_id: '',
+        unit_id: '',
+        start_date: '',
+        end_date: '',
+        category: 'clinical',
+        status: 'upcoming'
+      }
+    },
+    
+    oncallModal: {
+      show: false,
+      mode: 'add',
+      form: {
+        id: null,
+        date: '',
+        primary_id: '',
+        backup_id: '',
+        start_time: '08:00',
+        end_time: '17:00',
+        type: 'primary',
+        area: 'emergency'
+      }
+    }
+  }
+}
                     
                     // Department Functions
                     addClinicalUnit,
