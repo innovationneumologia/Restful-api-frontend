@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1302,6 +1301,542 @@
         background: var(--medical-light-gray);
     }
 
+    /* ============ ENHANCED DASHBOARD STYLES ============ */
+    /* Quick Actions Toolbar */
+    .quick-actions-toolbar {
+        display: flex;
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 16px;
+        margin-bottom: 24px;
+        border: 1px solid var(--medical-light-blue);
+        gap: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .action-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .action-group-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--medical-gray);
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .action-btn {
+        padding: 8px 12px;
+        background: var(--medical-light-blue);
+        border: none;
+        border-radius: var(--border-radius-md);
+        color: var(--medical-blue);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .action-btn:hover {
+        background: var(--medical-blue);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .action-btn-large {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, var(--medical-blue), var(--medical-dark-blue));
+        color: white;
+        border: none;
+        border-radius: var(--border-radius-md);
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: var(--shadow-sm);
+        white-space: nowrap;
+    }
+
+    .action-btn-large:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    /* Smart Stats Dashboard */
+    .stats-dashboard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 20px;
+        border: 1px solid var(--medical-light-blue);
+        border-top: 4px solid var(--medical-blue);
+    }
+
+    .stat-card.critical {
+        border-top-color: var(--medical-red);
+    }
+
+    .stat-card.wide {
+        grid-column: span 2;
+    }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--medical-light-blue);
+    }
+
+    .stat-header i {
+        font-size: 20px;
+        color: var(--medical-blue);
+    }
+
+    .stat-header h3 {
+        flex: 1;
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .stat-main-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--medical-dark-blue);
+        margin-bottom: 15px;
+    }
+
+    .stat-breakdown {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .breakdown-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid var(--medical-light-blue);
+    }
+
+    .breakdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .breakdown-item .label {
+        color: var(--medical-gray);
+        font-size: 13px;
+    }
+
+    .breakdown-item .value {
+        font-weight: 600;
+        color: var(--medical-dark-blue);
+        font-size: 14px;
+    }
+
+    .trend {
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
+    .trend.up {
+        background: rgba(46, 125, 50, 0.1);
+        color: var(--medical-green);
+    }
+
+    .trend.down {
+        background: rgba(198, 40, 40, 0.1);
+        color: var(--medical-red);
+    }
+
+    /* Unit Status Grid */
+    .unit-status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+    }
+
+    .unit-status {
+        padding: 10px;
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--medical-light-blue);
+        border-left: 4px solid var(--medical-green);
+    }
+
+    .unit-status.warning {
+        border-left-color: var(--medical-orange);
+    }
+
+    .unit-status.danger {
+        border-left-color: var(--medical-red);
+    }
+
+    .unit-name {
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--medical-dark-blue);
+        margin-bottom: 4px;
+    }
+
+    .unit-metrics {
+        font-size: 11px;
+        color: var(--medical-gray);
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* Priority List */
+    .priority-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .priority-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        background: var(--medical-light-blue);
+        border-radius: var(--border-radius-md);
+    }
+
+    .priority-item.critical {
+        background: rgba(198, 40, 40, 0.1);
+        border-left: 4px solid var(--medical-red);
+    }
+
+    .priority-item i {
+        color: var(--medical-blue);
+    }
+
+    .priority-item.critical i {
+        color: var(--medical-red);
+    }
+
+    .priority-content {
+        flex: 1;
+    }
+
+    .priority-title {
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--medical-dark-blue);
+    }
+
+    .priority-desc {
+        font-size: 11px;
+        color: var(--medical-gray);
+    }
+
+    /* Widget Styles */
+    .widget-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--medical-light-blue);
+    }
+
+    .widget-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--medical-dark-blue);
+    }
+
+    /* Announcements Widget */
+    .announcements-widget {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 20px;
+        margin-bottom: 24px;
+        border: 1px solid var(--medical-light-blue);
+    }
+
+    .announcements-feed {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .announcement-card {
+        padding: 12px;
+        border: 1px solid var(--medical-light-blue);
+        border-radius: var(--border-radius-md);
+        transition: all 0.2s;
+    }
+
+    .announcement-card:hover {
+        background: var(--medical-light-blue);
+        transform: translateX(4px);
+    }
+
+    .announcement-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+
+    .announcement-title {
+        font-weight: 600;
+        color: var(--medical-dark-blue);
+        font-size: 14px;
+        flex: 1;
+    }
+
+    .announcement-priority {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .announcement-priority.urgent {
+        background: var(--medical-red);
+        color: white;
+    }
+
+    .announcement-priority.high {
+        background: var(--medical-orange);
+        color: white;
+    }
+
+    .announcement-priority.medium {
+        background: var(--medical-blue);
+        color: white;
+    }
+
+    .announcement-priority.low {
+        background: var(--medical-gray);
+        color: white;
+    }
+
+    .announcement-preview {
+        font-size: 13px;
+        color: var(--gray-700);
+        margin-bottom: 8px;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .announcement-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+        color: var(--gray-500);
+    }
+
+    /* Live Schedule */
+    .live-schedule {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 20px;
+        border: 1px solid var(--medical-light-blue);
+    }
+
+    .schedule-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .timeline-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px;
+        background: white;
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--medical-light-blue);
+    }
+
+    .timeline-time {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--medical-blue);
+        min-width: 80px;
+    }
+
+    .timeline-content {
+        flex: 1;
+    }
+
+    .physician-name {
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--medical-dark-blue);
+    }
+
+    .shift-type {
+        font-size: 11px;
+        color: var(--medical-gray);
+    }
+
+    .timeline-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    /* Status Pill Buttons */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 2px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .status-pill.active {
+        background: var(--medical-green);
+        color: white;
+        border-color: var(--medical-green);
+    }
+
+    .status-pill.inactive {
+        background: var(--medical-gray);
+        color: white;
+        border-color: var(--medical-gray);
+    }
+
+    .status-pill.warning {
+        background: var(--medical-orange);
+        color: white;
+        border-color: var(--medical-orange);
+    }
+
+    .status-pill.danger {
+        background: var(--medical-red);
+        color: white;
+        border-color: var(--medical-red);
+    }
+
+    .status-pill.oncall {
+        background: var(--medical-blue);
+        color: white;
+        border-color: var(--medical-blue);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+
+    .status-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+    }
+
+    .status-dot.active {
+        background: var(--medical-green);
+        box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.3);
+    }
+
+    .status-dot.inactive {
+        background: var(--medical-gray);
+    }
+
+    .status-dot.warning {
+        background: var(--medical-orange);
+        animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+
+    .schedule-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--medical-gray);
+    }
+
+    /* Absence Type Grid */
+    .absence-type-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .absence-type-option {
+        padding: 12px;
+        border: 2px solid var(--medical-light-blue);
+        border-radius: var(--border-radius-md);
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .absence-type-option:hover {
+        background: var(--medical-light-blue);
+        border-color: var(--medical-blue);
+    }
+
+    .absence-type-option.selected {
+        background: var(--medical-blue);
+        color: white;
+        border-color: var(--medical-dark-blue);
+    }
+
+    .absence-type-option i {
+        font-size: 18px;
+    }
+
+    /* Duration Display */
+    .duration-display {
+        border-left: 4px solid var(--medical-blue);
+        background: var(--medical-light-blue);
+    }
+
     /* ============ QUICK ACTIONS ============ */
     .quick-actions {
         display: flex;
@@ -1350,7 +1885,7 @@
         margin-bottom: 32px;
     }
 
-    .stat-card {
+    .stat-card-old {
         background: white;
         border-radius: var(--border-radius-lg);
         padding: 24px;
@@ -1364,7 +1899,7 @@
         overflow: hidden;
     }
 
-    .stat-card::before {
+    .stat-card-old::before {
         content: '';
         position: absolute;
         top: 0;
@@ -1374,7 +1909,7 @@
         background: linear-gradient(90deg, var(--medical-blue), var(--medical-teal));
     }
 
-    .stat-card:hover {
+    .stat-card-old:hover {
         box-shadow: var(--shadow-md);
         transform: translateY(-4px);
     }
@@ -2030,6 +2565,28 @@
         .training-units-grid {
             grid-template-columns: 1fr;
         }
+
+        .stats-dashboard {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-card.wide {
+            grid-column: span 1;
+        }
+
+        .quick-actions-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .action-group {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .action-group-label {
+            text-align: left;
+        }
     }
 
     @media (max-width: 768px) {
@@ -2060,7 +2617,7 @@
             min-width: 160px;
         }
 
-        .stat-card {
+        .stat-card-old {
             flex-direction: column;
             text-align: center;
             gap: 16px;
@@ -2103,6 +2660,14 @@
         }
 
         .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .unit-status-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .absence-type-grid {
             grid-template-columns: 1fr;
         }
     }
@@ -2163,6 +2728,15 @@
 
         .grid.grid-cols-2 {
             grid-template-columns: 1fr;
+        }
+
+        .quick-actions-toolbar {
+            padding: 12px;
+        }
+
+        .action-btn, .action-btn-large {
+            width: 100%;
+            justify-content: center;
         }
     }
 
@@ -2363,30 +2937,7 @@
                                     <span>Communications</span>
                                 </a>
                             </li>
-                            <li class="sidebar-menu-item" v-if="hasPermission('audit', 'read')">
-                                <a href="#" class="sidebar-menu-link" :class="{ active: currentView === 'audit_logs' }" 
-                                   @click.prevent="switchView('audit_logs'); mobileMenuOpen = false"
-                                   :aria-current="currentView === 'audit_logs' ? 'page' : null">
-                                    <i class="fas fa-history"></i>
-                                    <span>Audit Logs</span>
-                                </a>
-                            </li>
-                            <li class="sidebar-menu-item" v-if="hasPermission('permissions', 'manage')">
-                                <a href="#" class="sidebar-menu-link" :class="{ active: currentView === 'permission_manager' }" 
-                                   @click.prevent="switchView('permission_manager'); mobileMenuOpen = false"
-                                   :aria-current="currentView === 'permission_manager' ? 'page' : null">
-                                    <i class="fas fa-user-shield"></i>
-                                    <span>Permission Manager</span>
-                                </a>
-                            </li>
-                            <li class="sidebar-menu-item" v-if="hasPermission('system', 'read')">
-                                <a href="#" class="sidebar-menu-link" :class="{ active: currentView === 'system_settings' }" 
-                                   @click.prevent="switchView('system_settings'); mobileMenuOpen = false"
-                                   :aria-current="currentView === 'system_settings' ? 'page' : null">
-                                    <i class="fas fa-cog"></i>
-                                    <span>System Settings</span>
-                                </a>
-                            </li>
+                            <!-- AUDIT LOGS REMOVED -->
                         </ul>
                     </div>
                 </nav>
@@ -2441,25 +2992,8 @@
                 </div>
                 
                 <div class="stat-item">
-                    <span class="stat-label">Pending Requests</span>
-                    <div v-if="loadingStats" class="skeleton skeleton-text" style="width: 30px;"></div>
-                    <template v-else>
-                        <span class="stat-value">{{ liveStats.pendingRequests || 0 }}</span>
-                    </template>
-                </div>
-                
-                <div class="stat-item">
-                    <span class="stat-label">Training Unit Capacity</span>
-                    <div v-if="loadingStats" class="skeleton skeleton-text" style="width: 80px;"></div>
-                    <template v-else>
-                        <span class="stat-value">{{ liveStats.trainingCapacity?.current || 0 }}/{{ liveStats.trainingCapacity?.max || 0 }}</span>
-                        <span class="stat-trend" :class="liveStats.trainingCapacity?.status || ''">{{ liveStats.trainingCapacity?.status || 'normal' }}</span>
-                    </template>
-                </div>
-                
-                <div class="stat-item">
                     <span class="stat-label">Active Rotations</span>
-                    <div v-if="loadingStats" class="skeleton skeleton-text" style="width: 80px;"></div>
+                    <div v-if="loadingStats" class="skeleton skeleton-text" style="width: 30px;"></div>
                     <template v-else>
                         <span class="stat-value">{{ liveStats.activeRotations || 0 }}</span>
                     </template>
@@ -2491,17 +3025,6 @@
                                 <button class="search-scope" @click="toggleSearchScope" aria-label="Change search scope">
                                     {{ searchScope }} <i class="fas fa-chevron-down ml-2"></i>
                                 </button>
-                            </div>
-                            
-                            <div class="search-filters">
-                                <button class="search-filter-btn" :class="{ active: searchFilter === 'all' }" 
-                                        @click="searchFilter = 'all'">All</button>
-                                <button class="search-filter-btn" :class="{ active: searchFilter === 'staff' }" 
-                                        @click="searchFilter = 'staff'">Staff</button>
-                                <button class="search-filter-btn" :class="{ active: searchFilter === 'rotations' }" 
-                                        @click="searchFilter = 'rotations'">Rotations</button>
-                                <button class="search-filter-btn" :class="{ active: searchFilter === 'units' }" 
-                                        @click="searchFilter = 'units'">Units</button>
                             </div>
                         </div>
                         
@@ -2574,103 +3097,179 @@
                         </div>
                     </nav>
 
-                    <!-- Daily Operations View -->
+                    <!-- ============ ENHANCED DASHBOARD ============ -->
                     <div v-if="currentView === 'daily_operations'">
-                        <!-- Quick Actions -->
-                        <div class="quick-actions">
-                            <div class="quick-action-btn" @click="showAddMedicalStaffModal" v-if="hasPermission('medical_staff', 'create')">
-                                <i class="fas fa-user-plus" style="color: var(--medical-green);"></i>
-                                Add Medical Staff
-                            </div>
-                            <div class="quick-action-btn" @click="showAddOnCallModal" v-if="hasPermission('oncall_schedule', 'create')">
-                                <i class="fas fa-phone-alt" style="color: var(--medical-blue);"></i>
-                                Schedule On-call
-                            </div>
-                            <div class="quick-action-btn" @click="showAddAbsenceModal" v-if="hasPermission('staff_absence', 'create')">
-                                <i class="fas fa-calendar-times" style="color: var(--medical-orange);"></i>
-                                Document Absence
-                            </div>
-                            <div class="quick-action-btn" @click="showQuickPlacementModal" v-if="hasPermission('placements', 'create')">
-                                <i class="fas fa-user-md" style="color: var(--medical-teal);"></i>
-                                Quick Placement
-                            </div>
-                            <div class="quick-action-btn" @click="showAddRotationModal" v-if="hasPermission('resident_rotations', 'create')">
-                                <i class="fas fa-calendar-alt" style="color: var(--medical-blue);"></i>
-                                Add Rotation
-                            </div>
-                            <div class="quick-action-btn" @click="showCommunicationsModal" v-if="hasPermission('communications', 'create')">
-                                <i class="fas fa-bullhorn" style="color: var(--medical-red);"></i>
-                                Post Announcement
-                            </div>
-                        </div>
-
-                        <!-- Stats Overview -->
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-icon primary">
-                                    <i class="fas fa-user-md"></i>
-                                </div>
-                                <div class="stat-content">
-                                    <div class="stat-value">
-                                        <span v-if="loadingStats" class="skeleton skeleton-text" style="width: 60px; display: inline-block;"></span>
-                                        <span v-else>{{ stats.totalStaff || 0 }}</span>
-                                    </div>
-                                    <div class="stat-label">Total Medical Staff</div>
-                                </div>
-                            </div>
-                            
-                            <div class="stat-card">
-                                <div class="stat-icon success">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </div>
-                                <div class="stat-content">
-                                    <div class="stat-value">
-                                        <span v-if="loadingStats" class="skeleton skeleton-text" style="width: 60px; display: inline-block;"></span>
-                                        <span v-else>{{ stats.activeRotations || 0 }}</span>
-                                    </div>
-                                    <div class="stat-label">Active Rotations</div>
-                                </div>
-                            </div>
-                            
-                            <div class="stat-card">
-                                <div class="stat-icon warning">
-                                    <i class="fas fa-clinic-medical"></i>
-                                </div>
-                                <div class="stat-content">
-                                    <div class="stat-value">
-                                        <span v-if="loadingStats" class="skeleton skeleton-text" style="width: 60px; display: inline-block;"></span>
-                                        <span v-else>{{ stats.occupiedUnits || 0 }}/{{ stats.totalUnits || 0 }}</span>
-                                    </div>
-                                    <div class="stat-label">Training Units</div>
-                                </div>
-                            </div>
-                            
-                            <div class="stat-card">
-                                <div class="stat-icon danger">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                                <div class="stat-content">
-                                    <div class="stat-value">
-                                        <span v-if="loadingStats" class="skeleton skeleton-text" style="width: 60px; display: inline-block;"></span>
-                                        <span v-else>{{ stats.pendingAlerts || 0 }}</span>
-                                    </div>
-                                    <div class="stat-label">Pending Alerts</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Recent Announcements -->
-                        <div class="card mb-6">
-                            <div class="card-header">
-                                <div class="card-title">
-                                    <i class="fas fa-bullhorn"></i>
-                                    Recent Announcements
-                                </div>
-                                <button class="btn btn-sm btn-primary" @click="showCommunicationsModal" v-if="hasPermission('communications', 'create')">
-                                    <i class="fas fa-plus"></i> New Announcement
+                        <!-- Quick Actions Toolbar -->
+                        <div class="quick-actions-toolbar">
+                            <div class="action-group">
+                                <span class="action-group-label">Staff</span>
+                                <button class="action-btn" @click="showAddMedicalStaffModal" v-if="hasPermission('medical_staff', 'create')">
+                                    <i class="fas fa-user-plus"></i> Add Staff
                                 </button>
                             </div>
-                            <div class="card-content">
+                            
+                            <div class="action-group">
+                                <span class="action-group-label">Scheduling</span>
+                                <button class="action-btn" @click="showAddOnCallModal" v-if="hasPermission('oncall_schedule', 'create')">
+                                    <i class="fas fa-phone-alt"></i> On-call
+                                </button>
+                                <button class="action-btn" @click="showAddAbsenceModal" v-if="hasPermission('staff_absence', 'create')">
+                                    <i class="fas fa-calendar-times"></i> Absence
+                                </button>
+                            </div>
+                            
+                            <div class="action-group">
+                                <span class="action-group-label">Training</span>
+                                <button class="action-btn" @click="showQuickPlacementModal" v-if="hasPermission('placements', 'create')">
+                                    <i class="fas fa-user-md"></i> Placement
+                                </button>
+                                <button class="action-btn" @click="showAddRotationModal" v-if="hasPermission('resident_rotations', 'create')">
+                                    <i class="fas fa-calendar-alt"></i> Rotation
+                                </button>
+                            </div>
+                            
+                            <div class="action-group">
+                                <button class="action-btn-large" @click="showCommunicationsModal" v-if="hasPermission('communications', 'create')">
+                                    <i class="fas fa-bullhorn"></i> Post Announcement
+                                    <span class="badge badge-danger" v-if="unreadAnnouncements > 0">{{ unreadAnnouncements }}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Smart Stats Dashboard -->
+                        <div class="stats-dashboard">
+                            <!-- Medical Staff Card -->
+                            <div class="stat-card critical">
+                                <div class="stat-header">
+                                    <i class="fas fa-user-md"></i>
+                                    <h3>Medical Staff</h3>
+                                    <button class="btn btn-sm btn-outline" @click="switchView('medical_staff')">View All</button>
+                                </div>
+                                <div class="stat-body">
+                                    <div class="stat-main-value">{{ stats.totalStaff || 0 }}</div>
+                                    <div class="stat-breakdown">
+                                        <div class="breakdown-item">
+                                            <span class="label">Active</span>
+                                            <span class="value">{{ stats.activeStaff || 0 }}</span>
+                                            <span class="status-pill active">Live</span>
+                                        </div>
+                                        <div class="breakdown-item">
+                                            <span class="label">On Leave</span>
+                                            <span class="value">{{ stats.onLeaveStaff || 0 }}</span>
+                                        </div>
+                                        <div class="breakdown-item">
+                                            <span class="label">On-call Today</span>
+                                            <span class="value">{{ todaysOnCall.length || 0 }}</span>
+                                            <span class="status-pill oncall">Now</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Rotations Card -->
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <h3>Rotations</h3>
+                                    <button class="btn btn-sm btn-outline" @click="switchView('resident_rotations')">Manage</button>
+                                </div>
+                                <div class="stat-body">
+                                    <div class="stat-main-value">{{ stats.activeRotations || 0 }}</div>
+                                    <div class="stat-breakdown">
+                                        <div class="breakdown-item">
+                                            <span class="label">Active</span>
+                                            <span class="value">{{ stats.activeRotations || 0 }}</span>
+                                            <span class="trend up" v-if="stats.rotationTrend > 0">+{{ stats.rotationTrend }}</span>
+                                            <span class="trend down" v-else-if="stats.rotationTrend < 0">{{ stats.rotationTrend }}</span>
+                                        </div>
+                                        <div class="breakdown-item">
+                                            <span class="label">Upcoming</span>
+                                            <span class="value">{{ stats.upcomingRotations || 0 }}</span>
+                                        </div>
+                                        <div class="breakdown-item">
+                                            <span class="label">Ending Soon</span>
+                                            <span class="value">{{ stats.endingRotations || 0 }}</span>
+                                            <span class="status-pill warning">Alert</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Clinical Units Status -->
+                            <div class="stat-card wide">
+                                <div class="stat-header">
+                                    <i class="fas fa-clinic-medical"></i>
+                                    <h3>Clinical Units Status</h3>
+                                </div>
+                                <div class="stat-body">
+                                    <div class="unit-status-grid">
+                                        <div v-for="unit in trainingUnits.slice(0, 4)" :key="unit.id" 
+                                             :class="['unit-status', getUnitStatusClass(unit)]">
+                                            <div class="unit-name">{{ unit.unit_name }}</div>
+                                            <div class="unit-metrics">
+                                                <span class="resident-count">{{ unit.current_residents || 0 }}/{{ unit.maximum_residents }}</span>
+                                                <span class="attending" v-if="getUnitSupervisor(unit.id)">{{ getUnitSupervisor(unit.id) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Today's Priorities -->
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <h3>Today's Priority</h3>
+                                </div>
+                                <div class="stat-body">
+                                    <div class="priority-list">
+                                        <div class="priority-item critical" v-if="todaysOnCall.length > 0">
+                                            <i class="fas fa-phone"></i>
+                                            <div class="priority-content">
+                                                <div class="priority-title">On-call Coverage</div>
+                                                <div class="priority-desc">{{ todaysOnCall.length }} physicians on-call</div>
+                                            </div>
+                                        </div>
+                                        <div class="priority-item" v-if="todaysAbsences.length > 0">
+                                            <i class="fas fa-user-clock"></i>
+                                            <div class="priority-content">
+                                                <div class="priority-title">Absences Today</div>
+                                                <div class="priority-desc">{{ todaysAbsences.length }} staff members out</div>
+                                            </div>
+                                        </div>
+                                        <div class="priority-item" v-if="endingRotationsToday.length > 0">
+                                            <i class="fas fa-calendar-check"></i>
+                                            <div class="priority-content">
+                                                <div class="priority-title">Rotation Changes</div>
+                                                <div class="priority-desc">{{ endingRotationsToday.length }} rotations ending</div>
+                                            </div>
+                                        </div>
+                                        <div class="priority-item" v-if="priorityItems.length === 0">
+                                            <i class="fas fa-check-circle"></i>
+                                            <div class="priority-content">
+                                                <div class="priority-title">All Clear</div>
+                                                <div class="priority-desc">No urgent priorities</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Announcements Widget -->
+                        <div class="announcements-widget">
+                            <div class="widget-header">
+                                <div class="widget-title">
+                                    <i class="fas fa-bullhorn"></i>
+                                    Announcements
+                                    <span class="badge badge-primary">{{ recentAnnouncements.length }}</span>
+                                </div>
+                                <button class="btn btn-sm btn-primary" @click="showCommunicationsModal" v-if="hasPermission('communications', 'create')">
+                                    <i class="fas fa-plus"></i> New
+                                </button>
+                            </div>
+                            
+                            <div class="announcements-feed">
                                 <div v-if="loadingAnnouncements" class="loading-overlay">
                                     <div class="loading-spinner"></div>
                                 </div>
@@ -2680,42 +3279,44 @@
                                     <div class="empty-state-description">
                                         No announcements have been posted yet.
                                     </div>
-                                    <button class="btn btn-primary mt-4" @click="showCommunicationsModal" v-if="hasPermission('communications', 'create')">
-                                        <i class="fas fa-plus"></i> Create Announcement
-                                    </button>
                                 </div>
                                 <div v-else>
-                                    <div v-for="announcement in recentAnnouncements.slice(0, 3)" :key="announcement.id" style="margin-bottom: 16px; padding: 16px; border: 1px solid var(--medical-light-blue); border-radius: var(--border-radius-md); transition: all var(--transition-fast);" @mouseenter="this.style.backgroundColor='var(--medical-light-blue)'" @mouseleave="this.style.backgroundColor='white'">
-                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                                            <div>
-                                                <div style="font-weight: 600; color: var(--medical-dark-blue);">{{ announcement.title }}</div>
-                                                <div style="font-size: 12px; color: var(--medical-gray);">By: {{ announcement.author }} • {{ formatTimeAgo(announcement.created_at) }}</div>
-                                            </div>
-                                            <span class="badge" :class="`badge-${announcement.priority}`">
-                                                {{ announcement.priority }}
+                                    <div v-for="announcement in recentAnnouncements.slice(0, 3)" :key="announcement.id" class="announcement-card">
+                                        <div class="announcement-header">
+                                            <div class="announcement-title">{{ announcement.title }}</div>
+                                            <span class="announcement-priority" :class="announcement.priority_level">
+                                                {{ announcement.priority_level }}
                                             </span>
                                         </div>
-                                        <p style="color: var(--gray-700); margin-bottom: 12px;">{{ announcement.content }}</p>
-                                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--gray-500);">
-                                            <span>Expires: {{ announcement.expires_at ? formatDateTime(announcement.expires_at) : 'Never' }}</span>
+                                        <div class="announcement-preview">
+                                            {{ truncateText(announcement.content, 100) }}
+                                        </div>
+                                        <div class="announcement-footer">
+                                            <span class="author">{{ announcement.author }}</span>
+                                            <span class="time">{{ formatTimeAgo(announcement.created_at) }}</span>
+                                            <button class="btn btn-xs btn-outline" @click="viewAnnouncement(announcement)">
+                                                Read More
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Today's On-call Schedule -->
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">
+                        <!-- Live Schedule -->
+                        <div class="live-schedule">
+                            <div class="widget-header">
+                                <div class="widget-title">
                                     <i class="fas fa-phone-alt"></i>
                                     Today's On-call Schedule
                                 </div>
-                                <button class="btn btn-sm btn-primary" @click="showAddOnCallModal" v-if="hasPermission('oncall_schedule', 'create')">
-                                    <i class="fas fa-plus"></i> Add Schedule
-                                </button>
+                                <div class="schedule-status">
+                                    <span class="status-dot active"></span>
+                                    Live Updates
+                                </div>
                             </div>
-                            <div class="card-content">
+                            
+                            <div class="schedule-timeline">
                                 <div v-if="loadingSchedule" class="loading-overlay">
                                     <div class="loading-spinner"></div>
                                 </div>
@@ -2725,54 +3326,30 @@
                                     <div class="empty-state-description">
                                         No physicians are scheduled for on-call duty today
                                     </div>
-                                    <button class="btn btn-primary mt-4" @click="showAddOnCallModal" v-if="hasPermission('oncall_schedule', 'create')">
-                                        <i class="fas fa-plus"></i> Schedule On-call
-                                    </button>
                                 </div>
-                                <div v-else class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>Physician</th>
-                                                <th>Shift Time</th>
-                                                <th>Role</th>
-                                                <th>Contact</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr v-for="schedule in todaysOnCall" :key="schedule.id">
-                                                <td>{{ schedule.physician_name }}</td>
-                                                <td>{{ formatTimeRange(schedule.start_time, schedule.end_time) }}</td>
-                                                <td>
-                                                    <span class="badge badge-primary">{{ schedule.shift_type }}</span>
-                                                </td>
-                                                <td>{{ schedule.contact_number || 'N/A' }}</td>
-                                                <td>
-                                                    <div class="action-dropdown">
-                                                        <button class="btn btn-sm btn-secondary" @click="toggleActionMenu($event)" aria-label="Schedule actions">
-                                                            <i class="fas fa-ellipsis-v"></i>
-                                                        </button>
-                                                        <div class="action-menu">
-                                                            <div class="action-menu-item" @click="editOnCallSchedule(schedule)" v-if="hasPermission('oncall_schedule', 'update')">
-                                                                <i class="fas fa-edit"></i>
-                                                                <span>Edit</span>
-                                                            </div>
-                                                            <div class="action-menu-item danger" @click="deleteOnCallSchedule(schedule.id)" v-if="hasPermission('oncall_schedule', 'delete')">
-                                                                <i class="fas fa-trash"></i>
-                                                                <span>Delete</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                <div v-else>
+                                    <div v-for="shift in todaysOnCall" :key="shift.id" class="timeline-item">
+                                        <div class="timeline-time">{{ shift.start_time }} - {{ shift.end_time }}</div>
+                                        <div class="timeline-content">
+                                            <div class="physician-name">{{ shift.physician_name }}</div>
+                                            <div class="shift-type">{{ formatShiftType(shift.shift_type) }}</div>
+                                        </div>
+                                        <div class="timeline-actions">
+                                            <button class="btn btn-sm btn-outline" @click="contactPhysician(shift)">
+                                                <i class="fas fa-phone"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline" @click="editOnCallSchedule(shift)" v-if="hasPermission('oncall_schedule', 'update')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- ============ OTHER VIEWS (UNCHANGED STRUCTURE) ============ -->
+                    
                     <!-- Medical Staff View -->
                     <div v-if="currentView === 'medical_staff'">
                         <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
@@ -2868,7 +3445,7 @@
                                             <td>{{ staff.staff_id }}</td>
                                             <td>{{ getDepartmentName(staff.department_id) || 'Unassigned' }}</td>
                                             <td>
-                                                <span class="badge" :class="staff.employment_status === 'active' ? 'status-available' : staff.employment_status === 'on_leave' ? 'status-busy' : 'status-critical'">
+                                                <span class="status-pill" :class="staff.employment_status">
                                                     {{ formatEmploymentStatus(staff.employment_status) }}
                                                 </span>
                                             </td>
@@ -2930,14 +3507,13 @@
                                         <i class="fas fa-hospital"></i>
                                         {{ department.name }}
                                     </div>
-                                    <span class="badge" :class="department.status === 'active' ? 'status-available' : 'status-busy'">
+                                    <span class="status-pill" :class="department.status">
                                         {{ department.status }}
                                     </span>
                                 </div>
                                 
                                 <div class="mb-4">
                                     <div class="text-sm text-gray-600 mb-2">Department Code: {{ department.code }}</div>
-                                    <div class="text-sm text-gray-600 mb-4">{{ department.description || 'No description available' }}</div>
                                     
                                     <div class="mt-3">
                                         <div class="text-sm font-medium mb-2">Clinical Units:</div>
@@ -3004,12 +3580,10 @@
                                         <div class="training-unit-capacity">{{ unit.current_residents || 0 }}/{{ unit.maximum_residents }} residents</div>
                                         <div class="text-sm text-gray-600 mt-1">{{ unit.unit_code }} • {{ getDepartmentName(unit.department_id) }}</div>
                                     </div>
-                                    <span class="badge" :class="unit.unit_status === 'active' ? 'status-available' : 'status-busy'">
+                                    <span class="status-pill" :class="unit.unit_status">
                                         {{ unit.unit_status }}
                                     </span>
                                 </div>
-                                
-                                <div class="text-sm text-gray-600 mb-4">{{ unit.unit_description || 'No description available' }}</div>
                                 
                                 <div v-if="unit.specialty" class="mb-3">
                                     <span class="badge badge-info">{{ unit.specialty }}</span>
@@ -3133,7 +3707,7 @@
                                             <td>{{ formatDate(rotation.rotation_start_date) }}</td>
                                             <td>{{ formatDate(rotation.rotation_end_date) }}</td>
                                             <td>
-                                                <span class="badge" :class="getRotationStatusClass(rotation.rotation_status)">
+                                                <span class="status-pill" :class="rotation.rotation_status">
                                                     {{ formatRotationStatus(rotation.rotation_status) }}
                                                 </span>
                                             </td>
@@ -3248,7 +3822,7 @@
                                             <td>{{ schedule.backup_physician_id ? getPhysicianName(schedule.backup_physician_id) : 'No backup' }}</td>
                                             <td>{{ schedule.start_time }} - {{ schedule.end_time }}</td>
                                             <td>
-                                                <span class="badge" :class="schedule.shift_type === 'primary_call' ? 'badge-primary' : 'badge-info'">
+                                                <span class="status-pill" :class="schedule.shift_type">
                                                     {{ formatShiftType(schedule.shift_type) }}
                                                 </span>
                                             </td>
@@ -3289,7 +3863,7 @@
                                 <p class="text-muted" style="color: var(--medical-gray);">Track and manage staff absences and coverage</p>
                             </div>
                             <button class="btn btn-primary" @click="showAddAbsenceModal" v-if="hasPermission('staff_absence', 'create')">
-                                <i class="fas fa-plus"></i> Document Absence
+                                <i class="fas fa-plus"></i> Record Absence
                             </button>
                         </div>
 
@@ -3362,7 +3936,7 @@
                                             <td>{{ calculateAbsenceDuration(absence.start_date, absence.end_date) }} days</td>
                                             <td>{{ getStaffName(absence.replacement_staff_id) || 'No coverage' }}</td>
                                             <td>
-                                                <span class="badge" :class="getAbsenceStatusClass(absence.status)">
+                                                <span class="status-pill" :class="absence.status">
                                                     {{ formatAbsenceStatus(absence.status) }}
                                                 </span>
                                             </td>
@@ -3379,10 +3953,6 @@
                                                         <div class="action-menu-item" @click="editAbsence(absence)" v-if="hasPermission('staff_absence', 'update')">
                                                             <i class="fas fa-edit"></i>
                                                             <span>Edit</span>
-                                                        </div>
-                                                        <div class="action-menu-item" @click="assignCoverage(absence)" v-if="hasPermission('staff_absence', 'update') && !absence.replacement_staff_id">
-                                                            <i class="fas fa-user-md"></i>
-                                                            <span>Assign Coverage</span>
                                                         </div>
                                                         <div class="action-menu-item danger" @click="deleteAbsence(absence.id)" v-if="hasPermission('staff_absence', 'delete')">
                                                             <i class="fas fa-trash"></i>
@@ -3421,275 +3991,34 @@
                                             Recent Announcements
                                         </div>
                                     </div>
-                                    <div class="activity-feed" style="background: white; border-radius: var(--border-radius-lg); padding: 24px;">
-                                        <div v-for="announcement in recentAnnouncements" :key="announcement.id" style="display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--medical-light-blue);">
-                                            <div :class="`bg-${getPriorityColor(announcement.priority_level)}`" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; flex-shrink: 0;">
-                                                <i class="fas fa-bullhorn"></i>
+                                    <div class="announcements-feed" style="padding: 0;">
+                                        <div v-if="recentAnnouncements.length === 0" class="empty-state">
+                                            <i class="fas fa-bullhorn empty-state-icon"></i>
+                                            <div class="empty-state-title">No Announcements</div>
+                                            <div class="empty-state-description">
+                                                No announcements have been posted yet.
                                             </div>
-                                            <div style="flex: 1;">
-                                                <div style="font-weight: 600; margin-bottom: 4px;">{{ announcement.announcement_title }}</div>
-                                                <div style="font-size: 14px; color: var(--gray-800); margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ announcement.announcement_content }}</div>
-                                                <div style="font-size: 12px; color: var(--gray-500);">
-                                                    {{ formatDateTime(announcement.publish_start_date) }} • 
-                                                    <span class="badge badge-sm" :class="`badge-${getPriorityColor(announcement.priority_level)}`">
+                                        </div>
+                                        <div v-else>
+                                            <div v-for="announcement in recentAnnouncements" :key="announcement.id" class="announcement-card">
+                                                <div class="announcement-header">
+                                                    <div class="announcement-title">{{ announcement.title }}</div>
+                                                    <span class="announcement-priority" :class="announcement.priority_level">
                                                         {{ announcement.priority_level }}
                                                     </span>
                                                 </div>
+                                                <div class="announcement-preview">
+                                                    {{ truncateText(announcement.content, 200) }}
+                                                </div>
+                                                <div class="announcement-footer">
+                                                    <span class="author">{{ announcement.author }}</span>
+                                                    <span class="time">{{ formatDateTime(announcement.created_at) }}</span>
+                                                    <button class="btn btn-xs btn-outline" @click="viewAnnouncement(announcement)">
+                                                        Read More
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Audit Logs View -->
-                    <div v-if="currentView === 'audit_logs'">
-                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                            <div>
-                                <h2 class="section-title" style="font-size: 24px; font-weight: 600; color: var(--medical-dark-blue);">Audit Logs</h2>
-                                <p class="text-muted" style="color: var(--medical-gray);">System activity and user action tracking</p>
-                            </div>
-                            <button class="btn btn-primary" @click="exportAuditLogs" v-if="hasPermission('audit', 'export')">
-                                <i class="fas fa-download"></i> Export Logs
-                            </button>
-                        </div>
-
-                        <!-- Audit Filters -->
-                        <div class="audit-filters">
-                            <div class="filter-group" style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
-                                <div class="filter-label" style="font-size: 12px; color: var(--medical-gray); font-weight=500;">Date Range</div>
-                                <input type="date" class="form-control form-control-sm" v-model="auditFilters.dateRange">
-                            </div>
-                            <div class="filter-group" style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
-                                <div class="filter-label" style="font-size: 12px; color: var(--medical-gray); font-weight=500;">Action Type</div>
-                                <select class="form-select form-select-sm" v-model="auditFilters.actionType">
-                                    <option value="">All Actions</option>
-                                    <option value="create">Create</option>
-                                    <option value="update">Update</option>
-                                    <option value="delete">Delete</option>
-                                    <option value="login">Login</option>
-                                    <option value="logout">Logout</option>
-                                </select>
-                            </div>
-                            <div class="filter-group" style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
-                                <div class="filter-label" style="font-size: 12px; color: var(--medical-gray); font-weight=500;">User</div>
-                                <select class="form-select form-select-sm" v-model="auditFilters.userId">
-                                    <option value="">All Users</option>
-                                    <option v-for="user in users" :key="user.id" :value="user.id">
-                                        {{ user.full_name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="filter-actions" style="display: flex; gap: 8px; align-items: flex-end;">
-                                <button class="btn btn-sm btn-secondary" @click="resetAuditFilters">
-                                    <i class="fas fa-redo"></i> Reset
-                                </button>
-                                <button class="btn btn-sm btn-primary" @click="applyAuditFilters">
-                                    <i class="fas fa-filter"></i> Apply
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Audit Logs List -->
-                        <div class="card">
-                            <div v-if="loadingAuditLogs" class="loading-overlay">
-                                <div class="loading-spinner"></div>
-                            </div>
-                            <div v-else-if="filteredAuditLogs.length === 0" class="empty-state">
-                                <i class="fas fa-history empty-state-icon"></i>
-                                <div class="empty-state-title">No Audit Logs Found</div>
-                                <div class="empty-state-description">
-                                    No audit logs match your filter criteria.
-                                </div>
-                            </div>
-                            <div v-else>
-                                <div v-for="log in filteredAuditLogs" :key="log.id" class="audit-log-item">
-                                    <div class="audit-action">{{ formatAuditAction(log.action) }}</div>
-                                    <div class="audit-details">
-                                        <span>User: {{ getUserName(log.user_id) }}</span>
-                                        <span>Module: {{ log.module }}</span>
-                                        <span>IP: {{ log.ip_address }}</span>
-                                    </div>
-                                    <div class="audit-timestamp">
-                                        <i class="fas fa-clock"></i> {{ formatDateTime(log.created_at) }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Permission Manager View -->
-                    <div v-if="currentView === 'permission_manager'">
-                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                            <div>
-                                <h2 class="section-title" style="font-size: 24px; font-weight: 600; color: var(--medical-dark-blue);">Permission Manager</h2>
-                                <p class="text-muted" style="color: var(--medical-gray);">Manage user permissions and access controls</p>
-                            </div>
-                            <button class="btn btn-primary" @click="showAddRoleModal" v-if="hasPermission('permissions', 'manage')">
-                                <i class="fas fa-plus"></i> Add Role
-                            </button>
-                        </div>
-
-                        <!-- Permission Grid -->
-                        <div class="permission-grid">
-                            <div v-for="role in userRoles" :key="role.id" class="permission-card">
-                                <div class="permission-header">
-                                    <div class="permission-role">{{ role.name }}</div>
-                                    <div class="flex gap-2">
-                                        <button class="btn btn-sm btn-primary" @click="editRole(role)" v-if="hasPermission('permissions', 'manage')">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-danger" @click="deleteRole(role.id)" v-if="hasPermission('permissions', 'manage') && role.name !== 'Administrator'">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div class="permission-checkboxes">
-                                    <div v-for="permission in availablePermissions" :key="permission.id" class="form-check">
-                                        <input type="checkbox" class="form-check-input" 
-                                               :checked="roleHasPermission(role.id, permission.id)"
-                                               @change="toggleRolePermission(role.id, permission.id)"
-                                               :id="`role-${role.id}-permission-${permission.id}`">
-                                        <label class="form-check-label" :for="`role-${role.id}-permission-${permission.id}`">
-                                            {{ formatPermissionName(permission.name) }}
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- User Permissions Table -->
-                        <div class="card mt-6">
-                            <div class="card-header">
-                                <div class="card-title">
-                                    <i class="fas fa-users"></i>
-                                    User Permissions
-                                </div>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>User</th>
-                                            <th>Role</th>
-                                            <th>Permissions</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="user in users" :key="user.id">
-                                            <td>{{ user.full_name }}</td>
-                                            <td>{{ user.user_role }}</td>
-                                            <td>
-                                                <span class="badge badge-sm" v-for="permission in getUserPermissions(user.id)" :key="permission">
-                                                    {{ permission }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-sm btn-primary" @click="editUserPermissions(user)" v-if="hasPermission('permissions', 'manage')">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- System Settings View -->
-                    <div v-if="currentView === 'system_settings'">
-                        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                            <div>
-                                <h2 class="section-title" style="font-size: 24px; font-weight: 600; color: var(--medical-dark-blue);">System Settings</h2>
-                                <p class="text-muted" style="color: var(--medical-gray);">Configure system preferences and behavior</p>
-                            </div>
-                            <button class="btn btn-primary" @click="saveSystemSettings">
-                                <i class="fas fa-save"></i> Save Settings
-                            </button>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="modal-section">
-                                    <div class="modal-section-title">
-                                        <i class="fas fa-hospital"></i>
-                                        Hospital Information
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div class="form-group">
-                                            <label class="form-label">Hospital Name</label>
-                                            <input type="text" class="form-control" v-model="systemSettings.hospital_name">
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Default Department</label>
-                                            <select class="form-select" v-model="systemSettings.default_department_id">
-                                                <option value="">Select Default Department</option>
-                                                <option v-for="department in departments" :key="department.id" :value="department.id">
-                                                    {{ department.name }}
-                                                </option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Max Residents per Training Unit</label>
-                                            <input type="number" class="form-control" v-model="systemSettings.max_residents_per_unit" min="1" max="50">
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Default Rotation Duration (weeks)</label>
-                                            <input type="number" class="form-control" v-model="systemSettings.default_rotation_duration" min="1" max="52">
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="modal-section">
-                                    <div class="modal-section-title">
-                                        <i class="fas fa-shield-alt"></i>
-                                        Security Settings
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-check">
-                                            <input type="checkbox" class="form-check-input" v-model="systemSettings.enable_audit_logging">
-                                            <span class="form-check-label">Enable Audit Logging</span>
-                                        </label>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-check">
-                                            <input type="checkbox" class="form-check-input" v-model="systemSettings.require_mfa">
-                                            <span class="form-check-label">Require MFA Authentication</span>
-                                        </label>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-check">
-                                            <input type="checkbox" class="form-check-input" v-model="systemSettings.maintenance_mode">
-                                            <span class="form-check-label">Maintenance Mode</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                
-                                <div class="modal-section">
-                                    <div class="modal-section-title">
-                                        <i class="fas fa-bell"></i>
-                                        Notification Settings
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-check">
-                                            <input type="checkbox" class="form-check-input" v-model="systemSettings.notifications_enabled">
-                                            <span class="form-check-label">Enable Email Notifications</span>
-                                        </label>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-check">
-                                            <input type="checkbox" class="form-check-input" v-model="systemSettings.absence_notifications">
-                                            <span class="form-check-label">Staff Absence Notifications</span>
-                                        </label>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-check">
-                                            <input type="checkbox" class="form-check-input" v-model="systemSettings.announcement_notifications">
-                                            <span class="form-check-label">Announcement Notifications</span>
-                                        </label>
                                     </div>
                                 </div>
                             </div>
@@ -3700,7 +4029,7 @@
 
             <!-- ============ MODALS ============ -->
             
-            <!-- MODAL 1: Staff Details Modal -->
+            <!-- MODAL 1: Staff Details Modal (TEXTAREA REMOVED - Biography removed) -->
             <div v-if="staffDetailsModal.show" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="staff-details-title">
                 <div class="modal-container modal-xwide">
                     <div class="modal-header">
@@ -3718,7 +4047,7 @@
                             <div class="staff-basic-info">
                                 <div class="staff-name">{{ staffDetailsModal.staff.full_name }}</div>
                                 <div class="staff-title">{{ formatStaffType(staffDetailsModal.staff.staff_type) }}</div>
-                                <span class="staff-status" :class="staffDetailsModal.staff.employment_status">
+                                <span class="status-pill" :class="staffDetailsModal.staff.employment_status">
                                     {{ formatEmploymentStatus(staffDetailsModal.staff.employment_status) }}
                                 </span>
                             </div>
@@ -3782,12 +4111,6 @@
                                         <div class="info-label">Years of Experience</div>
                                         <div class="info-value" :class="staffDetailsModal.staff.years_experience ? '' : 'unavailable'">
                                             {{ staffDetailsModal.staff.years_experience || 'Information unavailable' }}
-                                        </div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Biography</div>
-                                        <div class="info-value" :class="staffDetailsModal.staff.biography ? '' : 'unavailable'">
-                                            {{ staffDetailsModal.staff.biography || 'No biography available' }}
                                         </div>
                                     </div>
                                 </div>
@@ -3878,7 +4201,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 2: Add/Edit Medical Staff Modal -->
+            <!-- MODAL 2: Add/Edit Medical Staff Modal (TEXTAREA REMOVED - Biography removed) -->
             <div v-if="medicalStaffModal.show" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="medical-staff-title">
                 <div class="modal-container modal-wide">
                     <div class="modal-header">
@@ -3977,11 +4300,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Biography</label>
-                                    <textarea class="form-control" v-model="medicalStaffModal.form.biography" rows="4"></textarea>
-                                </div>
                             </div>
                         </div>
 
@@ -4036,7 +4354,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 3: Add/Edit Department Modal (WITH INTEGRATED CLINICAL UNITS) -->
+            <!-- MODAL 3: Add/Edit Department Modal (TEXTAREA REMOVED - Description removed) -->
             <div v-if="departmentModal.show" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="department-title">
                 <div class="modal-container modal-wide">
                     <div class="modal-header">
@@ -4094,10 +4412,6 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label">Description</label>
-                                    <textarea class="form-control" v-model="departmentModal.form.description" rows="3"></textarea>
-                                </div>
                             </div>
                         </div>
 
@@ -4147,10 +4461,6 @@
                                                 <option value="maintenance">Maintenance</option>
                                             </select>
                                         </div>
-                                        <div class="form-group col-span-2">
-                                            <label class="form-label">Description</label>
-                                            <textarea class="form-control" v-model="unit.description" rows="2"></textarea>
-                                        </div>
                                     </div>
                                 </div>
                                 
@@ -4175,7 +4485,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 4: Add/Edit Training Unit Modal -->
+            <!-- MODAL 4: Add/Edit Training Unit Modal (TEXTAREA REMOVED - Unit Description removed) -->
             <div v-if="trainingUnitModal.show" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="training-unit-title">
                 <div class="modal-container" style="max-width: 600px;">
                     <div class="modal-header">
@@ -4219,11 +4529,6 @@
                                         {{ department.name }}
                                     </option>
                                 </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Description</label>
-                                <textarea class="form-control" v-model="trainingUnitModal.form.unit_description" rows="3"></textarea>
                             </div>
                             
                             <div class="grid grid-cols-2 gap-4">
@@ -4270,7 +4575,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 5: Add/Edit Rotation Modal -->
+            <!-- MODAL 5: Add/Edit Rotation Modal (TEXTAREA REMOVED - Clinical Notes & Supervisor Evaluation removed) -->
             <div v-if="rotationModal.show" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="rotation-title">
                 <div class="modal-container" style="max-width: 700px;">
                     <div class="modal-header">
@@ -4374,22 +4679,6 @@
                                     </select>
                                 </div>
                             </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Clinical Notes</label>
-                                <textarea class="form-control" 
-                                          v-model="rotationModal.form.clinical_notes"
-                                          rows="3"
-                                          placeholder="Enter clinical notes or instructions..."></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Supervisor Evaluation</label>
-                                <textarea class="form-control" 
-                                          v-model="rotationModal.form.supervisor_evaluation"
-                                          rows="3"
-                                          placeholder="Enter supervisor evaluation..."></textarea>
-                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -4404,7 +4693,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 6: Quick Placement Modal -->
+            <!-- MODAL 6: Quick Placement Modal (UNCHANGED - No textarea) -->
             <div v-if="quickPlacementModal.show" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="quick-placement-title">
                 <div class="modal-container" style="max-width: 500px;">
                     <div class="modal-header">
@@ -4476,7 +4765,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 7: On-call Schedule Modal -->
+            <!-- MODAL 7: On-call Schedule Modal (TEXTAREA REMOVED - Coverage Notes removed) -->
             <div v-if="onCallModal.show" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="oncall-title">
                 <div class="modal-container" style="max-width: 600px;">
                     <div class="modal-header">
@@ -4535,7 +4824,7 @@
                                                 :value="physician.id">
                                             {{ physician.full_name }} ({{ physician.staff_id }})
                                         </option>
-                                    </select>
+                                </select>
                                 </div>
                             </div>
                             
@@ -4563,11 +4852,6 @@
                             </div>
                             
                             <div class="form-group">
-                                <label class="form-label">Coverage Notes</label>
-                                <textarea class="form-control" v-model="onCallModal.form.coverage_notes" rows="3"></textarea>
-                            </div>
-                            
-                            <div class="form-group">
                                 <label class="form-label">Contact Number</label>
                                 <input type="tel" class="form-control" v-model="onCallModal.form.contact_number" placeholder="Emergency contact number">
                             </div>
@@ -4585,154 +4869,122 @@
                 </div>
             </div>
 
-            <!-- MODAL 8: Add/Edit Staff Absence Modal -->
+            <!-- MODAL 8: Staff Absence Modal (REDESIGNED - No textareas, dropdown-based) -->
             <div v-if="absenceModal.show" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="absence-title">
-                <div class="modal-container">
+                <div class="modal-container" style="max-width: 400px;">
                     <div class="modal-header">
                         <div class="modal-title" id="absence-title">
                             <i class="fas fa-calendar-times"></i>
-                            {{ absenceModal.mode === 'add' ? 'Document Staff Absence' : 'Edit Absence Record' }}
+                            Record Staff Absence
                         </div>
                         <button class="modal-close" @click="absenceModal.show = false" aria-label="Close modal">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
+                    
                     <div class="modal-body">
-                        <div class="modal-tabs" role="tablist">
-                            <button class="modal-tab" :class="{ active: absenceModal.activeTab === 'basic' }" 
-                                    @click="absenceModal.activeTab = 'basic'" role="tab" aria-selected="absenceModal.activeTab === 'basic'">
-                                <i class="fas fa-info-circle"></i> Basic Information
-                            </button>
-                            <button class="modal-tab" :class="{ active: absenceModal.activeTab === 'coverage' }" 
-                                    @click="absenceModal.activeTab = 'coverage'" role="tab" aria-selected="absenceModal.activeTab === 'coverage'">
-                                <i class="fas fa-user-md"></i> Coverage Arrangements
-                            </button>
-                        </div>
-
-                        <!-- Basic Information Tab -->
-                        <div v-if="absenceModal.activeTab === 'basic'" class="modal-tab-content active" role="tabpanel">
-                            <div class="modal-section">
-                                <div class="modal-section-title">
-                                    <i class="fas fa-user"></i>
-                                    Staff Information
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="form-group">
-                                        <label class="form-label">Staff Member *</label>
-                                        <select class="form-select" v-model="absenceModal.form.staff_member_id" aria-required="true">
-                                            <option value="">Select Staff Member</option>
-                                            <option v-for="staff in availableStaff" :key="staff.id" :value="staff.id">
-                                                {{ staff.full_name }} ({{ formatStaffType(staff.staff_type) }})
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Absence Reason *</label>
-                                        <select class="form-select" v-model="absenceModal.form.absence_reason" aria-required="true">
-                                            <option value="">Select Reason</option>
-                                            <option value="vacation">Vacation</option>
-                                            <option value="sick_leave">Sick Leave</option>
-                                            <option value="family_emergency">Family Emergency</option>
-                                            <option value="conference">Conference/Training</option>
-                                            <option value="maternity_paternity">Maternity/Paternity Leave</option>
-                                            <option value="personal">Personal Leave</option>
-                                            <option value="other">Other</option>
-                                        </select>
+                        <div class="modal-section">
+                            <div class="modal-section-title">
+                                <i class="fas fa-user"></i>
+                                Staff Information
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Staff Member *</label>
+                                <select class="form-select" v-model="absenceModal.form.staff_id" required>
+                                    <option value="">Select Staff Member</option>
+                                    <option v-for="staff in medicalStaff" :key="staff.id" :value="staff.id">
+                                        {{ staff.full_name }} ({{ staff.staff_id }})
+                                    </option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Absence Type *</label>
+                                <div class="absence-type-grid">
+                                    <div v-for="type in absenceTypes" 
+                                         :key="type.value"
+                                         class="absence-type-option"
+                                         :class="{ 'selected': absenceModal.form.absence_type === type.value }"
+                                         @click="absenceModal.form.absence_type = type.value">
+                                        <i :class="type.icon"></i>
+                                        <span>{{ type.label }}</span>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="modal-section">
-                                <div class="modal-section-title">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    Dates & Duration
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="form-group">
-                                        <label class="form-label">Start Date *</label>
-                                        <input type="date" class="form-control" v-model="absenceModal.form.start_date" aria-required="true">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">End Date *</label>
-                                        <input type="date" class="form-control" v-model="absenceModal.form.end_date" aria-required="true">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Status</label>
-                                        <select class="form-select" v-model="absenceModal.form.status">
-                                            <option value="upcoming">Upcoming</option>
-                                            <option value="active">Active</option>
-                                            <option value="completed">Completed</option>
-                                            <option value="cancelled">Cancelled</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Total Days</label>
-                                        <input type="number" class="form-control" v-model="absenceModal.form.total_days" readonly>
-                                    </div>
-                                </div>
+                            
+                            <div v-if="absenceModal.form.absence_type === 'other'" class="form-group mt-2">
+                                <input type="text" class="form-control" 
+                                       v-model="absenceModal.form.other_reason"
+                                       placeholder="Brief reason (max 50 chars)"
+                                       maxlength="50">
                             </div>
                         </div>
-
-                        <!-- Coverage Arrangements Tab -->
-                        <div v-if="absenceModal.activeTab === 'coverage'" class="modal-tab-content active" role="tabpanel">
-                            <div class="modal-section">
-                                <div class="modal-section-title">
-                                    <i class="fas fa-user-friends"></i>
-                                    Coverage Information
-                                </div>
-                                
+                        
+                        <div class="modal-section">
+                            <div class="modal-section-title">
+                                <i class="fas fa-calendar-alt"></i>
+                                Date Range
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
                                 <div class="form-group">
-                                    <label class="form-label">Needs Coverage?</label>
-                                    <div class="form-check">
-                                        <input type="checkbox" class="form-check-input" v-model="absenceModal.form.needs_coverage" 
-                                               :id="'needs-coverage-' + absenceModal.mode">
-                                        <label class="form-check-label" :for="'needs-coverage-' + absenceModal.mode">
-                                            This absence requires coverage arrangements
-                                        </label>
+                                    <div class="text-xs text-gray-600 mb-1">Start Date *</div>
+                                    <input type="date" class="form-control" 
+                                           v-model="absenceModal.form.start_date"
+                                           required>
+                                </div>
+                                <div class="form-group">
+                                    <div class="text-xs text-gray-600 mb-1">End Date *</div>
+                                    <input type="date" class="form-control" 
+                                           v-model="absenceModal.form.end_date"
+                                           required>
+                                </div>
+                            </div>
+                            
+                            <div class="duration-display mt-3 p-3 bg-blue-50 rounded">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="text-sm font-medium">Duration</div>
+                                        <div class="text-2xl font-bold text-primary">
+                                            {{ calculateAbsenceDuration(absenceModal.form.start_date, absenceModal.form.end_date) }} days
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div v-if="absenceModal.form.needs_coverage" class="grid grid-cols-2 gap-4">
-                                    <div class="form-group">
-                                        <label class="form-label">Replacement Staff</label>
-                                        <select class="form-select" v-model="absenceModal.form.replacement_staff_id">
-                                            <option value="">Select Replacement</option>
-                                            <option v-for="staff in availableCoverageStaff" :key="staff.id" :value="staff.id">
-                                                {{ staff.full_name }} ({{ formatStaffType(staff.staff_type) }})
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Coverage Type</label>
-                                        <select class="form-select" v-model="absenceModal.form.coverage_type">
-                                            <option value="">Select Type</option>
-                                            <option value="full">Full Coverage</option>
-                                            <option value="partial">Partial Coverage</option>
-                                            <option value="emergency">Emergency Only</option>
-                                            <option value="shared">Shared Responsibility</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div v-if="absenceModal.form.needs_coverage && absenceModal.form.replacement_staff_id" class="form-group">
-                                    <label class="form-label">Coverage Notes</label>
-                                    <textarea class="form-control" v-model="absenceModal.form.coverage_notes" rows="3" 
-                                              placeholder="Details about coverage arrangements, responsibilities, etc."></textarea>
-                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-section">
+                            <div class="modal-section-title">
+                                <i class="fas fa-robot"></i>
+                                Auto Actions
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" 
+                                       v-model="absenceModal.form.auto_remove_oncall" checked>
+                                <label class="form-check-label">
+                                    Remove from on-call schedule
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" 
+                                       v-model="absenceModal.form.auto_notify_team" checked>
+                                <label class="form-check-label">
+                                    Notify team members
+                                </label>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-secondary" @click="absenceModal.show = false">Cancel</button>
-                        <button class="btn btn-primary" @click="saveAbsence" :disabled="saving">
-                            <span v-if="saving" class="loading"></span>
-                            <span v-else>{{ absenceModal.mode === 'add' ? 'Document Absence' : 'Save Changes' }}</span>
+                        <button class="btn btn-secondary" @click="absenceModal.show = false">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button class="btn btn-success" @click="recordAbsence" :disabled="!canSubmitAbsence">
+                            <i class="fas fa-save"></i> Record Absence
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- MODAL 9: Communications Modal -->
+            <!-- MODAL 9: Communications Modal (ONLY MODAL WITH TEXTAREAS - KEPT AS IS) -->
             <div v-if="communicationsModal.show" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="communications-title">
                 <div class="modal-container modal-wide">
                     <div class="modal-header">
@@ -4874,7 +5126,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 10: Permission Role Modal -->
+            <!-- MODAL 10: Permission Role Modal (TEXTAREA REMOVED - Description removed) -->
             <div v-if="roleModal.show" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="role-title">
                 <div class="modal-container">
                     <div class="modal-header">
@@ -4897,12 +5149,6 @@
                                 <label class="form-label">Role Name *</label>
                                 <input type="text" class="form-control" v-model="roleModal.form.name" 
                                        placeholder="Enter role name" aria-required="true">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Description</label>
-                                <textarea class="form-control" v-model="roleModal.form.description" rows="3"
-                                          placeholder="Enter role description"></textarea>
                             </div>
                             
                             <div class="form-group">
@@ -4932,7 +5178,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 11: User Profile Modal -->
+            <!-- MODAL 11: User Profile Modal (TEXTAREA REMOVED - Biography removed) -->
             <div v-if="userProfileModal.show" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="user-profile-title">
                 <div class="modal-container">
                     <div class="modal-header">
@@ -4993,11 +5239,6 @@
                                             </option>
                                         </select>
                                     </div>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Biography</label>
-                                    <textarea class="form-control" v-model="userProfileModal.form.biography" rows="4"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -5100,3 +5341,4 @@
         });
     </script>
 </body>
+</html>
