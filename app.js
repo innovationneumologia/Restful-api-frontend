@@ -453,6 +453,58 @@ document.addEventListener('DOMContentLoaded', function() {
                     pendingRequests: 8,
                     activeRotations: 12
                 });
+                // ============ ADD MISSING roleModal STATE ============
+const roleModal = reactive({
+    show: false,
+    mode: 'add',
+    form: {
+        name: '',
+        description: '',
+        permissions: []
+    }
+});
+
+// Add these missing functions that are referenced in the HTML
+const showAddRoleModal = () => {
+    roleModal.mode = 'add';
+    roleModal.form = {
+        name: '',
+        description: '',
+        permissions: []
+    };
+    roleModal.show = true;
+};
+
+const saveRole = async () => {
+    saving.value = true;
+    try {
+        showToast('Success', 'Role saved successfully', 'success');
+        roleModal.show = false;
+    } catch (error) {
+        showToast('Error', error.message, 'error');
+    } finally {
+        saving.value = false;
+    }
+};
+
+const isPermissionSelected = (permissionId) => {
+    return roleModal.form.permissions.includes(permissionId);
+};
+
+const togglePermissionSelection = (permissionId) => {
+    const index = roleModal.form.permissions.indexOf(permissionId);
+    if (index === -1) {
+        roleModal.form.permissions.push(permissionId);
+    } else {
+        roleModal.form.permissions.splice(index, 1);
+    }
+};
+
+const formatPermissionName = (name) => {
+    return name.split('_').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+};
                 
                 // UI Components
                 const toasts = ref([]);
@@ -683,7 +735,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     return permissions.includes(action) || permissions.includes('*');
                 };
-                
+                const availablePermissions = ref([
+    { id: 1, name: 'read_medical_staff', module: 'medical_staff' },
+    { id: 2, name: 'update_medical_staff', module: 'medical_staff' },
+    { id: 3, name: 'delete_medical_staff', module: 'medical_staff' },
+    { id: 4, name: 'read_oncall_schedule', module: 'oncall_schedule' },
+    { id: 5, name: 'update_oncall_schedule', module: 'oncall_schedule' },
+    { id: 6, name: 'delete_oncall_schedule', module: 'oncall_schedule' }
+]);
                 // ============ FORMATTING FUNCTIONS ============
                 const getUserRoleDisplay = (role) => {
                     const map = {
@@ -2273,6 +2332,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     onCallSchedule,
                     announcements,
                     settings,
+                     roleModal,
+    availablePermissions,
+    showAddRoleModal,
+    saveRole,
+    isPermissionSelected,
+    togglePermissionSelection,
+    formatPermissionName
                     
                     // Dashboard
                     dashboardStats,
