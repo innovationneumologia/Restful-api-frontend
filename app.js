@@ -408,6 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Loading States
                 const loading = ref(false);
+                const loadingOncall = ref(false);
                 const saving = ref(false);
                 const loadingStaff = ref(false);
                 const loadingDepartments = ref(false);
@@ -2096,6 +2097,9 @@ const formatPermissionName = (name) => {
                         staff.employment_status === 'active'
                     );
                 });
+                const activeTrainingUnits = computed(() => {
+    return trainingUnits.value.filter(unit => unit.unit_status === 'active');
+});
                 
                 const availableAttendings = computed(() => {
                     return medicalStaff.value.filter(staff => 
@@ -2500,8 +2504,10 @@ const formatPermissionName = (name) => {
                     deleteRotation,
                     deleteAbsence,
                     deleteOnCallSchedule,
+                     getCommunicationIcon,
+        getCommunicationButtonText,
                     
-                    // Filter Functions
+                    // Filter Function
                     applyStaffFilters,
                     resetStaffFilters,
                     applyRotationFilters,
