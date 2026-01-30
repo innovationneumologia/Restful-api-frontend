@@ -381,6 +381,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // ============ CREATE VUE APP ============
         const app = createApp({
             setup() {
+                 // 1. getCommunicationIcon function
+    const getCommunicationIcon = (tab) => {
+        return tab === 'announcement' ? 'fas fa-bullhorn' : 'fas fa-sticky-note';
+    };
+    
+    // 2. getCommunicationButtonText function
+    const getCommunicationButtonText = (tab) => {
+        return tab === 'announcement' ? 'Post Announcement' : 'Save Note';
+    };
                 // ============ REACTIVE STATE ============
                 const currentUser = ref(JSON.parse(localStorage.getItem(CONFIG.USER_KEY)) || {
                     id: '11111111-1111-1111-1111-111111111111',
@@ -2409,6 +2418,9 @@ const formatPermissionName = (name) => {
                     
                     // Permission Functions
                     hasPermission,
+                            getCommunicationIcon,
+        getCommunicationButtonText,
+
                     
                     // Computed Properties
                     availableResidents,
