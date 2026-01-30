@@ -150,8 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.token = ref(localStorage.getItem(CONFIG.TOKEN_KEY) || '');
                 this.pendingRequests = new Map();
             }
-            
-         getHeaders() {
+            getHeaders() {
     const headers = { 
         'Content-Type': 'application/json'
     };
@@ -160,9 +159,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (token && token.trim()) {
         headers['Authorization'] = `Bearer ${token}`;
     }
-    
-    return headers;
-}
+            
+
             async request(endpoint, options = {}) {
                 const requestId = EnhancedUtils.generateID('req_');
                 const url = `${CONFIG.API_BASE_URL}${endpoint}`;
