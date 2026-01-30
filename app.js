@@ -2338,7 +2338,7 @@ const formatPermissionName = (name) => {
     saveRole,
     isPermissionSelected,
     togglePermissionSelection,
-    formatPermissionName
+    formatPermissionName,
                     
                     // Dashboard
                     dashboardStats,
