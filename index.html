@@ -2973,8 +2973,9 @@
                                             <td class="font-mono text-sm">{{ rotation.rotation_id }}</td>
                                             <td>{{ getResidentName(rotation.resident_id) }}</td>
                                             <td>{{ getTrainingUnitName(rotation.training_unit_id) }}</td>
-                                            <td>{{ formatDate(rotation.rotation_start_date) }}</td>
-                                            <td>{{ formatDate(rotation.rotation_end_date) }}</td>
+                                            <td>{{ formatDate(rotation.start_date) }}</td>
+                                            <td>{{ formatDate(rotation.end_date) }}</td>
+                                           
                                             <td>
                                                 <span class="status-indicator" :class="'status-' + rotation.rotation_status">
                                                     {{ formatRotationStatus(rotation.rotation_status) }}
