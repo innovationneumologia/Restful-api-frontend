@@ -64,6 +64,494 @@
             --sidebar-collapsed: 70px;
         }
         
+        /* ============ NEUMAC PROFESSIONAL ENHANCEMENTS ============ */
+        
+        /* Professional Status Indicators */
+        .neumac-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1;
+            border: 1px solid transparent;
+        }
+        
+        .neumac-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .neumac-status-active {
+            background: rgba(46, 125, 50, 0.08);
+            color: var(--medical-green);
+            border-color: rgba(46, 125, 50, 0.2);
+        }
+        .neumac-status-active .neumac-status-dot {
+            background: var(--medical-green);
+        }
+        
+        .neumac-status-busy {
+            background: rgba(245, 124, 0, 0.08);
+            color: var(--medical-orange);
+            border-color: rgba(245, 124, 0, 0.2);
+        }
+        .neumac-status-busy .neumac-status-dot {
+            background: var(--medical-orange);
+        }
+        
+        .neumac-status-critical {
+            background: rgba(198, 40, 40, 0.08);
+            color: var(--medical-red);
+            border-color: rgba(198, 40, 40, 0.2);
+        }
+        .neumac-status-critical .neumac-status-dot {
+            background: var(--medical-red);
+        }
+        
+        .neumac-status-oncall {
+            background: rgba(0, 119, 190, 0.08);
+            color: var(--medical-blue);
+            border-color: rgba(0, 119, 190, 0.2);
+        }
+        .neumac-status-oncall .neumac-status-dot {
+            background: var(--medical-blue);
+        }
+        
+        .neumac-status-offline {
+            background: rgba(84, 110, 122, 0.08);
+            color: var(--medical-gray);
+            border-color: rgba(84, 110, 122, 0.2);
+        }
+        .neumac-status-offline .neumac-status-dot {
+            background: var(--medical-gray);
+        }
+        
+        /* Professional Capacity Meter */
+        .neumac-capacity-meter {
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        
+        .neumac-meter-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--medical-green), #4caf50);
+            transition: width 0.3s ease;
+        }
+        
+        .neumac-meter-fill-limited {
+            background: linear-gradient(90deg, var(--medical-orange), #ff9800);
+        }
+        
+        .neumac-meter-fill-full {
+            background: linear-gradient(90deg, var(--medical-red), #f44336);
+        }
+        
+        .neumac-capacity-label {
+            font-size: 12px;
+            color: var(--gray-600);
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2px;
+        }
+        
+        /* Professional Information Cards */
+        .neumac-card-enhanced {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 20px;
+            border: 1px solid var(--gray-200);
+            border-left: 4px solid var(--medical-blue);
+            transition: all var(--transition-normal) ease;
+        }
+        
+        .neumac-card-enhanced:hover {
+            border-left-color: var(--medical-teal);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .neumac-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--medical-light-blue);
+        }
+        
+        .neumac-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+        
+        .neumac-card-title i {
+            color: var(--medical-blue);
+            font-size: 14px;
+            width: 16px;
+        }
+        
+        /* Professional Data Grouping */
+        .neumac-data-group {
+            background: var(--gray-50);
+            border-radius: var(--border-radius-md);
+            padding: 14px;
+            margin-bottom: 12px;
+            border: 1px solid var(--gray-200);
+        }
+        
+        .neumac-data-group-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--medical-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .neumac-data-group-title i {
+            font-size: 11px;
+        }
+        
+        /* Professional Timeline */
+        .neumac-timeline {
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .neumac-timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--medical-light-blue);
+        }
+        
+        .neumac-timeline-item {
+            position: relative;
+            padding-bottom: 16px;
+        }
+        
+        .neumac-timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--medical-blue);
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px var(--medical-blue);
+        }
+        
+        .neumac-timeline-time {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--medical-blue);
+            margin-bottom: 4px;
+        }
+        
+        /* Professional Icon Integration */
+        .neumac-icon-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--gray-700);
+        }
+        
+        .neumac-icon-text i {
+            font-size: 12px;
+            color: var(--medical-blue);
+            width: 14px;
+            text-align: center;
+        }
+        
+        /* Professional Table Enhancements */
+        .neumac-table-enhanced th {
+            background: linear-gradient(to bottom, var(--gray-50), #f8f9fa);
+            border-bottom: 2px solid var(--medical-blue);
+        }
+        
+        .neumac-table-enhanced tr.current-shift {
+            background: linear-gradient(90deg, rgba(0, 119, 190, 0.03) 0%, rgba(0, 119, 190, 0.08) 100%);
+            border-left: 3px solid var(--medical-blue);
+        }
+        
+        .neumac-table-enhanced tr.current-shift td:first-child {
+            font-weight: 600;
+            color: var(--medical-blue);
+        }
+        
+        /* Professional Dashboard Widget */
+        .neumac-coverage-widget {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 18px;
+            border: 1px solid var(--gray-200);
+            border-top: 4px solid var(--medical-blue);
+            margin-bottom: 20px;
+        }
+        
+        .neumac-coverage-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--medical-light-blue);
+        }
+        
+        .neumac-coverage-header i {
+            color: var(--medical-blue);
+            font-size: 14px;
+        }
+        
+        .neumac-coverage-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin: 0;
+        }
+        
+        .neumac-coverage-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        
+        .neumac-coverage-item:last-child {
+            border-bottom: none;
+        }
+        
+        .neumac-coverage-physician {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .neumac-coverage-time {
+            font-size: 12px;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+        
+        /* Professional Modal Enhancements */
+        .neumac-modal-section {
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .neumac-modal-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .neumac-modal-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .neumac-modal-section-title i {
+            font-size: 13px;
+            color: var(--medical-blue);
+        }
+        
+        /* Professional Training Unit Card */
+        .neumac-unit-card {
+            background: white;
+            border-radius: var(--border-radius-md);
+            padding: 18px;
+            border: 1px solid var(--gray-200);
+            border-top: 4px solid var(--medical-blue);
+            transition: all var(--transition-normal) ease;
+            height: 100%;
+        }
+        
+        .neumac-unit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .neumac-unit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+        
+        .neumac-unit-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin: 0;
+            line-height: 1.3;
+        }
+        
+        .neumac-unit-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        
+        .neumac-unit-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--gray-700);
+        }
+        
+        .neumac-unit-meta-item i {
+            font-size: 12px;
+            color: var(--medical-blue);
+            width: 14px;
+        }
+        
+        /* Visual Capacity Indicator */
+        .neumac-visual-capacity {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        
+        .neumac-visual-dots {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .neumac-visual-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--gray-300);
+        }
+        
+        .neumac-visual-dot.filled {
+            background: var(--medical-blue);
+        }
+        
+        .neumac-visual-dot.available {
+            background: var(--medical-green);
+        }
+        
+        .neumac-visual-dot.limited {
+            background: var(--medical-orange);
+        }
+        
+        .neumac-visual-dot.full {
+            background: var(--medical-red);
+        }
+        
+        /* Professional Action Buttons */
+        .neumac-action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        
+        .neumac-btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            min-height: 32px;
+        }
+        
+        .neumac-btn-sm i {
+            font-size: 11px;
+        }
+        
+        /* Professional Color Coding */
+        .neumac-color-primary {
+            color: var(--medical-blue);
+        }
+        
+        .neumac-color-success {
+            color: var(--medical-green);
+        }
+        
+        .neumac-color-warning {
+            color: var(--medical-orange);
+        }
+        
+        .neumac-color-danger {
+            color: var(--medical-red);
+        }
+        
+        .neumac-color-muted {
+            color: var(--gray-600);
+        }
+        
+        /* Professional Spacing */
+        .neumac-space-y-4 > * + * {
+            margin-top: 16px;
+        }
+        
+        .neumac-space-y-2 > * + * {
+            margin-top: 8px;
+        }
+        
+        .neumac-p-4 {
+            padding: 16px;
+        }
+        
+        .neumac-p-3 {
+            padding: 12px;
+        }
+        
+        /* Professional Typography */
+        .neumac-text-sm {
+            font-size: 13px;
+        }
+        
+        .neumac-text-xs {
+            font-size: 12px;
+        }
+        
+        .neumac-text-lg {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .neumac-font-medium {
+            font-weight: 500;
+        }
+        
+        .neumac-font-semibold {
+            font-weight: 600;
+        }
+        
+        /* Existing styles continue below... */
         /* ============ RESET & BASE ============ */
         [v-cloak] { display: none !important; }
         #app[v-cloak] { opacity: 0; }
@@ -336,7 +824,6 @@
             background: rgba(198, 40, 40, 0.1);
             color: var(--medical-red);
             border: 1px solid rgba(198, 40, 40, 0.2);
-            animation: gentle-pulse 2s infinite;
         }
 
         .status-oncall {
@@ -355,11 +842,6 @@
             background: rgba(84, 110, 122, 0.1);
             color: var(--medical-gray);
             border: 1px solid rgba(84, 110, 122, 0.2);
-        }
-
-        @keyframes gentle-pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
         }
 
         .status-dot {
@@ -1140,200 +1622,6 @@
         .live-stats-close:hover {
             background: var(--medical-blue);
             color: white;
-        }
-
-        /* ============ LIVE STATS EDIT MODE ============ */
-        .live-stats-edit-mode {
-            background: var(--gray-50);
-            border-radius: var(--border-radius-md);
-            padding: 16px;
-            margin-bottom: 20px;
-            border: 1px solid var(--medical-light-blue);
-        }
-
-        .live-stats-edit-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .live-stats-edit-header h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--medical-dark-blue);
-            margin: 0;
-        }
-
-        /* Metric Input */
-        .live-metric-input {
-            margin-bottom: 12px;
-        }
-
-        .metric-input-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        /* Status Flags */
-        .status-flags-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .status-flag-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px;
-            background: white;
-            border-radius: var(--border-radius-sm);
-            border: 1px solid var(--gray-300);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-
-        .status-flag-item:hover {
-            border-color: var(--medical-blue);
-            background: var(--gray-50);
-        }
-
-        .status-flag-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--medical-blue);
-        }
-
-        .status-flag-label {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--gray-700);
-        }
-
-        /* Live Update Display */
-        .live-update-display {
-            margin-bottom: 20px;
-        }
-
-        .live-update-card {
-            background: linear-gradient(135deg, #e3f2fd 0%, #f3f9ff 100%);
-            border-radius: var(--border-radius-md);
-            padding: 16px;
-            margin-bottom: 16px;
-            border-left: 3px solid var(--medical-blue);
-        }
-
-        .live-update-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .live-update-header h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--medical-dark-blue);
-            margin: 0;
-            flex: 1;
-        }
-
-        .live-update-time {
-            font-size: 11px;
-            color: var(--medical-gray);
-            background: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-        }
-
-        .live-update-content {
-            font-size: 13px;
-            line-height: 1.5;
-            color: var(--gray-800);
-            margin-bottom: 8px;
-        }
-
-        .live-update-author {
-            font-size: 11px;
-            color: var(--gray-600);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        /* Live Metrics Display */
-        .live-metrics-display {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .live-metric-card {
-            background: white;
-            border-radius: var(--border-radius-sm);
-            padding: 12px;
-            border: 1px solid var(--gray-200);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .live-metric-label {
-            font-weight: 600;
-            color: var(--medical-dark-blue);
-            font-size: 13px;
-        }
-
-        .live-metric-value {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--medical-blue);
-        }
-
-        /* Active Clinicians */
-        .active-clinicians-card {
-            background: white;
-            border-radius: var(--border-radius-md);
-            padding: 16px;
-            border: 1px solid var(--gray-200);
-            margin-bottom: 20px;
-        }
-
-        .clinician-count-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 12px;
-        }
-
-        .clinician-count-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 12px;
-            background: var(--gray-50);
-            border-radius: var(--border-radius-sm);
-            text-align: center;
-        }
-
-        .clinician-count-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--medical-blue);
-            line-height: 1;
-            margin-bottom: 4px;
-        }
-
-        .clinician-count-label {
-            font-size: 11px;
-            color: var(--gray-600);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         /* ============ MODALS ============ */
@@ -2480,6 +2768,52 @@
                     <!-- ============ DASHBOARD VIEW ============ -->
                     <div v-if="currentView === 'dashboard'">
                         
+                        <!-- NEUMAC ENHANCEMENT: Coverage Widget -->
+                        <div class="neumac-coverage-widget">
+                            <div class="neumac-coverage-header">
+                                <i class="fas fa-phone-medical"></i>
+                                <h3>Current Coverage Schedule</h3>
+                            </div>
+                            
+                            <div v-if="loadingSchedule">
+                                <div class="neumac-space-y-4">
+                                    <div class="neumac-coverage-item">
+                                        <div class="neumac-icon-text">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                            <span>Loading schedule...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div v-else-if="todaysOnCall.length === 0">
+                                <div class="neumac-coverage-item">
+                                    <div class="neumac-icon-text">
+                                        <i class="fas fa-phone-slash"></i>
+                                        <span>No on-call scheduled today</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div v-else class="neumac-space-y-2">
+                                <div v-for="shift in todaysOnCall" :key="shift.id" class="neumac-coverage-item">
+                                    <div class="neumac-coverage-physician">
+                                        <div class="neumac-icon-text">
+                                            <i class="fas fa-user-md"></i>
+                                            <span>{{ shift.physicianName }}</span>
+                                        </div>
+                                        <span class="neumac-status" :class="getShiftStatusClass(shift)">
+                                            <span class="neumac-status-dot"></span>
+                                            {{ shift.shiftType === 'primary' ? 'Primary' : 'Backup' }}
+                                        </span>
+                                    </div>
+                                    <div class="neumac-coverage-time">
+                                        {{ shift.startTime }} - {{ shift.endTime }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Quick Actions Toolbar -->
                         <div class="quick-actions-bar">
                             <button class="action-btn" @click="showAddMedicalStaffModal" v-if="hasPermission('medical_staff', 'create')">
@@ -2516,7 +2850,10 @@
                                     <div class="breakdown-item">
                                         <span class="label">Attending Physicians</span>
                                         <span class="value">{{ systemStats.activeAttending || 0 }}</span>
-                                        <span class="status-indicator status-active">Active</span>
+                                        <span class="neumac-status neumac-status-active">
+                                            <span class="neumac-status-dot"></span>
+                                            Active
+                                        </span>
                                     </div>
                                     <div class="breakdown-item">
                                         <span class="label">Residents</span>
@@ -2545,7 +2882,10 @@
                                     <div class="breakdown-item">
                                         <span class="label">Ending This Week</span>
                                         <span class="value">{{ systemStats.endingThisWeek || 0 }}</span>
-                                        <span class="status-indicator status-busy">Alert</span>
+                                        <span class="neumac-status neumac-status-busy">
+                                            <span class="neumac-status-dot"></span>
+                                            Alert
+                                        </span>
                                     </div>
                                     <div class="breakdown-item">
                                         <span class="label">Starting Next Week</span>
@@ -2566,7 +2906,10 @@
                                     <div v-for="shift in todaysOnCall.slice(0, 3)" :key="shift.id" class="breakdown-item">
                                         <span class="label">{{ shift.physicianName }}</span>
                                         <span class="value">{{ shift.startTime }}</span>
-                                        <span class="status-indicator status-oncall">On-call</span>
+                                        <span class="neumac-status neumac-status-oncall">
+                                            <span class="neumac-status-dot"></span>
+                                            On-call
+                                        </span>
                                     </div>
                                     <div v-if="todaysOnCall.length === 0" class="breakdown-item">
                                         <span class="label text-gray-500">No on-call scheduled today</span>
@@ -2601,9 +2944,9 @@
                         </div>
 
                         <!-- Today's Schedule -->
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">
+                        <div class="neumac-card-enhanced">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
                                     <i class="fas fa-phone-medical"></i>
                                     Today's On-call Schedule
                                 </div>
@@ -2613,7 +2956,7 @@
                             </div>
                             
                             <div class="table-responsive">
-                                <table class="table">
+                                <table class="table neumac-table-enhanced">
                                     <thead>
                                         <tr>
                                             <th>Time</th>
@@ -2637,37 +2980,51 @@
                                                 <p>No on-call scheduled today</p>
                                             </td>
                                         </tr>
-                                      <tr v-else v-for="shift in todaysOnCall" :key="shift.id">
-    <td>{{ shift.startTime }} - {{ shift.endTime }}</td>
-    <td>
-        <div class="flex items-center gap-3">
-            <div class="user-avatar">{{ getInitials(shift.physicianName) }}</div>
-            <div>
-                <div class="font-medium">{{ shift.physicianName }}</div>
-                <div class="text-xs text-gray-500">{{ shift.staffType }}</div>
-            </div>
-        </div>
-    </td>
-    <td>
-        <span class="badge" :class="shift.shiftTypeClass">
-            {{ shift.shiftType }}
-        </span>
-    </td>
-    <td>{{ shift.coverageArea }}</td>
-    <td>
-        <span v-if="shift.backupPhysician">{{ shift.backupPhysician }}</span>
-        <span v-else class="text-gray-500 text-xs">None</span>
-    </td>
-    <td>
-        <button class="btn btn-sm btn-outline" 
-                @click="contactPhysician(shift)"
-                :disabled="!shift.contactInfo || shift.contactInfo === 'No contact info'"
-                aria-label="Contact physician">
-            <i class="fas" :class="shift.contactInfo && shift.contactInfo.includes('@') ? 'fa-envelope' : 'fa-phone'"></i> 
-            {{ shift.contactInfo && shift.contactInfo.includes('@') ? 'Email' : 'Contact' }}
-        </button>
-    </td>
-</tr>
+                                        <tr v-else v-for="shift in todaysOnCall" :key="shift.id" 
+                                            :class="{'current-shift': isCurrentShift(shift)}">
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-clock"></i>
+                                                    {{ shift.startTime }} - {{ shift.endTime }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="user-avatar">{{ getInitials(shift.physicianName) }}</div>
+                                                    <div>
+                                                        <div class="font-medium">{{ shift.physicianName }}</div>
+                                                        <div class="neumac-text-xs neumac-color-muted">{{ shift.staffType }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="neumac-status" :class="getShiftStatusClass(shift)">
+                                                    <span class="neumac-status-dot"></span>
+                                                    {{ shift.shiftType === 'primary' ? 'Primary' : 'Backup' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-hospital"></i>
+                                                    {{ shift.coverageArea }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span v-if="shift.backupPhysician" class="neumac-icon-text">
+                                                    <i class="fas fa-user-shield"></i>
+                                                    {{ shift.backupPhysician }}
+                                                </span>
+                                                <span v-else class="neumac-text-xs neumac-color-muted">No backup</span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline neumac-btn-sm" 
+                                                        @click="contactPhysician(shift)"
+                                                        :disabled="!shift.contactInfo || shift.contactInfo === 'No contact info'"
+                                                        aria-label="Contact physician">
+                                                    <i class="fas" :class="shift.contactInfo && shift.contactInfo.includes('@') ? 'fa-envelope' : 'fa-phone'"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -2676,9 +3033,9 @@
 
                     <!-- ============ MEDICAL STAFF VIEW ============ -->
                     <div v-if="currentView === 'medical_staff'">
-                        <div class="card mb-6">
-                            <div class="card-header">
-                                <div class="card-title">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
                                     <i class="fas fa-stethoscope"></i>
                                     Medical Staff Management
                                 </div>
@@ -2689,7 +3046,7 @@
                             </div>
                             
                             <!-- Filters -->
-                            <div class="p-4 border-b border-gray-200 bg-gray-50">
+                            <div class="neumac-p-4 border-b border-gray-200 bg-gray-50">
                                 <div class="grid grid-cols-4 gap-4">
                                     <div>
                                         <input type="text" class="form-control" v-model="staffFilters.search" 
@@ -2725,7 +3082,7 @@
 
                             <!-- Staff Table -->
                             <div class="table-responsive">
-                                <table class="table table-striped">
+                                <table class="table table-striped neumac-table-enhanced">
                                     <thead>
                                         <tr>
                                             <th>Staff Member</th>
@@ -2744,44 +3101,48 @@
                                                     <div class="user-avatar">{{ getInitials(staff.full_name) }}</div>
                                                     <div>
                                                         <div class="font-medium">{{ staff.full_name }}</div>
-                                                        <div class="text-xs text-gray-500">{{ staff.professional_email }}</div>
-                                                        <div v-if="staff.resident_year" class="text-xs text-blue-600">
+                                                        <div class="neumac-text-xs neumac-color-muted">{{ staff.professional_email }}</div>
+                                                        <div v-if="staff.resident_year" class="neumac-text-xs neumac-color-primary">
                                                             {{ staff.resident_year }}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>
-                                                <span class="badge" :class="getStaffTypeClass(staff.staff_type)">
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas" :class="getStaffTypeIcon(staff.staff_type)"></i>
                                                     {{ formatStaffType(staff.staff_type) }}
-                                                </span>
+                                                </div>
                                             </td>
-                                            <td class="font-mono text-sm">{{ staff.staff_id }}</td>
+                                            <td class="font-mono neumac-text-sm">{{ staff.staff_id }}</td>
                                             <td>
-                                                <span v-if="getDepartmentName(staff.department_id)">
+                                                <span v-if="getDepartmentName(staff.department_id)" class="neumac-icon-text">
+                                                    <i class="fas fa-building"></i>
                                                     {{ getDepartmentName(staff.department_id) }}
                                                 </span>
-                                                <span v-else class="text-gray-500 text-xs">Not assigned</span>
+                                                <span v-else class="neumac-text-xs neumac-color-muted">Not assigned</span>
                                             </td>
                                             <td>
-    <span v-if="getCurrentRotationForStaff(staff.id)">
-        {{ getTrainingUnitName(getCurrentRotationForStaff(staff.id).training_unit_id) }}
-    </span>
-    <span v-else class="text-gray-500 text-xs">Not assigned</span>
-</td>
+                                                <span v-if="getCurrentRotationForStaff(staff.id)" class="neumac-icon-text">
+                                                    <i class="fas fa-calendar-check"></i>
+                                                    {{ getTrainingUnitName(getCurrentRotationForStaff(staff.id).training_unit_id) }}
+                                                </span>
+                                                <span v-else class="neumac-text-xs neumac-color-muted">Not assigned</span>
+                                            </td>
                                             
                                             <td>
-                                                <span class="status-indicator" :class="'status-' + staff.employment_status">
+                                                <span class="neumac-status" :class="'neumac-status-' + staff.employment_status">
+                                                    <span class="neumac-status-dot"></span>
                                                     {{ formatEmploymentStatus(staff.employment_status) }}
                                                 </span>
                                             </td>
                                             <td>
-                                                <div class="flex gap-2">
-                                                    <button class="btn btn-sm btn-outline" @click="viewStaffDetails(staff)"
+                                                <div class="neumac-action-buttons">
+                                                    <button class="btn btn-sm btn-outline neumac-btn-sm" @click="viewStaffDetails(staff)"
                                                             aria-label="View staff details">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-outline" @click="editMedicalStaff(staff)" 
+                                                    <button class="btn btn-sm btn-outline neumac-btn-sm" @click="editMedicalStaff(staff)" 
                                                             v-if="hasPermission('medical_staff', 'update')"
                                                             aria-label="Edit staff">
                                                         <i class="fas fa-edit"></i>
@@ -2803,9 +3164,9 @@
 
                     <!-- ============ ON-CALL SCHEDULE VIEW ============ -->
                     <div v-if="currentView === 'oncall_schedule'">
-                        <div class="card mb-6">
-                            <div class="card-header">
-                                <div class="card-title">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
                                     <i class="fas fa-phone-medical"></i>
                                     On-call Schedule Management
                                 </div>
@@ -2815,7 +3176,7 @@
                             </div>
                             
                             <!-- Filters -->
-                            <div class="p-4 border-b border-gray-200 bg-gray-50">
+                            <div class="neumac-p-4 border-b border-gray-200 bg-gray-50">
                                 <div class="grid grid-cols-4 gap-4">
                                     <div>
                                         <input type="date" class="form-control" v-model="onCallFilters.date" 
@@ -2850,7 +3211,7 @@
 
                             <!-- Schedule Table -->
                             <div class="table-responsive">
-                                <table class="table table-striped">
+                                <table class="table table-striped neumac-table-enhanced">
                                     <thead>
                                         <tr>
                                             <th>Date</th>
@@ -2864,24 +3225,46 @@
                                     </thead>
                                     <tbody>
                                         <tr v-for="schedule in filteredOnCallSchedules" :key="schedule.id">
-                                            <td>{{ formatDate(schedule.duty_date) }}</td>
-                                            <td>{{ getPhysicianName(schedule.primary_physician_id) }}</td>
-                                            <td>{{ schedule.start_time }} - {{ schedule.end_time }}</td>
                                             <td>
-                                                <span class="badge" :class="schedule.shift_type === 'primary' ? 'badge-primary' : 'badge-secondary'">
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-calendar"></i>
+                                                    {{ formatDate(schedule.duty_date) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-user-md"></i>
+                                                    {{ getPhysicianName(schedule.primary_physician_id) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-clock"></i>
+                                                    {{ schedule.start_time }} - {{ schedule.end_time }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="neumac-status" :class="schedule.shift_type === 'primary' ? 'neumac-status-oncall' : 'neumac-status-busy'">
+                                                    <span class="neumac-status-dot"></span>
                                                     {{ schedule.shift_type === 'primary' ? 'Primary' : 'Backup' }}
                                                 </span>
                                             </td>
-                                            <td>{{ schedule.coverage_area }}</td>
                                             <td>
-                                                <span v-if="schedule.backup_physician_id">
-                                                    {{ getPhysicianName(schedule.backup_physician_id) }}
-                                                </span>
-                                                <span v-else class="text-gray-500 text-xs">No backup</span>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-hospital"></i>
+                                                    {{ schedule.coverage_area }}
+                                                </div>
                                             </td>
                                             <td>
-                                                <div class="flex gap-2">
-                                                    <button class="btn btn-sm btn-outline" @click="editOnCallSchedule(schedule)" 
+                                                <span v-if="schedule.backup_physician_id" class="neumac-icon-text">
+                                                    <i class="fas fa-user-shield"></i>
+                                                    {{ getPhysicianName(schedule.backup_physician_id) }}
+                                                </span>
+                                                <span v-else class="neumac-text-xs neumac-color-muted">No backup</span>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-action-buttons">
+                                                    <button class="btn btn-sm btn-outline neumac-btn-sm" @click="editOnCallSchedule(schedule)" 
                                                             v-if="hasPermission('oncall_schedule', 'update')"
                                                             aria-label="Edit schedule">
                                                         <i class="fas fa-edit"></i>
@@ -2903,9 +3286,9 @@
 
                     <!-- ============ RESIDENT ROTATIONS VIEW ============ -->
                     <div v-if="currentView === 'resident_rotations'">
-                        <div class="card mb-6">
-                            <div class="card-header">
-                                <div class="card-title">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
                                     <i class="fas fa-calendar-check"></i>
                                     Resident Rotations Management
                                 </div>
@@ -2915,7 +3298,7 @@
                             </div>
                             
                             <!-- Filters -->
-                            <div class="p-4 border-b border-gray-200 bg-gray-50">
+                            <div class="neumac-p-4 border-b border-gray-200 bg-gray-50">
                                 <div class="grid grid-cols-4 gap-4">
                                     <div>
                                         <select class="form-select" v-model="rotationFilters.resident" aria-label="Filter by resident">
@@ -2955,7 +3338,7 @@
 
                             <!-- Rotations Table -->
                             <div class="table-responsive">
-                                <table class="table table-striped">
+                                <table class="table table-striped neumac-table-enhanced">
                                     <thead>
                                         <tr>
                                             <th>Rotation ID</th>
@@ -2970,26 +3353,48 @@
                                     </thead>
                                     <tbody>
                                         <tr v-for="rotation in filteredRotations" :key="rotation.id">
-                                            <td class="font-mono text-sm">{{ rotation.rotation_id }}</td>
-                                            <td>{{ getResidentName(rotation.resident_id) }}</td>
-                                            <td>{{ getTrainingUnitName(rotation.training_unit_id) }}</td>
-                                            <td>{{ formatDate(rotation.start_date) }}</td>
-                                            <td>{{ formatDate(rotation.end_date) }}</td>
+                                            <td class="font-mono neumac-text-sm">{{ rotation.rotation_id }}</td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-user-graduate"></i>
+                                                    {{ getResidentName(rotation.resident_id) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-clinic-medical"></i>
+                                                    {{ getTrainingUnitName(rotation.training_unit_id) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-play-circle"></i>
+                                                    {{ formatDate(rotation.start_date) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-flag-checkered"></i>
+                                                    {{ formatDate(rotation.end_date) }}
+                                                </div>
+                                            </td>
                                            
                                             <td>
-                                                <span class="status-indicator" :class="'status-' + rotation.rotation_status">
+                                                <span class="neumac-status" :class="'neumac-status-' + rotation.rotation_status">
+                                                    <span class="neumac-status-dot"></span>
                                                     {{ formatRotationStatus(rotation.rotation_status) }}
                                                 </span>
                                             </td>
                                             <td>
-                                                <span v-if="rotation.supervising_attending_id">
+                                                <span v-if="rotation.supervising_attending_id" class="neumac-icon-text">
+                                                    <i class="fas fa-user-md"></i>
                                                     {{ getSupervisorName(rotation.supervising_attending_id) }}
                                                 </span>
-                                                <span v-else class="text-gray-500 text-xs">Not assigned</span>
+                                                <span v-else class="neumac-text-xs neumac-color-muted">Not assigned</span>
                                             </td>
                                             <td>
-                                                <div class="flex gap-2">
-                                                    <button class="btn btn-sm btn-outline" @click="editRotation(rotation)" 
+                                                <div class="neumac-action-buttons">
+                                                    <button class="btn btn-sm btn-outline neumac-btn-sm" @click="editRotation(rotation)" 
                                                             v-if="hasPermission('resident_rotations', 'update')"
                                                             aria-label="Edit rotation">
                                                         <i class="fas fa-edit"></i>
@@ -3011,9 +3416,9 @@
 
                     <!-- ============ TRAINING UNITS VIEW ============ -->
                     <div v-if="currentView === 'training_units'">
-                        <div class="card mb-6">
-                            <div class="card-header">
-                                <div class="card-title">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
                                     <i class="fas fa-hospital-user"></i>
                                     Training Units Management
                                 </div>
@@ -3022,50 +3427,72 @@
                                 </button>
                             </div>
                             
-                            <!-- Training Units Grid -->
+                            <!-- NEUMAC ENHANCEMENT: Training Units Grid -->
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                                <div v-for="unit in trainingUnits" :key="unit.id" class="card hover:shadow-lg transition-shadow">
-                                    <div class="card-header">
-                                        <div class="card-title">
-                                            <i class="fas fa-clinic-medical"></i>
-                                            {{ unit.unit_name }}
+                                <div v-for="unit in trainingUnits" :key="unit.id" class="neumac-unit-card">
+                                    <div class="neumac-unit-header">
+                                        <div>
+                                            <h3 class="neumac-unit-title">{{ unit.unit_name }}</h3>
+                                            <div class="neumac-text-xs neumac-color-muted">{{ unit.unit_code }}</div>
                                         </div>
-                                        <span class="status-indicator" :class="'status-' + unit.unit_status">
+                                        <span class="neumac-status" :class="'neumac-status-' + unit.unit_status">
+                                            <span class="neumac-status-dot"></span>
                                             {{ unit.unit_status }}
                                         </span>
                                     </div>
                                     
-                                    <div class="space-y-3">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600">Code:</span>
-                                            <span class="font-mono text-sm">{{ unit.unit_code }}</span>
+                                    <!-- NEUMAC ENHANCEMENT: Visual Capacity Indicator -->
+                                    <div v-if="unit.maximum_residents" class="neumac-visual-capacity">
+                                        <div class="neumac-visual-dots">
+                                            <span v-for="n in unit.maximum_residents" 
+                                                  :key="n"
+                                                  class="neumac-visual-dot"
+                                                  :class="getCapacityDotClass(n, unit.current_residents)"></span>
                                         </div>
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600">Department:</span>
-                                            <span class="text-sm">{{ getDepartmentName(unit.department_id) }}</span>
-                                        </div>
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600">Current Capacity:</span>
-                                            <span class="text-sm">{{ unit.current_residents || 0 }}/{{ unit.maximum_residents }}</span>
-                                        </div>
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600">Supervisor:</span>
-                                            <span class="text-sm">{{ getSupervisorName(unit.supervising_attending_id) || 'Not assigned' }}</span>
-                                        </div>
-                                        <div v-if="unit.specialty" class="mt-2">
-                                            <span class="badge badge-info">{{ unit.specialty }}</span>
+                                        <div class="neumac-text-sm neumac-font-semibold">
+                                            {{ unit.current_residents || 0 }}/{{ unit.maximum_residents }}
                                         </div>
                                     </div>
                                     
-                                    <div class="mt-4 flex gap-2">
-                                        <button class="btn btn-sm btn-outline flex-1" @click="editTrainingUnit(unit)" 
+                                    <!-- Capacity Meter -->
+                                    <div v-if="unit.maximum_residents" class="neumac-capacity-meter">
+                                        <div class="neumac-meter-fill" :class="getMeterFillClass(unit.current_residents, unit.maximum_residents)"
+                                             :style="{width: calculateCapacityPercent(unit.current_residents, unit.maximum_residents) + '%'}"></div>
+                                    </div>
+                                    
+                                    <div class="neumac-capacity-label" v-if="unit.maximum_residents">
+                                        <span class="neumac-text-xs">Capacity</span>
+                                        <span class="neumac-text-xs neumac-font-medium">
+                                            {{ calculateCapacityPercent(unit.current_residents, unit.maximum_residents) }}%
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="neumac-unit-meta">
+                                        <div class="neumac-unit-meta-item">
+                                            <i class="fas fa-user-md"></i>
+                                            <span>{{ getSupervisorName(unit.supervising_attending_id) || 'Supervisor not assigned' }}</span>
+                                        </div>
+                                        <div class="neumac-unit-meta-item">
+                                            <i class="fas fa-building"></i>
+                                            <span>{{ getDepartmentName(unit.department_id) || 'Department not assigned' }}</span>
+                                        </div>
+                                        <div v-if="unit.specialty" class="neumac-unit-meta-item">
+                                            <i class="fas fa-stethoscope"></i>
+                                            <span>{{ unit.specialty }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="neumac-action-buttons">
+                                        <button class="btn btn-sm btn-outline flex-1 neumac-btn-sm" @click="editTrainingUnit(unit)" 
                                                 v-if="hasPermission('training_units', 'update')"
                                                 aria-label="Edit training unit">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
-                                        <button class="btn btn-sm btn-primary flex-1" @click="viewUnitResidents(unit)"
+                                        <button class="btn btn-sm btn-primary flex-1 neumac-btn-sm" @click="viewUnitResidents(unit)"
                                                 aria-label="View unit residents">
-                                            <i class="fas fa-users"></i> Residents
+                                            <i class="fas fa-users"></i> 
+                                            <span v-if="unit.current_residents">{{ unit.current_residents }}</span>
+                                            <span v-else>0</span>
                                         </button>
                                     </div>
                                 </div>
@@ -3081,9 +3508,9 @@
 
                     <!-- ============ STAFF ABSENCE VIEW ============ -->
                     <div v-if="currentView === 'staff_absence'">
-                        <div class="card mb-6">
-                            <div class="card-header">
-                                <div class="card-title">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
                                     <i class="fas fa-user-clock"></i>
                                     Staff Absence Management
                                 </div>
@@ -3093,7 +3520,7 @@
                             </div>
                             
                             <!-- Filters -->
-                            <div class="p-4 border-b border-gray-200 bg-gray-50">
+                            <div class="neumac-p-4 border-b border-gray-200 bg-gray-50">
                                 <div class="grid grid-cols-4 gap-4">
                                     <div>
                                         <select class="form-select" v-model="absenceFilters.staff" aria-label="Filter by staff">
@@ -3130,7 +3557,7 @@
 
                             <!-- Absences Table -->
                             <div class="table-responsive">
-                                <table class="table table-striped">
+                                <table class="table table-striped neumac-table-enhanced">
                                     <thead>
                                         <tr>
                                             <th>Staff Member</th>
@@ -3145,25 +3572,47 @@
                                     </thead>
                                     <tbody>
                                         <tr v-for="absence in filteredAbsences" :key="absence.id">
-                                            <td>{{ getStaffName(absence.staff_member_id) }}</td>
-                                            <td>{{ formatAbsenceReason(absence.absence_reason) }}</td>
-                                            <td>{{ formatDate(absence.start_date) }}</td>
-                                            <td>{{ formatDate(absence.end_date) }}</td>
-                                            <td>{{ calculateAbsenceDuration(absence.start_date, absence.end_date) }} days</td>
                                             <td>
-                                                <span v-if="absence.replacement_staff_id">
-                                                    {{ getStaffName(absence.replacement_staff_id) }}
-                                                </span>
-                                                <span v-else class="text-gray-500 text-xs">No coverage</span>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-user"></i>
+                                                    {{ getStaffName(absence.staff_member_id) }}
+                                                </div>
                                             </td>
                                             <td>
-                                                <span class="status-indicator" :class="'status-' + absence.status">
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas" :class="getAbsenceReasonIcon(absence.absence_reason)"></i>
+                                                    {{ formatAbsenceReason(absence.absence_reason) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-play-circle"></i>
+                                                    {{ formatDate(absence.start_date) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-flag-checkered"></i>
+                                                    {{ formatDate(absence.end_date) }}
+                                                </div>
+                                            </td>
+                                            <td>{{ calculateAbsenceDuration(absence.start_date, absence.end_date) }} days</td>
+                                            <td>
+                                                <span v-if="absence.replacement_staff_id" class="neumac-icon-text">
+                                                    <i class="fas fa-user-shield"></i>
+                                                    {{ getStaffName(absence.replacement_staff_id) }}
+                                                </span>
+                                                <span v-else class="neumac-text-xs neumac-color-muted">No coverage</span>
+                                            </td>
+                                            <td>
+                                                <span class="neumac-status" :class="'neumac-status-' + absence.status">
+                                                    <span class="neumac-status-dot"></span>
                                                     {{ formatAbsenceStatus(absence.status) }}
                                                 </span>
                                             </td>
                                             <td>
-                                                <div class="flex gap-2">
-                                                    <button class="btn btn-sm btn-outline" @click="editAbsence(absence)" 
+                                                <div class="neumac-action-buttons">
+                                                    <button class="btn btn-sm btn-outline neumac-btn-sm" @click="editAbsence(absence)" 
                                                             v-if="hasPermission('staff_absence', 'update')"
                                                             aria-label="Edit absence">
                                                         <i class="fas fa-edit"></i>
@@ -3185,9 +3634,9 @@
 
                     <!-- ============ DEPARTMENT MANAGEMENT VIEW ============ -->
                     <div v-if="currentView === 'department_management'">
-                        <div class="card mb-6">
-                            <div class="card-header">
-                                <div class="card-title">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
                                     <i class="fas fa-sitemap"></i>
                                     Department Management
                                 </div>
@@ -3199,50 +3648,50 @@
                             
                             <!-- Departments Grid -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-                                <div v-for="department in departments" :key="department.id" class="card hover:shadow-lg transition-shadow">
-                                    <div class="card-header">
-                                        <div class="card-title">
-                                            <i class="fas fa-hospital"></i>
-                                            {{ department.name }}
+                                <div v-for="department in departments" :key="department.id" class="neumac-unit-card">
+                                    <div class="neumac-unit-header">
+                                        <div>
+                                            <h3 class="neumac-unit-title">{{ department.name }}</h3>
+                                            <div class="neumac-text-xs neumac-color-muted">{{ department.code }}</div>
                                         </div>
-                                        <span class="status-indicator" :class="'status-' + department.status">
+                                        <span class="neumac-status" :class="'neumac-status-' + department.status">
+                                            <span class="neumac-status-dot"></span>
                                             {{ department.status }}
                                         </span>
                                     </div>
                                     
-                                    <div class="space-y-3">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600">Code:</span>
-                                            <span class="font-mono text-sm">{{ department.code }}</span>
+                                    <div class="neumac-unit-meta">
+                                        <div v-if="department.head_of_department_id" class="neumac-unit-meta-item">
+                                            <i class="fas fa-user-tie"></i>
+                                            <span>{{ getStaffName(department.head_of_department_id) }}</span>
                                         </div>
-                                        <div v-if="department.head_of_department_id" class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600">Head of Department:</span>
-                                            <span class="text-sm">{{ getStaffName(department.head_of_department_id) }}</span>
-                                        </div>
-                                        <div class="mt-2">
-                                            <div class="text-xs text-gray-600 mb-1">Clinical Units:</div>
-                                            <div class="flex flex-wrap gap-1">
-                                                <span v-for="unit in getDepartmentUnits(department.id)" :key="unit.id" 
-                                                      class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-                                                    {{ unit.name }}
-                                                </span>
-                                                <span v-if="getDepartmentUnits(department.id).length === 0" 
-                                                      class="text-gray-500 text-xs">No units</span>
-                                            </div>
-                                        </div>
-                                        <div class="mt-2">
-                                            <div class="text-xs text-gray-600 mb-1">Staff Count:</div>
-                                            <div class="text-sm">{{ getDepartmentStaffCount(department.id) }} staff members</div>
+                                        <div class="neumac-unit-meta-item">
+                                            <i class="fas fa-users"></i>
+                                            <span>{{ getDepartmentStaffCount(department.id) }} staff members</span>
                                         </div>
                                     </div>
                                     
-                                    <div class="mt-4 flex gap-2">
-                                        <button class="btn btn-sm btn-outline flex-1" @click="editDepartment(department)" 
+                                    <div v-if="getDepartmentUnits(department.id).length > 0" class="neumac-data-group">
+                                        <div class="neumac-data-group-title">
+                                            <i class="fas fa-clinic-medical"></i>
+                                            Clinical Units
+                                        </div>
+                                        <div class="neumac-space-y-2">
+                                            <div v-for="unit in getDepartmentUnits(department.id)" :key="unit.id" 
+                                                 class="neumac-icon-text">
+                                                <i class="fas fa-hospital-alt"></i>
+                                                {{ unit.name }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="neumac-action-buttons">
+                                        <button class="btn btn-sm btn-outline flex-1 neumac-btn-sm" @click="editDepartment(department)" 
                                                 v-if="hasPermission('system', 'manage_departments')"
                                                 aria-label="Edit department">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
-                                        <button class="btn btn-sm btn-primary flex-1" @click="viewDepartmentStaff(department)"
+                                        <button class="btn btn-sm btn-primary flex-1 neumac-btn-sm" @click="viewDepartmentStaff(department)"
                                                 aria-label="View department staff">
                                             <i class="fas fa-users"></i> Staff
                                         </button>
@@ -3260,9 +3709,9 @@
 
                     <!-- ============ COMMUNICATIONS VIEW ============ -->
                     <div v-if="currentView === 'communications'">
-                        <div class="card mb-6">
-                            <div class="card-header">
-                                <div class="card-title">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
                                     <i class="fas fa-bullhorn"></i>
                                     Communications Center
                                 </div>
@@ -3273,33 +3722,32 @@
                             </div>
                             
                             <!-- Communications List -->
-                            <div class="space-y-4">
+                            <div class="neumac-space-y-4">
                                 <div v-for="announcement in recentAnnouncements" :key="announcement.id" 
-                                     class="card hover:shadow-md transition-shadow">
-                                    <div class="flex justify-between items-start mb-3">
+                                     class="neumac-card-enhanced">
+                                    <div class="neumac-card-header">
                                         <div>
-                                            <h4 class="font-semibold text-gray-900">{{ announcement.title }}</h4>
+                                            <h4 class="neumac-font-medium neumac-text-lg">{{ announcement.title }}</h4>
                                             <div class="flex items-center gap-2 mt-1">
-                                                <span class="text-xs text-gray-600">{{ announcement.author }}</span>
-                                                <span class="text-xs text-gray-500">•</span>
-                                                <span class="text-xs text-gray-600">{{ formatTimeAgo(announcement.created_at) }}</span>
+                                                <span class="neumac-text-xs neumac-color-muted">{{ announcement.author }}</span>
+                                                <span class="neumac-text-xs neumac-color-muted">•</span>
+                                                <span class="neumac-text-xs neumac-color-muted">{{ formatTimeAgo(announcement.created_at) }}</span>
                                             </div>
                                         </div>
-                                        <span class="badge" :class="'badge-' + announcement.priority_level">
+                                        <span class="neumac-status" :class="'neumac-status-' + announcement.priority_level">
+                                            <span class="neumac-status-dot"></span>
                                             {{ announcement.priority_level }}
                                         </span>
                                     </div>
                                     
-                                    <p class="text-sm text-gray-700 mb-3">{{ announcement.content }}</p>
+                                    <p class="neumac-text-sm neumac-color-muted mb-3">{{ announcement.content }}</p>
                                     
-                                    <div class="flex items-center justify-between text-xs text-gray-500">
-                                        <div class="flex items-center gap-4">
+                                    <div class="flex items-center justify-between neumac-text-xs neumac-color-muted">
+                                        <div class="neumac-icon-text">
+                                            <i class="fas fa-users"></i>
                                             <span>{{ announcement.target_audience }}</span>
-                                            <span v-if="announcement.type === 'stats_update'">
-                                                <i class="fas fa-chart-line"></i> Live Stats Update
-                                            </span>
                                         </div>
-                                        <button class="btn btn-sm btn-outline" @click="viewAnnouncement(announcement)"
+                                        <button class="btn btn-sm btn-outline neumac-btn-sm" @click="viewAnnouncement(announcement)"
                                                 aria-label="View announcement">
                                             <i class="fas fa-eye"></i> View Details
                                         </button>
@@ -3320,7 +3768,7 @@
 
             <!-- ============ MODALS ============ -->
             
-            <!-- MODAL 1: Dynamic Staff Profile (NO PHONE NUMBERS) -->
+            <!-- MODAL 1: Dynamic Staff Profile (NEUMAC Enhanced) -->
             <div v-if="staffProfileModal.show" class="modal-overlay">
                 <div class="modal-container modal-wide">
                     <div class="modal-header">
@@ -3334,35 +3782,46 @@
                     </div>
                     
                     <div class="modal-body">
-                        <!-- Profile Header -->
-                        <div class="profile-header">
-                            <div class="profile-avatar-large">{{ getInitials(staffProfileModal.staff.full_name) }}</div>
-                            <div class="profile-basic-info">
-                                <div class="profile-name">{{ staffProfileModal.staff.full_name }}</div>
-                                <div class="profile-title">{{ formatStaffType(staffProfileModal.staff.staff_type) }}</div>
-                                <div class="profile-meta-row">
-                                    <div class="profile-meta-item">
-                                        <i class="fas fa-id-badge"></i>
-                                        <span>{{ staffProfileModal.staff.staff_id }}</span>
+                        <!-- NEUMAC ENHANCEMENT: Profile Header -->
+                        <div class="neumac-modal-section">
+                            <div class="profile-header">
+                                <div class="profile-avatar-large">{{ getInitials(staffProfileModal.staff.full_name) }}</div>
+                                <div class="profile-basic-info">
+                                    <div class="profile-name">{{ staffProfileModal.staff.full_name }}</div>
+                                    <div class="profile-title">{{ formatStaffType(staffProfileModal.staff.staff_type) }}</div>
+                                    <div class="profile-meta-row">
+                                        <div class="profile-meta-item">
+                                            <i class="fas fa-id-badge"></i>
+                                            <span>{{ staffProfileModal.staff.staff_id }}</span>
+                                        </div>
+                                        <div class="profile-meta-item">
+                                            <i class="fas fa-envelope"></i>
+                                            <span>{{ staffProfileModal.staff.professional_email }}</span>
+                                        </div>
+                                        <span class="neumac-status" :class="'neumac-status-' + staffProfileModal.staff.employment_status">
+                                            <span class="neumac-status-dot"></span>
+                                            {{ formatEmploymentStatus(staffProfileModal.staff.employment_status) }}
+                                        </span>
                                     </div>
-                                    <div class="profile-meta-item">
-                                        <i class="fas fa-envelope"></i>
-                                        <span>{{ staffProfileModal.staff.professional_email }}</span>
+                                    <div class="profile-status-row">
+                                        <span class="profile-department-badge" v-if="getDepartmentName(staffProfileModal.staff.department_id)">
+                                            {{ getDepartmentName(staffProfileModal.staff.department_id) }}
+                                        </span>
+                                        <span v-if="isOnCallToday(staffProfileModal.staff.id)" class="neumac-status neumac-status-oncall">
+                                            <span class="neumac-status-dot"></span>
+                                            On-Call Today
+                                        </span>
                                     </div>
-                                    <span class="status-indicator" :class="'status-' + staffProfileModal.staff.employment_status">
-                                        {{ formatEmploymentStatus(staffProfileModal.staff.employment_status) }}
-                                    </span>
-                                </div>
-                                <div class="profile-status-row">
-                                    <span class="profile-department-badge" v-if="getDepartmentName(staffProfileModal.staff.department_id)">
-                                        {{ getDepartmentName(staffProfileModal.staff.department_id) }}
-                                    </span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Academic Information -->
-                        <div class="education-section">
+                        <!-- NEUMAC ENHANCEMENT: Academic Information -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-graduation-cap"></i>
+                                Academic Information
+                            </div>
                             <div class="education-grid">
                                 <div class="education-item">
                                     <span class="education-label">Academic Degree</span>
@@ -3379,105 +3838,87 @@
                                 <div class="education-item" v-if="staffProfileModal.staff.clinical_certificate">
                                     <span class="education-label">Clinical Certificate</span>
                                     <span class="education-value">{{ staffProfileModal.staff.clinical_certificate }}</span>
-                                    <span class="text-xs" :class="staffProfileModal.staff.certificate_status === 'expired' ? 'text-red-600' : 'text-green-600'">
+                                    <span class="neumac-text-xs" :class="staffProfileModal.staff.certificate_status === 'expired' ? 'neumac-color-danger' : 'neumac-color-success'">
                                         {{ staffProfileModal.staff.certificate_status === 'expired' ? 'Expired' : 'Current' }}
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Dynamic Tabs -->
-                        <div class="modal-tabs">
-                            <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'clinical' }" 
-                                    @click="staffProfileModal.activeTab = 'clinical'">
-                                <i class="fas fa-stethoscope"></i> Clinical Status
-                            </button>
-                            <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'assignments' }" 
-                                    @click="staffProfileModal.activeTab = 'assignments'">
-                                <i class="fas fa-tasks"></i> Current Assignments
-                            </button>
-                            <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'activity' }" 
-                                    @click="staffProfileModal.activeTab = 'activity'">
-                                <i class="fas fa-history"></i> Recent Activity
-                            </button>
+                        <!-- NEUMAC ENHANCEMENT: Dynamic Tabs with Professional Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="modal-tabs">
+                                <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'clinical' }" 
+                                        @click="staffProfileModal.activeTab = 'clinical'">
+                                    <i class="fas fa-stethoscope"></i> Clinical Status
+                                </button>
+                                <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'assignments' }" 
+                                        @click="staffProfileModal.activeTab = 'assignments'">
+                                    <i class="fas fa-tasks"></i> Current Assignments
+                                </button>
+                                <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'activity' }" 
+                                        @click="staffProfileModal.activeTab = 'activity'">
+                                    <i class="fas fa-history"></i> Recent Activity
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Clinical Status Tab -->
-                        <div v-if="staffProfileModal.activeTab === 'clinical'" class="mt-6">
-                            <div class="dynamic-status-grid">
-                                <!-- Current Location -->
-                                <div class="dynamic-status-card">
-                                    <div class="dynamic-status-header">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <h4>Current Location</h4>
-                                    </div>
-                                    <div class="dynamic-status-content">
-                                        <div class="status-data-row">
-                                            <span class="status-data-label">Clinical Unit</span>
-                                            <span class="status-data-value">{{ getCurrentUnit(staffProfileModal.staff.id) || 'Not assigned' }}</span>
+                        <div v-if="staffProfileModal.activeTab === 'clinical'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <div class="dynamic-status-grid">
+                                    <!-- Current Location -->
+                                    <div class="neumac-card-enhanced">
+                                        <div class="neumac-card-header">
+                                            <div class="neumac-card-title">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                Current Location
+                                            </div>
                                         </div>
-                                        <div class="status-data-row">
-                                            <span class="status-data-label">Ward/Floor</span>
-                                            <span class="status-data-value">{{ getCurrentWard(staffProfileModal.staff.id) || 'General' }}</span>
-                                        </div>
-                                        <div class="status-data-row">
-                                            <span class="status-data-label">Current Activity</span>
-                                            <span class="status-data-value">
-                                                <span class="status-indicator" :class="'status-' + getCurrentActivityStatus(staffProfileModal.staff.id)">
+                                        <div class="neumac-space-y-2">
+                                            <div class="neumac-icon-text">
+                                                <i class="fas fa-clinic-medical"></i>
+                                                <span>{{ getCurrentUnit(staffProfileModal.staff.id) || 'Not assigned' }}</span>
+                                            </div>
+                                            <div class="neumac-icon-text">
+                                                <i class="fas fa-hospital-alt"></i>
+                                                <span>{{ getCurrentWard(staffProfileModal.staff.id) || 'General' }}</span>
+                                            </div>
+                                            <div class="neumac-icon-text">
+                                                <i class="fas fa-running"></i>
+                                                <span class="neumac-status" :class="'neumac-status-' + getCurrentActivityStatus(staffProfileModal.staff.id)">
+                                                    <span class="neumac-status-dot"></span>
                                                     {{ getCurrentActivityStatus(staffProfileModal.staff.id) || 'Available' }}
                                                 </span>
-                                            </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- Patient Load -->
-                                <div class="dynamic-status-card">
-                                    <div class="dynamic-status-header">
-                                        <i class="fas fa-procedures"></i>
-                                        <h4>Patient Load</h4>
-                                    </div>
-                                    <div class="dynamic-status-content">
-                                        <div class="status-data-row">
-                                            <span class="status-data-label">Total Active</span>
-                                            <span class="status-data-value status-data-value-large">
-                                                {{ getCurrentPatientCount(staffProfileModal.staff.id) || 0 }}
-                                            </span>
+                                    <!-- On-call Status -->
+                                    <div class="neumac-card-enhanced">
+                                        <div class="neumac-card-header">
+                                            <div class="neumac-card-title">
+                                                <i class="fas fa-phone-medical"></i>
+                                                On-call Status
+                                            </div>
                                         </div>
-                                        <div class="status-data-row">
-                                            <span class="status-data-label">ICU Patients</span>
-                                            <span class="status-data-value">{{ getICUPatientCount(staffProfileModal.staff.id) || 0 }}</span>
-                                        </div>
-                                        <div class="status-data-row">
-                                            <span class="status-data-label">Ward Patients</span>
-                                            <span class="status-data-value">{{ getWardPatientCount(staffProfileModal.staff.id) || 0 }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- On-call Status -->
-                                <div class="dynamic-status-card">
-                                    <div class="dynamic-status-header">
-                                        <i class="fas fa-phone-medical"></i>
-                                        <h4>On-call Status</h4>
-                                    </div>
-                                    <div class="dynamic-status-content">
-                                        <div class="status-data-row">
-                                            <span class="status-data-label">Today's On-call</span>
-                                            <span class="status-data-value">
-                                                <span v-if="isOnCallToday(staffProfileModal.staff.id)" class="status-indicator status-oncall">
-                                                    On-call
+                                        <div class="neumac-space-y-2">
+                                            <div class="neumac-icon-text">
+                                                <i class="fas fa-phone"></i>
+                                                <span v-if="isOnCallToday(staffProfileModal.staff.id)" class="neumac-status neumac-status-oncall">
+                                                    <span class="neumac-status-dot"></span>
+                                                    Scheduled Today
                                                 </span>
-                                                <span v-else class="text-gray-500">Not scheduled</span>
-                                            </span>
-                                        </div>
-                                        <div class="status-data-row" v-if="isOnCallToday(staffProfileModal.staff.id)">
-                                            <span class="status-data-label">Shift Time</span>
-                                            <span class="status-data-value">{{ getOnCallShiftTime(staffProfileModal.staff.id) }}</span>
-                                        </div>
-                                        <div class="status-data-row" v-if="isOnCallToday(staffProfileModal.staff.id)">
-                                            <span class="status-data-label">Coverage Area</span>
-                                            <span class="status-data-value">{{ getOnCallCoverage(staffProfileModal.staff.id) }}</span>
+                                                <span v-else class="neumac-text-sm neumac-color-muted">Not scheduled</span>
+                                            </div>
+                                            <div v-if="isOnCallToday(staffProfileModal.staff.id)" class="neumac-icon-text">
+                                                <i class="fas fa-clock"></i>
+                                                <span>{{ getOnCallShiftTime(staffProfileModal.staff.id) }}</span>
+                                            </div>
+                                            <div v-if="isOnCallToday(staffProfileModal.staff.id)" class="neumac-icon-text">
+                                                <i class="fas fa-hospital"></i>
+                                                <span>{{ getOnCallCoverage(staffProfileModal.staff.id) }}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -3485,47 +3926,52 @@
                         </div>
 
                         <!-- Current Assignments Tab -->
-                        <div v-if="staffProfileModal.activeTab === 'assignments'" class="mt-6">
-                            <div class="assignments-section">
+                        <div v-if="staffProfileModal.activeTab === 'assignments'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
                                 <div class="assignments-grid">
                                     <!-- Current Rotation -->
-                                    <div class="assignment-card" v-if="getCurrentRotationForStaff(staffProfileModal.staff.id)">
-                                        <div class="assignment-header">
-                                            <i class="fas fa-calendar-check"></i>
-                                            <h4>Current Rotation</h4>
-                                        </div>
-                                        <div class="assignment-list">
-                                            <div class="assignment-item">
-                                                <span class="assignment-details">
-                                                    {{ getCurrentRotationForStaff(staffProfileModal.staff.id).unitName }}
-                                                </span>
-                                                <span class="assignment-time">
-                                                    {{ getRotationDaysLeft(staffProfileModal.staff.id) }} days left
-                                                </span>
+                                    <div class="neumac-card-enhanced" v-if="getCurrentRotationForStaff(staffProfileModal.staff.id)">
+                                        <div class="neumac-card-header">
+                                            <div class="neumac-card-title">
+                                                <i class="fas fa-calendar-check"></i>
+                                                Current Rotation
                                             </div>
-                                            <div class="assignment-item" v-if="getCurrentRotationForStaff(staffProfileModal.staff.id).supervisor">
-                                                <span class="assignment-details">
-                                                    Supervisor: {{ getCurrentRotationForStaff(staffProfileModal.staff.id).supervisor }}
-                                                </span>
+                                        </div>
+                                        <div class="neumac-space-y-2">
+                                            <div class="neumac-icon-text">
+                                                <i class="fas fa-clinic-medical"></i>
+                                                <span>{{ getCurrentRotationForStaff(staffProfileModal.staff.id).unitName }}</span>
+                                            </div>
+                                            <div class="neumac-icon-text">
+                                                <i class="fas fa-calendar"></i>
+                                                <span>{{ getRotationDaysLeft(staffProfileModal.staff.id) }} days remaining</span>
+                                            </div>
+                                            <div v-if="getCurrentRotationForStaff(staffProfileModal.staff.id).supervisor" class="neumac-icon-text">
+                                                <i class="fas fa-user-md"></i>
+                                                <span>Supervisor: {{ getCurrentRotationForStaff(staffProfileModal.staff.id).supervisor }}</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Today's Schedule -->
-                                    <div class="assignment-card">
-                                        <div class="assignment-header">
-                                            <i class="fas fa-clock"></i>
-                                            <h4>Today's Schedule</h4>
+                                    <div class="neumac-card-enhanced">
+                                        <div class="neumac-card-header">
+                                            <div class="neumac-card-title">
+                                                <i class="fas fa-clock"></i>
+                                                Today's Schedule
+                                            </div>
                                         </div>
-                                        <div class="assignment-list">
+                                        <div class="neumac-space-y-2">
                                             <div v-for="item in getTodaysSchedule(staffProfileModal.staff.id)" :key="item.id" 
-                                                 class="assignment-item">
-                                                <span class="assignment-details">{{ item.activity }}</span>
-                                                <span class="assignment-time">{{ item.time }}</span>
+                                                 class="neumac-icon-text">
+                                                <i class="fas" :class="getScheduleIcon(item.activity)"></i>
+                                                <span>{{ item.activity }}</span>
+                                                <span class="neumac-text-xs neumac-color-muted ml-auto">{{ item.time }}</span>
                                             </div>
                                             <div v-if="getTodaysSchedule(staffProfileModal.staff.id).length === 0" 
-                                                 class="text-center py-4 text-gray-500 text-sm">
-                                                No scheduled activities today
+                                                 class="neumac-icon-text">
+                                                <i class="fas fa-calendar-times"></i>
+                                                <span class="neumac-text-sm neumac-color-muted">No scheduled activities today</span>
                                             </div>
                                         </div>
                                     </div>
@@ -3534,26 +3980,30 @@
                         </div>
 
                         <!-- Recent Activity Tab -->
-                        <div v-if="staffProfileModal.activeTab === 'activity'" class="mt-6">
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">
-                                        <i class="fas fa-history"></i>
-                                        Recent Clinical Activity
-                                    </div>
-                                </div>
-                                <div class="space-y-2">
-                                    <div v-for="activity in getRecentActivities(staffProfileModal.staff.id)" :key="activity.id" 
-                                         class="flex items-center justify-between p-3 border-b border-gray-100 hover:bg-gray-50">
-                                        <div>
-                                            <div class="font-medium text-sm">{{ activity.description }}</div>
-                                            <div class="text-xs text-gray-600">{{ activity.location }}</div>
+                        <div v-if="staffProfileModal.activeTab === 'activity'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <div class="neumac-card-enhanced">
+                                    <div class="neumac-card-header">
+                                        <div class="neumac-card-title">
+                                            <i class="fas fa-history"></i>
+                                            Recent Clinical Activity
                                         </div>
-                                        <div class="text-xs text-gray-500">{{ formatTime(activity.timestamp) }}</div>
                                     </div>
-                                    <div v-if="getRecentActivities(staffProfileModal.staff.id).length === 0" 
-                                         class="text-center py-4 text-gray-500 text-sm">
-                                        No recent activities recorded
+                                    <div class="neumac-space-y-2">
+                                        <div v-for="activity in getRecentActivities(staffProfileModal.staff.id)" :key="activity.id" 
+                                             class="neumac-timeline-item">
+                                            <div class="neumac-timeline-time">{{ formatTime(activity.timestamp) }}</div>
+                                            <div class="neumac-icon-text">
+                                                <i class="fas" :class="activity.icon || 'fa-stethoscope'"></i>
+                                                <span>{{ activity.description }}</span>
+                                                <span class="neumac-text-xs neumac-color-muted ml-auto">{{ activity.location }}</span>
+                                            </div>
+                                        </div>
+                                        <div v-if="getRecentActivities(staffProfileModal.staff.id).length === 0" 
+                                             class="neumac-icon-text">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span class="neumac-text-sm neumac-color-muted">No recent activities recorded</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -3570,7 +4020,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 2: Add/Edit Medical Staff (NO PHONE FIELD) -->
+            <!-- MODAL 2: Add/Edit Medical Staff (NEUMAC Enhanced) -->
             <div v-if="medicalStaffModal.show" class="modal-overlay">
                 <div class="modal-container">
                     <div class="modal-header">
@@ -3584,111 +4034,118 @@
                     </div>
                     
                     <div class="modal-body">
-                        <div class="modal-tabs">
-                            <button class="modal-tab" :class="{ active: medicalStaffModal.activeTab === 'basic' }" 
-                                    @click="medicalStaffModal.activeTab = 'basic'">
-                                <i class="fas fa-user"></i> Basic Information
-                            </button>
-                            <button class="modal-tab" :class="{ active: medicalStaffModal.activeTab === 'professional' }" 
-                                    @click="medicalStaffModal.activeTab = 'professional'">
-                                <i class="fas fa-graduation-cap"></i> Professional Details
-                            </button>
+                        <!-- NEUMAC ENHANCEMENT: Professional Tab Navigation -->
+                        <div class="neumac-modal-section">
+                            <div class="modal-tabs">
+                                <button class="modal-tab" :class="{ active: medicalStaffModal.activeTab === 'basic' }" 
+                                        @click="medicalStaffModal.activeTab = 'basic'">
+                                    <i class="fas fa-user"></i> Basic Information
+                                </button>
+                                <button class="modal-tab" :class="{ active: medicalStaffModal.activeTab === 'professional' }" 
+                                        @click="medicalStaffModal.activeTab = 'professional'">
+                                    <i class="fas fa-graduation-cap"></i> Professional Details
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Basic Info Tab -->
-                        <div v-if="medicalStaffModal.activeTab === 'basic'" class="mt-6">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="form-group">
-                                    <label class="form-label">Full Name *</label>
-                                    <input type="text" class="form-control" v-model="medicalStaffModal.form.full_name" 
-                                           required aria-required="true">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Staff Type *</label>
-                                    <select class="form-select" v-model="medicalStaffModal.form.staff_type" 
-                                            required aria-required="true" aria-label="Staff type">
-                                        <option value="medical_resident">Medical Resident</option>
-                                        <option value="attending_physician">Attending Physician</option>
-                                        <option value="fellow">Fellow</option>
-                                        <option value="nurse_practitioner">Nurse Practitioner</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Staff ID</label>
-                                    <input type="text" class="form-control" v-model="medicalStaffModal.form.staff_id" 
-                                           aria-label="Staff ID">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Employment Status</label>
-                                    <select class="form-select" v-model="medicalStaffModal.form.employment_status" 
-                                            aria-label="Employment status">
-                                        <option value="active">Active</option>
-                                        <option value="on_leave">On Leave</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Professional Email *</label>
-                                    <input type="email" class="form-control" v-model="medicalStaffModal.form.professional_email" 
-                                           required aria-required="true" aria-label="Professional email">
+                        <div v-if="medicalStaffModal.activeTab === 'basic'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Full Name *</label>
+                                        <input type="text" class="form-control" v-model="medicalStaffModal.form.full_name" 
+                                               required aria-required="true">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Staff Type *</label>
+                                        <select class="form-select" v-model="medicalStaffModal.form.staff_type" 
+                                                required aria-required="true" aria-label="Staff type">
+                                            <option value="medical_resident">Medical Resident</option>
+                                            <option value="attending_physician">Attending Physician</option>
+                                            <option value="fellow">Fellow</option>
+                                            <option value="nurse_practitioner">Nurse Practitioner</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Staff ID</label>
+                                        <input type="text" class="form-control" v-model="medicalStaffModal.form.staff_id" 
+                                               aria-label="Staff ID">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Employment Status</label>
+                                        <select class="form-select" v-model="medicalStaffModal.form.employment_status" 
+                                                aria-label="Employment status">
+                                            <option value="active">Active</option>
+                                            <option value="on_leave">On Leave</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Professional Email *</label>
+                                        <input type="email" class="form-control" v-model="medicalStaffModal.form.professional_email" 
+                                               required aria-required="true" aria-label="Professional email">
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Professional Details Tab -->
-                        <div v-if="medicalStaffModal.activeTab === 'professional'" class="mt-6">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="form-group">
-                                    <label class="form-label">Academic Degree</label>
-                                    <select class="form-select" v-model="medicalStaffModal.form.academic_degree" 
-                                            aria-label="Academic degree">
-                                        <option value="">Select Degree</option>
-                                        <option value="MD">MD</option>
-                                        <option value="MD-PhD">MD-PhD</option>
-                                        <option value="MD-MSc">MD-MSc</option>
-                                        <option value="DO">DO</option>
-                                        <option value="MBBS">MBBS</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Specialization</label>
-                                    <input type="text" class="form-control" v-model="medicalStaffModal.form.specialization" 
-                                           placeholder="e.g., Pulmonology, Critical Care" aria-label="Specialization">
-                                </div>
-                                <div v-if="medicalStaffModal.form.staff_type === 'medical_resident'" class="form-group">
-                                    <label class="form-label">Resident Year</label>
-                                    <select class="form-select" v-model="medicalStaffModal.form.resident_year" 
-                                            aria-label="Resident year">
-                                        <option value="">Select Year</option>
-                                        <option value="PGY-1">PGY-1</option>
-                                        <option value="PGY-2">PGY-2</option>
-                                        <option value="PGY-3">PGY-3</option>
-                                        <option value="PGY-4">PGY-4</option>
-                                        <option value="PGY-5">PGY-5</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Clinical Certificate</label>
-                                    <input type="text" class="form-control" v-model="medicalStaffModal.form.clinical_certificate" 
-                                           placeholder="e.g., Board Certified" aria-label="Clinical certificate">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Certificate Status</label>
-                                    <select class="form-select" v-model="medicalStaffModal.form.certificate_status" 
-                                            aria-label="Certificate status">
-                                        <option value="current">Current</option>
-                                        <option value="expired">Expired</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Department</label>
-                                    <select class="form-select" v-model="medicalStaffModal.form.department_id" 
-                                            aria-label="Department">
-                                        <option value="">Select Department</option>
-                                        <option v-for="department in departments" :key="department.id" :value="department.id">
-                                            {{ department.name }}
-                                        </option>
-                                    </select>
+                        <div v-if="medicalStaffModal.activeTab === 'professional'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Academic Degree</label>
+                                        <select class="form-select" v-model="medicalStaffModal.form.academic_degree" 
+                                                aria-label="Academic degree">
+                                            <option value="">Select Degree</option>
+                                            <option value="MD">MD</option>
+                                            <option value="MD-PhD">MD-PhD</option>
+                                            <option value="MD-MSc">MD-MSc</option>
+                                            <option value="DO">DO</option>
+                                            <option value="MBBS">MBBS</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Specialization</label>
+                                        <input type="text" class="form-control" v-model="medicalStaffModal.form.specialization" 
+                                               placeholder="e.g., Pulmonology, Critical Care" aria-label="Specialization">
+                                    </div>
+                                    <div v-if="medicalStaffModal.form.staff_type === 'medical_resident'" class="form-group">
+                                        <label class="form-label">Resident Year</label>
+                                        <select class="form-select" v-model="medicalStaffModal.form.resident_year" 
+                                                aria-label="Resident year">
+                                            <option value="">Select Year</option>
+                                            <option value="PGY-1">PGY-1</option>
+                                            <option value="PGY-2">PGY-2</option>
+                                            <option value="PGY-3">PGY-3</option>
+                                            <option value="PGY-4">PGY-4</option>
+                                            <option value="PGY-5">PGY-5</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Clinical Certificate</label>
+                                        <input type="text" class="form-control" v-model="medicalStaffModal.form.clinical_certificate" 
+                                               placeholder="e.g., Board Certified" aria-label="Clinical certificate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Certificate Status</label>
+                                        <select class="form-select" v-model="medicalStaffModal.form.certificate_status" 
+                                                aria-label="Certificate status">
+                                            <option value="current">Current</option>
+                                            <option value="expired">Expired</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Department</label>
+                                        <select class="form-select" v-model="medicalStaffModal.form.department_id" 
+                                                aria-label="Department">
+                                            <option value="">Select Department</option>
+                                            <option v-for="department in departments" :key="department.id" :value="department.id">
+                                                {{ department.name }}
+                                            </option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3703,7 +4160,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 3: Communications with Stats Update Tab -->
+            <!-- MODAL 3: Communications with Stats Update Tab (NEUMAC Enhanced) -->
             <div v-if="communicationsModal.show" class="modal-overlay">
                 <div class="modal-container">
                     <div class="modal-header">
@@ -3717,87 +4174,99 @@
                     </div>
                     
                     <div class="modal-body">
-                        <div class="modal-tabs">
-                            <button class="modal-tab" :class="{ active: communicationsModal.activeTab === 'announcement' }" 
-                                    @click="communicationsModal.activeTab = 'announcement'">
-                                <i class="fas fa-bullhorn"></i> Announcement
-                            </button>
-                            <button class="modal-tab" :class="{ active: communicationsModal.activeTab === 'stats_update' }" 
-                                    @click="communicationsModal.activeTab = 'stats_update'" v-if="hasPermission('system', 'manage_updates')">
-                                <i class="fas fa-chart-line"></i> Live Stats Update
-                            </button>
+                        <!-- NEUMAC ENHANCEMENT: Professional Tab Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="modal-tabs">
+                                <button class="modal-tab" :class="{ active: communicationsModal.activeTab === 'announcement' }" 
+                                        @click="communicationsModal.activeTab = 'announcement'">
+                                    <i class="fas fa-bullhorn"></i> Announcement
+                                </button>
+                                <button class="modal-tab" :class="{ active: communicationsModal.activeTab === 'stats_update' }" 
+                                        @click="communicationsModal.activeTab = 'stats_update'" v-if="hasPermission('system', 'manage_updates')">
+                                    <i class="fas fa-chart-line"></i> Live Stats Update
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Announcement Tab -->
-                        <div v-if="communicationsModal.activeTab === 'announcement'" class="mt-6">
-                            <div class="space-y-4">
-                                <div class="form-group">
-                                    <label class="form-label">Title *</label>
-                                    <input type="text" class="form-control" v-model="communicationsModal.form.title" 
-                                           required aria-required="true" aria-label="Announcement title">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Content *</label>
-                                    <textarea class="form-control form-textarea" v-model="communicationsModal.form.content" 
-                                              rows="4" required aria-required="true" aria-label="Announcement content"></textarea>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
+                        <div v-if="communicationsModal.activeTab === 'announcement'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <div class="neumac-space-y-4">
                                     <div class="form-group">
-                                        <label class="form-label">Priority Level</label>
-                                        <select class="form-select" v-model="communicationsModal.form.priority" aria-label="Priority level">
-                                            <option value="normal">Normal</option>
-                                            <option value="high">High</option>
-                                            <option value="urgent">Urgent</option>
-                                        </select>
+                                        <label class="form-label">Title *</label>
+                                        <input type="text" class="form-control" v-model="communicationsModal.form.title" 
+                                               required aria-required="true" aria-label="Announcement title">
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label">Target Audience</label>
-                                        <select class="form-select" v-model="communicationsModal.form.target_audience" 
-                                                aria-label="Target audience">
-                                            <option value="all_staff">All Staff</option>
-                                            <option value="medical_staff">Medical Staff Only</option>
-                                            <option value="residents">Residents Only</option>
-                                            <option value="attendings">Attending Physicians Only</option>
-                                        </select>
+                                        <label class="form-label">Content *</label>
+                                        <textarea class="form-control form-textarea" v-model="communicationsModal.form.content" 
+                                                  rows="4" required aria-required="true" aria-label="Announcement content"></textarea>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="form-group">
+                                            <label class="form-label">Priority Level</label>
+                                            <select class="form-select" v-model="communicationsModal.form.priority" aria-label="Priority level">
+                                                <option value="normal">Normal</option>
+                                                <option value="high">High</option>
+                                                <option value="urgent">Urgent</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Target Audience</label>
+                                            <select class="form-select" v-model="communicationsModal.form.target_audience" 
+                                                    aria-label="Target audience">
+                                                <option value="all_staff">All Staff</option>
+                                                <option value="medical_staff">Medical Staff Only</option>
+                                                <option value="residents">Residents Only</option>
+                                                <option value="attendings">Attending Physicians Only</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Stats Update Tab -->
-                        <div v-if="communicationsModal.activeTab === 'stats_update'" class="mt-6">
-                            <div class="stats-update-section">
-                                <div class="update-type-buttons">
-                                    <button class="update-type-btn" :class="{ active: communicationsModal.form.updateType === 'daily' }"
-                                            @click="communicationsModal.form.updateType = 'daily'">
-                                        <i class="fas fa-sun"></i>
-                                        Daily Status
-                                    </button>
-                                    <button class="update-type-btn" :class="{ active: communicationsModal.form.updateType === 'metric' }"
-                                            @click="communicationsModal.form.updateType = 'metric'">
-                                        <i class="fas fa-chart-bar"></i>
-                                        Metric Update
-                                    </button>
-                                    <button class="update-type-btn" :class="{ active: communicationsModal.form.updateType === 'alert' }"
-                                            @click="communicationsModal.form.updateType = 'alert'">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                        Alert Status
-                                    </button>
+                        <div v-if="communicationsModal.activeTab === 'stats_update'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <!-- NEUMAC ENHANCEMENT: Update Type Buttons with Professional Styling -->
+                                <div class="neumac-data-group">
+                                    <div class="neumac-data-group-title">
+                                        <i class="fas fa-tasks"></i>
+                                        Update Type
+                                    </div>
+                                    <div class="update-type-buttons">
+                                        <button class="update-type-btn" :class="{ active: communicationsModal.form.updateType === 'daily' }"
+                                                @click="communicationsModal.form.updateType = 'daily'">
+                                            <i class="fas fa-sun"></i>
+                                            Daily Status
+                                        </button>
+                                        <button class="update-type-btn" :class="{ active: communicationsModal.form.updateType === 'metric' }"
+                                                @click="communicationsModal.form.updateType = 'metric'">
+                                            <i class="fas fa-chart-bar"></i>
+                                            Metric Update
+                                        </button>
+                                        <button class="update-type-btn" :class="{ active: communicationsModal.form.updateType === 'alert' }"
+                                                @click="communicationsModal.form.updateType = 'alert'">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            Alert Status
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- Daily Status Update -->
-                                <div v-if="communicationsModal.form.updateType === 'daily'" class="space-y-4">
+                                <div v-if="communicationsModal.form.updateType === 'daily'" class="neumac-space-y-4">
                                     <div class="form-group">
                                         <label class="form-label">Daily Status Summary *</label>
                                         <textarea class="form-control form-textarea" v-model="communicationsModal.form.dailySummary" 
                                                   rows="3" placeholder="Brief summary of department status..." 
                                                   required aria-required="true" aria-label="Daily status summary"></textarea>
-                                        <small class="text-muted">This will appear in the Live Statistics panel</small>
+                                        <small class="neumac-text-xs neumac-color-muted">This will appear in the Live Statistics panel</small>
                                     </div>
                                     
                                     <div class="form-group">
                                         <label class="form-label">Key Highlights</label>
-                                        <div class="space-y-2">
+                                        <div class="neumac-space-y-2">
                                             <input type="text" class="form-control" v-model="communicationsModal.form.highlight1" 
                                                    placeholder="Highlight 1 (e.g., ER: 3 critical cases)" aria-label="Highlight 1">
                                             <input type="text" class="form-control" v-model="communicationsModal.form.highlight2" 
@@ -3829,17 +4298,17 @@
                                 </div>
 
                                 <!-- Metric Update -->
-                                <div v-if="communicationsModal.form.updateType === 'metric'" class="space-y-4">
+                                <div v-if="communicationsModal.form.updateType === 'metric'" class="neumac-space-y-4">
                                     <div class="form-group">
                                         <label class="form-label">Metric Information</label>
                                         <div class="metric-inputs-grid">
-                                            <div class="space-y-2">
+                                            <div class="neumac-space-y-2">
                                                 <input type="text" class="form-control" v-model="communicationsModal.form.metricName" 
                                                        placeholder="Metric name (e.g., ER Wait Time)" aria-label="Metric name">
                                                 <input type="text" class="form-control" v-model="communicationsModal.form.metricValue" 
                                                        placeholder="Current value (e.g., 15 mins)" aria-label="Metric value">
                                             </div>
-                                            <div class="space-y-2">
+                                            <div class="neumac-space-y-2">
                                                 <select class="form-select" v-model="communicationsModal.form.metricTrend" aria-label="Metric trend">
                                                     <option value="improved">Improved ↑</option>
                                                     <option value="worsened">Worsened ↓</option>
@@ -3859,7 +4328,7 @@
                                 </div>
 
                                 <!-- Alert Status -->
-                                <div v-if="communicationsModal.form.updateType === 'alert'" class="space-y-4">
+                                <div v-if="communicationsModal.form.updateType === 'alert'" class="neumac-space-y-4">
                                     <div class="form-group">
                                         <label class="form-label">Alert Level</label>
                                         <select class="form-select" v-model="communicationsModal.form.alertLevel" aria-label="Alert level">
@@ -3911,7 +4380,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 4: Add/Edit On-call Schedule -->
+            <!-- MODAL 4: Add/Edit On-call Schedule (NEUMAC Enhanced) -->
             <div v-if="onCallModal.show" class="modal-overlay">
                 <div class="modal-container">
                     <div class="modal-header">
@@ -3925,58 +4394,65 @@
                     </div>
                     
                     <div class="modal-body">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="form-group">
-                                <label class="form-label">Date *</label>
-                                <input type="date" class="form-control" v-model="onCallModal.form.duty_date" 
-                                       required aria-required="true" aria-label="Duty date">
+                        <!-- NEUMAC ENHANCEMENT: Professional Section Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-calendar-alt"></i>
+                                Schedule Details
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Shift Type *</label>
-                                <select class="form-select" v-model="onCallModal.form.shift_type" 
-                                        required aria-required="true" aria-label="Shift type">
-                                    <option value="primary">Primary Call</option>
-                                    <option value="backup">Backup Call</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Primary Physician *</label>
-                                <select class="form-select" v-model="onCallModal.form.primary_physician_id" 
-                                        required aria-required="true" aria-label="Primary physician">
-                                    <option value="">Select Physician</option>
-                                    <option v-for="physician in availablePhysicians" :key="physician.id" :value="physician.id">
-                                        {{ physician.full_name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Backup Physician</label>
-                                <select class="form-select" v-model="onCallModal.form.backup_physician_id" aria-label="Backup physician">
-                                    <option value="">No Backup</option>
-                                    <option v-for="physician in availablePhysicians" :key="physician.id" :value="physician.id">
-                                        {{ physician.full_name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Start Time *</label>
-                                <input type="time" class="form-control" v-model="onCallModal.form.start_time" 
-                                       required aria-required="true" aria-label="Start time">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">End Time *</label>
-                                <input type="time" class="form-control" v-model="onCallModal.form.end_time" 
-                                       required aria-required="true" aria-label="End time">
-                            </div>
-                            <div class="form-group col-span-2">
-                                <label class="form-label">Coverage Area</label>
-                                <select class="form-select" v-model="onCallModal.form.coverage_area" aria-label="Coverage area">
-                                    <option value="emergency">Emergency Department</option>
-                                    <option value="icu">Intensive Care Unit</option>
-                                    <option value="ward">General Ward</option>
-                                    <option value="consultation">Consultations</option>
-                                    <option value="all">All Areas</option>
-                                </select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label class="form-label">Date *</label>
+                                    <input type="date" class="form-control" v-model="onCallModal.form.duty_date" 
+                                           required aria-required="true" aria-label="Duty date">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Shift Type *</label>
+                                    <select class="form-select" v-model="onCallModal.form.shift_type" 
+                                            required aria-required="true" aria-label="Shift type">
+                                        <option value="primary">Primary Call</option>
+                                        <option value="backup">Backup Call</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Primary Physician *</label>
+                                    <select class="form-select" v-model="onCallModal.form.primary_physician_id" 
+                                            required aria-required="true" aria-label="Primary physician">
+                                        <option value="">Select Physician</option>
+                                        <option v-for="physician in availablePhysicians" :key="physician.id" :value="physician.id">
+                                            {{ physician.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Backup Physician</label>
+                                    <select class="form-select" v-model="onCallModal.form.backup_physician_id" aria-label="Backup physician">
+                                        <option value="">No Backup</option>
+                                        <option v-for="physician in availablePhysicians" :key="physician.id" :value="physician.id">
+                                            {{ physician.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Start Time *</label>
+                                    <input type="time" class="form-control" v-model="onCallModal.form.start_time" 
+                                           required aria-required="true" aria-label="Start time">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">End Time *</label>
+                                    <input type="time" class="form-control" v-model="onCallModal.form.end_time" 
+                                           required aria-required="true" aria-label="End time">
+                                </div>
+                                <div class="form-group col-span-2">
+                                    <label class="form-label">Coverage Area</label>
+                                    <select class="form-select" v-model="onCallModal.form.coverage_area" aria-label="Coverage area">
+                                        <option value="emergency">Emergency Department</option>
+                                        <option value="icu">Intensive Care Unit</option>
+                                        <option value="ward">General Ward</option>
+                                        <option value="consultation">Consultations</option>
+                                        <option value="all">All Areas</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3990,7 +4466,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 5: Add/Edit Rotation -->
+            <!-- MODAL 5: Add/Edit Rotation (NEUMAC Enhanced) -->
             <div v-if="rotationModal.show" class="modal-overlay">
                 <div class="modal-container">
                     <div class="modal-header">
@@ -4004,71 +4480,78 @@
                     </div>
                     
                     <div class="modal-body">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="form-group">
-                                <label class="form-label">Rotation ID</label>
-                                <input type="text" class="form-control" v-model="rotationModal.form.rotation_id" 
-                                       aria-label="Rotation ID">
+                        <!-- NEUMAC ENHANCEMENT: Professional Section Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-calendar"></i>
+                                Rotation Details
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Status *</label>
-                                <select class="form-select" v-model="rotationModal.form.rotation_status" 
-                                        required aria-required="true" aria-label="Rotation status">
-                                    <option value="scheduled">Scheduled</option>
-                                    <option value="active">Active</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Resident *</label>
-                                <select class="form-select" v-model="rotationModal.form.resident_id" 
-                                        required aria-required="true" aria-label="Resident">
-                                    <option value="">Select Resident</option>
-                                    <option v-for="resident in availableResidents" :key="resident.id" :value="resident.id">
-                                        {{ resident.full_name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Training Unit *</label>
-                                <select class="form-select" v-model="rotationModal.form.training_unit_id" 
-                                        required aria-required="true" aria-label="Training unit">
-                                    <option value="">Select Unit</option>
-                                    <option v-for="unit in trainingUnits" :key="unit.id" :value="unit.id">
-                                        {{ unit.unit_name }}
-                                    </option>
-                                </select>
-                            </div>
-                           <div class="form-group">
-    <label class="form-label">Start Date *</label>
-    <input type="date" class="form-control" v-model="rotationModal.form.start_date" 
-           required aria-required="true" aria-label="Start Date">
-</div>
-<div class="form-group">
-    <label class="form-label">End Date *</label>
-    <input type="date" class="form-control" v-model="rotationModal.form.end_date" 
-           required aria-required="true" aria-label="End Date">
-</div>
-                            <div class="form-group">
-                                <label class="form-label">Supervising Attending</label>
-                                <select class="form-select" v-model="rotationModal.form.supervising_attending_id" 
-                                        aria-label="Supervising attending">
-                                    <option value="">Select Supervisor</option>
-                                    <option v-for="attending in availableAttendings" :key="attending.id" :value="attending.id">
-                                        {{ attending.full_name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Rotation Category *</label>
-                                <select class="form-select" v-model="rotationModal.form.rotation_category" 
-                                        required aria-required="true" aria-label="Rotation category">
-                                    <option value="clinical_rotation">Clinical Rotation</option>
-                                    <option value="elective_rotation">Elective Rotation</option>
-                                    <option value="research_rotation">Research</option>
-                                    <option value="vacation_rotation">Vacation</option>
-                                </select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label class="form-label">Rotation ID</label>
+                                    <input type="text" class="form-control" v-model="rotationModal.form.rotation_id" 
+                                           aria-label="Rotation ID">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Status *</label>
+                                    <select class="form-select" v-model="rotationModal.form.rotation_status" 
+                                            required aria-required="true" aria-label="Rotation status">
+                                        <option value="scheduled">Scheduled</option>
+                                        <option value="active">Active</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Resident *</label>
+                                    <select class="form-select" v-model="rotationModal.form.resident_id" 
+                                            required aria-required="true" aria-label="Resident">
+                                        <option value="">Select Resident</option>
+                                        <option v-for="resident in availableResidents" :key="resident.id" :value="resident.id">
+                                            {{ resident.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Training Unit *</label>
+                                    <select class="form-select" v-model="rotationModal.form.training_unit_id" 
+                                            required aria-required="true" aria-label="Training unit">
+                                        <option value="">Select Unit</option>
+                                        <option v-for="unit in trainingUnits" :key="unit.id" :value="unit.id">
+                                            {{ unit.unit_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Start Date *</label>
+                                    <input type="date" class="form-control" v-model="rotationModal.form.start_date" 
+                                           required aria-required="true" aria-label="Start Date">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">End Date *</label>
+                                    <input type="date" class="form-control" v-model="rotationModal.form.end_date" 
+                                           required aria-required="true" aria-label="End Date">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Supervising Attending</label>
+                                    <select class="form-select" v-model="rotationModal.form.supervising_attending_id" 
+                                            aria-label="Supervising attending">
+                                        <option value="">Select Supervisor</option>
+                                        <option v-for="attending in availableAttendings" :key="attending.id" :value="attending.id">
+                                            {{ attending.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Rotation Category *</label>
+                                    <select class="form-select" v-model="rotationModal.form.rotation_category" 
+                                            required aria-required="true" aria-label="Rotation category">
+                                        <option value="clinical_rotation">Clinical Rotation</option>
+                                        <option value="elective_rotation">Elective Rotation</option>
+                                        <option value="research_rotation">Research</option>
+                                        <option value="vacation_rotation">Vacation</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4082,7 +4565,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 6: Add/Edit Training Unit -->
+            <!-- MODAL 6: Add/Edit Training Unit (NEUMAC Enhanced) -->
             <div v-if="trainingUnitModal.show" class="modal-overlay">
                 <div class="modal-container">
                     <div class="modal-header">
@@ -4096,54 +4579,90 @@
                     </div>
                     
                     <div class="modal-body">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="form-group">
-                                <label class="form-label">Unit Name *</label>
-                                <input type="text" class="form-control" v-model="trainingUnitModal.form.unit_name" 
-                                       required aria-required="true" aria-label="Unit name">
+                        <!-- NEUMAC ENHANCEMENT: Professional Section Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-clinic-medical"></i>
+                                Unit Information
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Unit Code *</label>
-                                <input type="text" class="form-control" v-model="trainingUnitModal.form.unit_code" 
-                                       required aria-required="true" aria-label="Unit code">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label class="form-label">Unit Name *</label>
+                                    <input type="text" class="form-control" v-model="trainingUnitModal.form.unit_name" 
+                                           required aria-required="true" aria-label="Unit name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Unit Code *</label>
+                                    <input type="text" class="form-control" v-model="trainingUnitModal.form.unit_code" 
+                                           required aria-required="true" aria-label="Unit code">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Department *</label>
+                                    <select class="form-select" v-model="trainingUnitModal.form.department_id" 
+                                            required aria-required="true" aria-label="Department">
+                                        <option value="">Select Department</option>
+                                        <option v-for="department in departments" :key="department.id" :value="department.id">
+                                            {{ department.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Status *</label>
+                                    <select class="form-select" v-model="trainingUnitModal.form.unit_status" 
+                                            required aria-required="true" aria-label="Unit status">
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Maximum Residents *</label>
+                                    <input type="number" class="form-control" v-model="trainingUnitModal.form.maximum_residents" 
+                                           min="1" max="50" required aria-required="true" aria-label="Maximum residents">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Specialty</label>
+                                    <input type="text" class="form-control" v-model="trainingUnitModal.form.specialty" 
+                                           placeholder="e.g., Pulmonology, Critical Care" aria-label="Specialty">
+                                </div>
+                                <div class="form-group col-span-2">
+                                    <label class="form-label">Supervising Attending</label>
+                                    <select class="form-select" v-model="trainingUnitModal.form.supervising_attending_id" 
+                                            aria-label="Supervising attending">
+                                        <option value="">Select Supervisor</option>
+                                        <option v-for="attending in availableAttendings" :key="attending.id" :value="attending.id">
+                                            {{ attending.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Department *</label>
-                                <select class="form-select" v-model="trainingUnitModal.form.department_id" 
-                                        required aria-required="true" aria-label="Department">
-                                    <option value="">Select Department</option>
-                                    <option v-for="department in departments" :key="department.id" :value="department.id">
-                                        {{ department.name }}
-                                    </option>
-                                </select>
+                        </div>
+                        
+                        <!-- NEUMAC ENHANCEMENT: Capacity Preview -->
+                        <div v-if="trainingUnitModal.form.maximum_residents" class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-chart-bar"></i>
+                                Capacity Preview
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Status *</label>
-                                <select class="form-select" v-model="trainingUnitModal.form.unit_status" 
-                                        required aria-required="true" aria-label="Unit status">
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Maximum Residents *</label>
-                                <input type="number" class="form-control" v-model="trainingUnitModal.form.maximum_residents" 
-                                       min="1" max="50" required aria-required="true" aria-label="Maximum residents">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Specialty</label>
-                                <input type="text" class="form-control" v-model="trainingUnitModal.form.specialty" 
-                                       placeholder="e.g., Pulmonology, Critical Care" aria-label="Specialty">
-                            </div>
-                            <div class="form-group col-span-2">
-                                <label class="form-label">Supervising Attending</label>
-                                <select class="form-select" v-model="trainingUnitModal.form.supervising_attending_id" 
-                                        aria-label="Supervising attending">
-                                    <option value="">Select Supervisor</option>
-                                    <option v-for="attending in availableAttendings" :key="attending.id" :value="attending.id">
-                                        {{ attending.full_name }}
-                                    </option>
-                                </select>
+                            <div class="neumac-data-group">
+                                <div class="neumac-visual-capacity">
+                                    <div class="neumac-visual-dots">
+                                        <span v-for="n in trainingUnitModal.form.maximum_residents" 
+                                              :key="n"
+                                              class="neumac-visual-dot"
+                                              :class="getCapacityDotClass(n, 0)"></span>
+                                    </div>
+                                    <div class="neumac-text-sm neumac-font-semibold">
+                                        0/{{ trainingUnitModal.form.maximum_residents }}
+                                    </div>
+                                </div>
+                                
+                                <div class="neumac-capacity-meter">
+                                    <div class="neumac-meter-fill" :style="{width: '0%'}"></div>
+                                </div>
+                                
+                                <div class="neumac-capacity-label">
+                                    <span class="neumac-text-xs">New unit will start empty (0% capacity)</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4157,7 +4676,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 7: Add/Edit Absence -->
+            <!-- MODAL 7: Add/Edit Absence (NEUMAC Enhanced) -->
             <div v-if="absenceModal.show" class="modal-overlay">
                 <div class="modal-container">
                     <div class="modal-header">
@@ -4171,40 +4690,53 @@
                     </div>
                     
                     <div class="modal-body">
-                        <div class="space-y-4">
-                            <div class="form-group">
-                                <label class="form-label">Staff Member *</label>
-                                <select class="form-select" v-model="absenceModal.form.staff_id" 
-                                        required aria-required="true" aria-label="Staff member">
-                                    <option value="">Select Staff Member</option>
-                                    <option v-for="staff in medicalStaff" :key="staff.id" :value="staff.id">
-                                        {{ staff.full_name }}
-                                    </option>
-                                </select>
+                        <!-- NEUMAC ENHANCEMENT: Professional Section Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-user"></i>
+                                Staff Information
                             </div>
-                            
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="neumac-space-y-4">
                                 <div class="form-group">
-                                    <label class="form-label">Absence Reason</label>
-                                    <select class="form-select" v-model="absenceModal.form.absence_reason" aria-label="Absence reason">
-                                        <option value="vacation">Vacation</option>
-                                        <option value="sick_leave">Sick Leave</option>
-                                        <option value="conference">Conference</option>
-                                        <option value="training">Training</option>
-                                        <option value="personal">Personal</option>
-                                        <option value="other">Other</option>
+                                    <label class="form-label">Staff Member *</label>
+                                    <select class="form-select" v-model="absenceModal.form.staff_id" 
+                                            required aria-required="true" aria-label="Staff member">
+                                        <option value="">Select Staff Member</option>
+                                        <option v-for="staff in medicalStaff" :key="staff.id" :value="staff.id">
+                                            {{ staff.full_name }}
+                                        </option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label">Status</label>
-                                    <select class="form-select" v-model="absenceModal.form.status" aria-label="Absence status">
-                                        <option value="active">Active</option>
-                                        <option value="upcoming">Upcoming</option>
-                                        <option value="completed">Completed</option>
-                                    </select>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Absence Reason</label>
+                                        <select class="form-select" v-model="absenceModal.form.absence_reason" aria-label="Absence reason">
+                                            <option value="vacation">Vacation</option>
+                                            <option value="sick_leave">Sick Leave</option>
+                                            <option value="conference">Conference</option>
+                                            <option value="training">Training</option>
+                                            <option value="personal">Personal</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Status</label>
+                                        <select class="form-select" v-model="absenceModal.form.status" aria-label="Absence status">
+                                            <option value="active">Active</option>
+                                            <option value="upcoming">Upcoming</option>
+                                            <option value="completed">Completed</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
-                            
+                        </div>
+
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-calendar"></i>
+                                Duration
+                            </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="form-group">
                                     <label class="form-label">Start Date *</label>
@@ -4217,21 +4749,29 @@
                                            required aria-required="true" aria-label="End date">
                                 </div>
                             </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Replacement Staff</label>
-                                <select class="form-select" v-model="absenceModal.form.replacement_staff_id" aria-label="Replacement staff">
-                                    <option value="">No Replacement</option>
-                                    <option v-for="staff in availableReplacementStaff" :key="staff.id" :value="staff.id">
-                                        {{ staff.full_name }}
-                                    </option>
-                                </select>
+                        </div>
+
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-user-shield"></i>
+                                Coverage Arrangements
                             </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Notes</label>
-                                <textarea class="form-control" v-model="absenceModal.form.notes" rows="3" 
-                                          placeholder="Additional notes about this absence..." aria-label="Absence notes"></textarea>
+                            <div class="neumac-space-y-4">
+                                <div class="form-group">
+                                    <label class="form-label">Replacement Staff</label>
+                                    <select class="form-select" v-model="absenceModal.form.replacement_staff_id" aria-label="Replacement staff">
+                                        <option value="">No Replacement</option>
+                                        <option v-for="staff in availableReplacementStaff" :key="staff.id" :value="staff.id">
+                                            {{ staff.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Notes</label>
+                                    <textarea class="form-control" v-model="absenceModal.form.notes" rows="3" 
+                                              placeholder="Additional notes about this absence..." aria-label="Absence notes"></textarea>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4245,7 +4785,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 8: Add/Edit Department -->
+            <!-- MODAL 8: Add/Edit Department (NEUMAC Enhanced) -->
             <div v-if="departmentModal.show" class="modal-overlay">
                 <div class="modal-container">
                     <div class="modal-header">
@@ -4259,35 +4799,42 @@
                     </div>
                     
                     <div class="modal-body">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="form-group">
-                                <label class="form-label">Department Name *</label>
-                                <input type="text" class="form-control" v-model="departmentModal.form.name" 
-                                       required aria-required="true" aria-label="Department name">
+                        <!-- NEUMAC ENHANCEMENT: Professional Section Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-building"></i>
+                                Department Information
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Department Code *</label>
-                                <input type="text" class="form-control" v-model="departmentModal.form.code" 
-                                       required aria-required="true" aria-label="Department code">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Status *</label>
-                                <select class="form-select" v-model="departmentModal.form.status" 
-                                        required aria-required="true" aria-label="Department status">
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                    <option value="archived">Archived</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Head of Department</label>
-                                <select class="form-select" v-model="departmentModal.form.head_of_department_id" 
-                                        aria-label="Head of department">
-                                    <option value="">Select Head</option>
-                                    <option v-for="staff in availableHeadsOfDepartment" :key="staff.id" :value="staff.id">
-                                        {{ staff.full_name }}
-                                    </option>
-                                </select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label class="form-label">Department Name *</label>
+                                    <input type="text" class="form-control" v-model="departmentModal.form.name" 
+                                           required aria-required="true" aria-label="Department name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Department Code *</label>
+                                    <input type="text" class="form-control" v-model="departmentModal.form.code" 
+                                           required aria-required="true" aria-label="Department code">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Status *</label>
+                                    <select class="form-select" v-model="departmentModal.form.status" 
+                                            required aria-required="true" aria-label="Department status">
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                        <option value="archived">Archived</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Head of Department</label>
+                                    <select class="form-select" v-model="departmentModal.form.head_of_department_id" 
+                                            aria-label="Head of department">
+                                        <option value="">Select Head</option>
+                                        <option v-for="staff in availableHeadsOfDepartment" :key="staff.id" :value="staff.id">
+                                            {{ staff.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4301,7 +4848,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 9: User Profile -->
+            <!-- MODAL 9: User Profile (NEUMAC Enhanced) -->
             <div v-if="userProfileModal.show" class="modal-overlay">
                 <div class="modal-container">
                     <div class="modal-header">
@@ -4314,25 +4861,32 @@
                     </div>
                     
                     <div class="modal-body">
-                        <div class="space-y-4">
-                            <div class="form-group">
-                                <label class="form-label">Full Name *</label>
-                                <input type="text" class="form-control" v-model="userProfileModal.form.full_name" 
-                                       required aria-required="true" aria-label="Full name">
+                        <!-- NEUMAC ENHANCEMENT: Professional Section Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-id-card"></i>
+                                Personal Information
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Email *</label>
-                                <input type="email" class="form-control" v-model="userProfileModal.form.email" 
-                                       required aria-required="true" aria-label="Email" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Department</label>
-                                <select class="form-select" v-model="userProfileModal.form.department_id" aria-label="Department">
-                                    <option value="">Select Department</option>
-                                    <option v-for="department in departments" :key="department.id" :value="department.id">
-                                        {{ department.name }}
-                                    </option>
-                                </select>
+                            <div class="neumac-space-y-4">
+                                <div class="form-group">
+                                    <label class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control" v-model="userProfileModal.form.full_name" 
+                                           required aria-required="true" aria-label="Full name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Email *</label>
+                                    <input type="email" class="form-control" v-model="userProfileModal.form.email" 
+                                           required aria-required="true" aria-label="Email" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Department</label>
+                                    <select class="form-select" v-model="userProfileModal.form.department_id" aria-label="Department">
+                                        <option value="">Select Department</option>
+                                        <option v-for="department in departments" :key="department.id" :value="department.id">
+                                            {{ department.name }}
+                                        </option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4346,7 +4900,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 10: Confirmation Modal -->
+            <!-- MODAL 10: Confirmation Modal (NEUMAC Enhanced) -->
             <div v-if="confirmationModal.show" class="modal-overlay">
                 <div class="modal-container" style="max-width: 500px;">
                     <div class="modal-header">
@@ -4360,10 +4914,20 @@
                     </div>
                     
                     <div class="modal-body">
-                        <p class="text-center text-gray-700 mb-4">{{ confirmationModal.message || 'Are you sure you want to proceed?' }}</p>
-                        <div v-if="confirmationModal.details" class="p-3 bg-blue-50 rounded mb-4">
-                            <i class="fas fa-info-circle text-blue-600 mr-2"></i>
-                            {{ confirmationModal.details }}
+                        <!-- NEUMAC ENHANCEMENT: Professional Message Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-data-group">
+                                <div class="neumac-icon-text">
+                                    <i class="fas" :class="confirmationModal.icon || 'fa-question-circle'"></i>
+                                    <p class="neumac-text-sm neumac-font-medium">{{ confirmationModal.message || 'Are you sure you want to proceed?' }}</p>
+                                </div>
+                                <div v-if="confirmationModal.details" class="neumac-space-y-2 mt-3">
+                                    <div class="neumac-icon-text">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="neumac-text-xs">{{ confirmationModal.details }}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
