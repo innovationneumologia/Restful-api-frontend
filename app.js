@@ -950,13 +950,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     return medicalStaff.value.filter(staff => staff.department_id === departmentId).length;
                 };
                 
-                const getCurrentRotationForStaff = (staffId) => {
-                    const rotation = rotations.value.find(r => 
-                        r.resident_id === staffId && r.rotation_status === 'active'
-                    );
-                    return rotation || null;
-                };
-                
+               const getCurrentRotationForStaff = (staffId) => {
+    console.log('Looking for rotation for staffId:', staffId);
+    console.log('All rotations:', rotations.value);
+    
+    const rotation = rotations.value.find(r => {
+        console.log('Checking rotation:', r.resident_id, 'vs', staffId, 'status:', r.rotation_status);
+        return r.resident_id === staffId && r.rotation_status === 'active';
+    });
+    
+    console.log('Found rotation:', rotation);
+    return rotation || null;
+};
                 const calculateAbsenceDuration = (startDate, endDate) => {
                     return EnhancedUtils.calculateDateDifference(startDate, endDate);
                 };
