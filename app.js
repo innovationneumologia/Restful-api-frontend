@@ -386,6 +386,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const getCommunicationIcon = (tab) => {
         return tab === 'announcement' ? 'fas fa-bullhorn' : 'fas fa-sticky-note';
     };
+                // Temporary: Always start fresh
+localStorage.removeItem(CONFIG.TOKEN_KEY);
+localStorage.removeItem(CONFIG.USER_KEY);
     
     // 2. getCommunicationButtonText function
     const getCommunicationButtonText = (tab) => {
