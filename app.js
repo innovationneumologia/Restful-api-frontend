@@ -510,7 +510,41 @@ document.addEventListener('DOMContentLoaded', function() {
                     const lastRead = localStorage.getItem('last_live_update_read') || '1970-01-01T00:00:00.000Z';
                     return liveUpdates.value.filter(update => new Date(update.created_at) > new Date(lastRead)).length;
                 });
-                
+                const availablePhysicians = computed(() => {
+    return medicalStaff.value.filter(staff => 
+        (staff.staff_type === 'attending_physician' || 
+         staff.staff_type === 'fellow' || 
+         staff.staff_type === 'nurse_practitioner') && 
+        staff.employment_status === 'active'
+    );
+});
+
+const availableResidents = computed(() => {
+    return medicalStaff.value.filter(staff => 
+        staff.staff_type === 'medical_resident' && 
+        staff.employment_status === 'active'
+    );
+});
+
+const availableAttendings = computed(() => {
+    return medicalStaff.value.filter(staff => 
+        staff.staff_type === 'attending_physician' && 
+        staff.employment_status === 'active'
+    );
+});
+
+const availableHeadsOfDepartment = computed(() => {
+    return availableAttendings.value;
+});
+
+const availableReplacementStaff = computed(() => {
+    return medicalStaff.value.filter(staff => 
+        staff.employment_status === 'active' && 
+        staff.staff_type === 'medical_resident'
+    );
+});
+
+// Make sure these are also added to your return statement
                 const unreadAnnouncements = computed(() => {
                     const lastRead = localStorage.getItem('last_announcement_read') || '1970-01-01T00:00:00.000Z';
                     return announcements.value.filter(announcement => 
@@ -2198,6 +2232,166 @@ const contactPhysician = (shift) => {
                     }, 
                     { deep: true }
                 );
+                // ============ NEUMAC ENHANCEMENTS ============
+// Add these methods to enhance the interface
+
+// 1. Enhanced status class based on shift time
+getShiftStatusClass(shift) {
+    if (!shift || !shift.raw) return 'neumac-status-oncall';
+    
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    
+    if (shift.raw.duty_date === today) {
+        try {
+            const startTime = shift.startTime;
+            const endTime = shift.endTime;
+            
+            if (startTime && endTime) {
+                const currentTime = now.getHours() * 100 + now.getMinutes();
+                const start = parseInt(startTime.replace(':', ''));
+                const end = parseInt(endTime.replace(':', ''));
+                
+                if (currentTime >= start && currentTime <= end) {
+                    return 'neumac-status-critical';
+                }
+            }
+        } catch (error) {
+            console.warn('Error calculating shift status:', error);
+        }
+    }
+    
+    return shift.shiftType === 'Primary' ? 'neumac-status-oncall' : 'neumac-status-busy';
+},
+
+// 2. Check if shift is current
+isCurrentShift(shift) {
+    if (!shift || !shift.raw) return false;
+    
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    
+    if (shift.raw.duty_date !== today) return false;
+    
+    try {
+        const startTime = shift.startTime;
+        const endTime = shift.endTime;
+        
+        if (!startTime || !endTime) return false;
+        
+        const currentTime = now.getHours() * 100 + now.getMinutes();
+        const start = parseInt(startTime.replace(':', ''));
+        const end = parseInt(endTime.replace(':', ''));
+        
+        return currentTime >= start && currentTime <= end;
+    } catch (error) {
+        console.warn('Error checking current shift:', error);
+        return false;
+    }
+},
+
+// 3. Staff type icon
+getStaffTypeIcon(staffType) {
+    const icons = {
+        'attending_physician': 'fa-user-md',
+        'medical_resident': 'fa-user-graduate',
+        'fellow': 'fa-user-tie',
+        'nurse_practitioner': 'fa-user-nurse'
+    };
+    return icons[staffType] || 'fa-user';
+},
+
+// 4. Capacity calculation
+calculateCapacityPercent(current, max) {
+    if (current === undefined || current === null || !max || max === 0) return 0;
+    return Math.round((current / max) * 100);
+},
+
+// 5. Capacity dot classification
+getCapacityDotClass(index, current) {
+    if (!current || current === 0) return 'available';
+    if (index <= current) {
+        const percent = (current / (index || 1)) * 100;
+        if (percent >= 90) return 'full';
+        if (percent >= 75) return 'limited';
+        return 'filled';
+    }
+    return 'available';
+},
+
+// 6. Meter fill classification
+getMeterFillClass(current, max) {
+    if (!current || !max) return '';
+    const percent = (current / max) * 100;
+    if (percent >= 90) return 'neumac-meter-fill-full';
+    if (percent >= 75) return 'neumac-meter-fill-limited';
+    return '';
+},
+
+// 7. Absence reason icon
+getAbsenceReasonIcon(reason) {
+    const icons = {
+        'vacation': 'fa-umbrella-beach',
+        'sick_leave': 'fa-procedures',
+        'conference': 'fa-chalkboard-teacher',
+        'training': 'fa-graduation-cap',
+        'personal': 'fa-user-clock',
+        'other': 'fa-question-circle'
+    };
+    return icons[reason] || 'fa-clock';
+},
+
+// 8. Schedule icon based on activity
+getScheduleIcon(activity) {
+    if (!activity) return 'fa-calendar-check';
+    
+    const activityLower = activity.toLowerCase();
+    if (activityLower.includes('round')) return 'fa-stethoscope';
+    if (activityLower.includes('clinic')) return 'fa-clinic-medical';
+    if (activityLower.includes('surgery')) return 'fa-scalpel-path';
+    if (activityLower.includes('meeting')) return 'fa-users';
+    if (activityLower.includes('lecture')) return 'fa-chalkboard-teacher';
+    if (activityLower.includes('consultation')) return 'fa-comments-medical';
+    return 'fa-calendar-check';
+},
+
+// 9. Get recent activities for staff profile
+getRecentActivities(staffId) {
+    // Return simulated recent activities for staff profile modal
+    const activities = [
+        { 
+            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), 
+            description: 'Completed patient rounds', 
+            location: 'Ward A',
+            icon: 'fa-stethoscope'
+        },
+        { 
+            timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), 
+            description: 'Admitted new patient', 
+            location: 'Emergency Room',
+            icon: 'fa-ambulance'
+        },
+        { 
+            timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), 
+            description: 'Morning report attendance', 
+            location: 'Conference Room',
+            icon: 'fa-chalkboard-teacher'
+        }
+    ];
+    
+    return activities;
+},
+
+// 10. Format time for display
+formatTimeDisplay(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+        return 'N/A';
+    }
+},
                 
                 // ============ 18. RETURN EXPOSED DATA/METHODS ============
                 return {
@@ -2208,6 +2402,7 @@ const contactPhysician = (shift) => {
                     loading,
                     saving,
                     loadingSchedule,
+            
                     
                     currentView,
                     sidebarCollapsed,
@@ -2235,6 +2430,16 @@ const contactPhysician = (shift) => {
                     liveStatsData,
                     unreadLiveUpdates,
                     unreadAnnouncements,
+             getShiftStatusClass,
+    isCurrentShift,
+    getStaffTypeIcon,
+    calculateCapacityPercent,
+    getCapacityDotClass,
+    getMeterFillClass,
+    getAbsenceReasonIcon,
+    getScheduleIcon,
+    getRecentActivities,
+    formatTimeDisplay,
                     
                     // UI
                     toasts,
