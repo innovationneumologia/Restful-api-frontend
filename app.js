@@ -26,19 +26,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
         
-       // ============ CONFIGURATION ============
 const CONFIG = {
-    // Use CORS proxy for development
-    API_BASE_URL: 'https://backend-neumac.up.railway.app/api',
-    // OR for production without CORS issues:
-    // API_BASE_URL: 'https://your-production-domain.com/api',
+    // Auto-detect environment
+    API_BASE_URL: window.location.hostname.includes('github.io') 
+        ? 'https://backend-neumac.up.railway.app/api'  // Production
+        : 'https://backend-neumac.up.railway.app/api', // Development (same for now)
     
     TOKEN_KEY: 'neumocare_token',
     USER_KEY: 'neumocare_user',
     APP_VERSION: '6.0',
-    DEBUG: true
-};
-        
+    DEBUG: window.location.hostname.includes('localhost') // Debug only locally
+};   
         // ============ ENHANCED UTILITIES ============
         class EnhancedUtils {
             static formatDate(dateString) {
