@@ -2431,6 +2431,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     todaysOnCallData,
                     liveStats,
                     editLiveStats,
+                     getSearchPlaceholder,
+
                     
                     // UI
                     toasts,
