@@ -510,14 +510,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const lastRead = localStorage.getItem('last_live_update_read') || '1970-01-01T00:00:00.000Z';
                     return liveUpdates.value.filter(update => new Date(update.created_at) > new Date(lastRead)).length;
                 });
-                const availablePhysicians = computed(() => {
-    return medicalStaff.value.filter(staff => 
-        (staff.staff_type === 'attending_physician' || 
-         staff.staff_type === 'fellow' || 
-         staff.staff_type === 'nurse_practitioner') && 
-        staff.employment_status === 'active'
-    );
-});
+
 
 const availableResidents = computed(() => {
     return medicalStaff.value.filter(staff => 
