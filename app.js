@@ -1,2407 +1,4965 @@
-// ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM v7.0 ============
-// FULLY COMPATIBLE WITH 10/10 UI - NO PLACEHOLDERS
-// ===================================================================
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 NeumoCare Hospital Management System v7.0 loading...');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeumoCare | Pulmonology Management System</title>
     
-    try {
-        // ============ 1. VUE VALIDATION ============
-        if (typeof Vue === 'undefined') {
-            document.body.innerHTML = `
-                <div style="padding: 40px; text-align: center; margin-top: 100px; color: #333;">
-                    <h2 style="color: #dc3545;">⚠️ Critical Error</h2>
-                    <p>Vue.js failed to load. Please refresh the page.</p>
-                    <button onclick="window.location.reload()" 
-                            style="padding: 12px 24px; background: #007bff; color: white; 
-                                   border: none; border-radius: 6px; cursor: pointer; margin-top: 20px;">
-                        🔄 Refresh Page
-                    </button>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Vue.js 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <style>
+        /* ============ MEDICAL BLUE THEME ============ */
+        :root {
+            --medical-blue: #0077be;
+            --medical-dark-blue: #005a9e;
+            --medical-light-blue: #e3f2fd;
+            --medical-teal: #00838f;
+            --medical-green: #2e7d32;
+            --medical-red: #c62828;
+            --medical-orange: #f57c00;
+            --medical-gray: #546e7a;
+            --medical-light-gray: #f5f7fa;
+            
+            --primary-color: var(--medical-blue);
+            --primary-dark: var(--medical-dark-blue);
+            --primary-light: var(--medical-light-blue);
+            --secondary-color: var(--medical-green);
+            --danger-color: var(--medical-red);
+            --warning-color: var(--medical-orange);
+            --info-color: var(--medical-teal);
+            
+            --gray-50: #f8f9fa;
+            --gray-100: #f1f3f4;
+            --gray-200: #e8eaed;
+            --gray-300: #dadce0;
+            --gray-400: #bdc1c6;
+            --gray-500: var(--medical-gray);
+            --gray-600: #80868b;
+            --gray-700: #5f6368;
+            --gray-800: #3c4043;
+            --gray-900: #202124;
+            
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 60px rgba(0,0,0,0.15);
+            
+            --border-radius-sm: 6px;
+            --border-radius-md: 10px;
+            --border-radius-lg: 16px;
+            --border-radius-xl: 24px;
+            
+            --transition-fast: 150ms;
+            --transition-normal: 250ms;
+            --transition-slow: 350ms;
+            
+            --sidebar-width: 280px;
+            --sidebar-collapsed: 70px;
+        }
+        
+        /* ============ NEUMAC PROFESSIONAL ENHANCEMENTS ============ */
+        
+        /* Professional Status Indicators */
+        .neumac-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1;
+            border: 1px solid transparent;
+        }
+        
+        .neumac-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .neumac-status-active {
+            background: rgba(46, 125, 50, 0.08);
+            color: var(--medical-green);
+            border-color: rgba(46, 125, 50, 0.2);
+        }
+        .neumac-status-active .neumac-status-dot {
+            background: var(--medical-green);
+        }
+        
+        .neumac-status-busy {
+            background: rgba(245, 124, 0, 0.08);
+            color: var(--medical-orange);
+            border-color: rgba(245, 124, 0, 0.2);
+        }
+        .neumac-status-busy .neumac-status-dot {
+            background: var(--medical-orange);
+        }
+        
+        .neumac-status-critical {
+            background: rgba(198, 40, 40, 0.08);
+            color: var(--medical-red);
+            border-color: rgba(198, 40, 40, 0.2);
+        }
+        .neumac-status-critical .neumac-status-dot {
+            background: var(--medical-red);
+        }
+        
+        .neumac-status-oncall {
+            background: rgba(0, 119, 190, 0.08);
+            color: var(--medical-blue);
+            border-color: rgba(0, 119, 190, 0.2);
+        }
+        .neumac-status-oncall .neumac-status-dot {
+            background: var(--medical-blue);
+        }
+        
+        .neumac-status-offline {
+            background: rgba(84, 110, 122, 0.08);
+            color: var(--medical-gray);
+            border-color: rgba(84, 110, 122, 0.2);
+        }
+        .neumac-status-offline .neumac-status-dot {
+            background: var(--medical-gray);
+        }
+        
+        /* Professional Capacity Meter */
+        .neumac-capacity-meter {
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        
+        .neumac-meter-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--medical-green), #4caf50);
+            transition: width 0.3s ease;
+        }
+        
+        .neumac-meter-fill-limited {
+            background: linear-gradient(90deg, var(--medical-orange), #ff9800);
+        }
+        
+        .neumac-meter-fill-full {
+            background: linear-gradient(90deg, var(--medical-red), #f44336);
+        }
+        
+        .neumac-capacity-label {
+            font-size: 12px;
+            color: var(--gray-600);
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2px;
+        }
+        
+        /* Professional Information Cards */
+        .neumac-card-enhanced {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 20px;
+            border: 1px solid var(--gray-200);
+            border-left: 4px solid var(--medical-blue);
+            transition: all var(--transition-normal) ease;
+        }
+        
+        .neumac-card-enhanced:hover {
+            border-left-color: var(--medical-teal);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .neumac-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--medical-light-blue);
+        }
+        
+        .neumac-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+        
+        .neumac-card-title i {
+            color: var(--medical-blue);
+            font-size: 14px;
+            width: 16px;
+        }
+        
+        /* Professional Data Grouping */
+        .neumac-data-group {
+            background: var(--gray-50);
+            border-radius: var(--border-radius-md);
+            padding: 14px;
+            margin-bottom: 12px;
+            border: 1px solid var(--gray-200);
+        }
+        
+        .neumac-data-group-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--medical-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .neumac-data-group-title i {
+            font-size: 11px;
+        }
+        
+        /* Professional Timeline */
+        .neumac-timeline {
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .neumac-timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--medical-light-blue);
+        }
+        
+        .neumac-timeline-item {
+            position: relative;
+            padding-bottom: 16px;
+        }
+        
+        .neumac-timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--medical-blue);
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px var(--medical-blue);
+        }
+        
+        .neumac-timeline-time {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--medical-blue);
+            margin-bottom: 4px;
+        }
+        
+        /* Professional Icon Integration */
+        .neumac-icon-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--gray-700);
+        }
+        
+        .neumac-icon-text i {
+            font-size: 12px;
+            color: var(--medical-blue);
+            width: 14px;
+            text-align: center;
+        }
+        
+        /* Professional Table Enhancements */
+        .neumac-table-enhanced th {
+            background: linear-gradient(to bottom, var(--gray-50), #f8f9fa);
+            border-bottom: 2px solid var(--medical-blue);
+        }
+        
+        .neumac-table-enhanced tr.current-shift {
+            background: linear-gradient(90deg, rgba(0, 119, 190, 0.03) 0%, rgba(0, 119, 190, 0.08) 100%);
+            border-left: 3px solid var(--medical-blue);
+        }
+        
+        .neumac-table-enhanced tr.current-shift td:first-child {
+            font-weight: 600;
+            color: var(--medical-blue);
+        }
+        
+        /* Professional Dashboard Widget */
+        .neumac-coverage-widget {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 18px;
+            border: 1px solid var(--gray-200);
+            border-top: 4px solid var(--medical-blue);
+            margin-bottom: 20px;
+        }
+        
+        .neumac-coverage-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--medical-light-blue);
+        }
+        
+        .neumac-coverage-header i {
+            color: var(--medical-blue);
+            font-size: 14px;
+        }
+        
+        .neumac-coverage-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin: 0;
+        }
+        
+        .neumac-coverage-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        
+        .neumac-coverage-item:last-child {
+            border-bottom: none;
+        }
+        
+        .neumac-coverage-physician {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .neumac-coverage-time {
+            font-size: 12px;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+        
+        /* Professional Modal Enhancements */
+        .neumac-modal-section {
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .neumac-modal-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .neumac-modal-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .neumac-modal-section-title i {
+            font-size: 13px;
+            color: var(--medical-blue);
+        }
+        
+        /* Professional Training Unit Card */
+        .neumac-unit-card {
+            background: white;
+            border-radius: var(--border-radius-md);
+            padding: 18px;
+            border: 1px solid var(--gray-200);
+            border-top: 4px solid var(--medical-blue);
+            transition: all var(--transition-normal) ease;
+            height: 100%;
+        }
+        
+        .neumac-unit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .neumac-unit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+        
+        .neumac-unit-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin: 0;
+            line-height: 1.3;
+        }
+        
+        .neumac-unit-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        
+        .neumac-unit-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--gray-700);
+        }
+        
+        .neumac-unit-meta-item i {
+            font-size: 12px;
+            color: var(--medical-blue);
+            width: 14px;
+        }
+        
+        /* Visual Capacity Indicator */
+        .neumac-visual-capacity {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        
+        .neumac-visual-dots {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .neumac-visual-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--gray-300);
+        }
+        
+        .neumac-visual-dot.filled {
+            background: var(--medical-blue);
+        }
+        
+        .neumac-visual-dot.available {
+            background: var(--medical-green);
+        }
+        
+        .neumac-visual-dot.limited {
+            background: var(--medical-orange);
+        }
+        
+        .neumac-visual-dot.full {
+            background: var(--medical-red);
+        }
+        
+        /* Professional Action Buttons */
+        .neumac-action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        
+        .neumac-btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            min-height: 32px;
+        }
+        
+        .neumac-btn-sm i {
+            font-size: 11px;
+        }
+        
+        /* Professional Color Coding */
+        .neumac-color-primary {
+            color: var(--medical-blue);
+        }
+        
+        .neumac-color-success {
+            color: var(--medical-green);
+        }
+        
+        .neumac-color-warning {
+            color: var(--medical-orange);
+        }
+        
+        .neumac-color-danger {
+            color: var(--medical-red);
+        }
+        
+        .neumac-color-muted {
+            color: var(--gray-600);
+        }
+        
+        /* Professional Spacing */
+        .neumac-space-y-4 > * + * {
+            margin-top: 16px;
+        }
+        
+        .neumac-space-y-2 > * + * {
+            margin-top: 8px;
+        }
+        
+        .neumac-p-4 {
+            padding: 16px;
+        }
+        
+        .neumac-p-3 {
+            padding: 12px;
+        }
+        
+        /* Professional Typography */
+        .neumac-text-sm {
+            font-size: 13px;
+        }
+        
+        .neumac-text-xs {
+            font-size: 12px;
+        }
+        
+        .neumac-text-lg {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .neumac-font-medium {
+            font-weight: 500;
+        }
+        
+        .neumac-font-semibold {
+            font-weight: 600;
+        }
+        
+        /* Existing styles continue below... */
+        /* ============ RESET & BASE ============ */
+        [v-cloak] { display: none !important; }
+        #app[v-cloak] { opacity: 0; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: var(--gray-900);
+            line-height: 1.5;
+            min-height: 100vh;
+            scroll-behavior: smooth;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        /* ============ UTILITY CLASSES ============ */
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+        
+        .text-primary { color: var(--primary-color); }
+        .text-success { color: var(--secondary-color); }
+        .text-danger { color: var(--danger-color); }
+        .text-warning { color: var(--warning-color); }
+        .text-info { color: var(--info-color); }
+        .text-muted { color: var(--gray-600); }
+
+        .bg-primary { background: var(--primary-color); }
+        .bg-success { background: var(--secondary-color); }
+        .bg-danger { background: var(--danger-color); }
+        .bg-warning { background: var(--warning-color); }
+        .bg-info { background: var(--info-color); }
+        .bg-light { background: var(--gray-50); }
+
+        .shadow-sm { box-shadow: var(--shadow-sm); }
+        .shadow-md { box-shadow: var(--shadow-md); }
+        .shadow-lg { box-shadow: var(--shadow-lg); }
+
+        .rounded-sm { border-radius: var(--border-radius-sm); }
+        .rounded-md { border-radius: var(--border-radius-md); }
+        .rounded-lg { border-radius: var(--border-radius-lg); }
+        .rounded-xl { border-radius: var(--border-radius-xl); }
+
+        .transition { transition: all var(--transition-normal) ease; }
+        .transition-fast { transition: all var(--transition-fast) ease; }
+        .transition-slow { transition: all var(--transition-slow) ease; }
+
+        /* Spacing */
+        .m-0 { margin: 0; }
+        .mt-1 { margin-top: 0.25rem; } .mt-2 { margin-top: 0.5rem; } .mt-3 { margin-top: 0.75rem; }
+        .mt-4 { margin-top: 1rem; } .mt-6 { margin-top: 1.5rem; } .mt-8 { margin-top: 2rem; }
+        .mb-1 { margin-bottom: 0.25rem; } .mb-2 { margin-bottom: 0.5rem; } .mb-3 { margin-bottom: 0.75rem; }
+        .mb-4 { margin-bottom: 1rem; } .mb-6 { margin-bottom: 1.5rem; } .mb-8 { margin-bottom: 2rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+
+        .p-0 { padding: 0; }
+        .p-1 { padding: 0.25rem; } .p-2 { padding: 0.5rem; } .p-3 { padding: 0.75rem; }
+        .p-4 { padding: 1rem; } .p-6 { padding: 1.5rem; } .p-8 { padding: 2rem; }
+
+        .w-100 { width: 100%; }
+        .h-100 { height: 100%; }
+
+        /* Layout */
+        .flex { display: flex; }
+        .grid { display: grid; }
+        .hidden { display: none; }
+        .block { display: block; }
+        .inline-block { display: inline-block; }
+
+        .items-center { align-items: center; }
+        .items-start { align-items: flex-start; }
+        .items-end { align-items: flex-end; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .justify-end { justify-content: flex-end; }
+        .flex-col { flex-direction: column; }
+        .flex-wrap { flex-wrap: wrap; }
+        .flex-1 { flex: 1; }
+        .flex-none { flex: none; }
+
+        .gap-1 { gap: 0.25rem; } .gap-2 { gap: 0.5rem; } .gap-3 { gap: 0.75rem; }
+        .gap-4 { gap: 1rem; } .gap-6 { gap: 1.5rem; } .gap-8 { gap: 2rem; }
+
+        /* Grid System */
+        .grid-cols-1 { grid-template-columns: 1fr; }
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+        .col-span-2 { grid-column: span 2; }
+        .col-span-3 { grid-column: span 3; }
+
+        /* ============ MEDICAL BUTTONS ============ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            line-height: 1;
+            cursor: pointer;
+            transition: all var(--transition-normal) ease;
+            white-space: nowrap;
+            min-height: 40px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+
+        .btn:hover::after {
+            width: 200px;
+            height: 200px;
+        }
+
+        .btn i { 
+            font-size: 13px; 
+            width: 16px;
+            text-align: center;
+            transition: transform var(--transition-fast) ease;
+        }
+
+        .btn:hover i {
+            transform: translateX(2px);
+        }
+
+        /* Button Variants */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--medical-blue), var(--medical-dark-blue));
+            color: white;
+            box-shadow: 0 3px 8px rgba(0, 119, 190, 0.25);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--medical-dark-blue), var(--medical-blue));
+            transform: translateY(-1px);
+            box-shadow: 0 5px 12px rgba(0, 119, 190, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--medical-green), #1b5e20);
+            color: white;
+            box-shadow: 0 3px 8px rgba(46, 125, 50, 0.25);
+        }
+        .btn-success:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--medical-red), #b71c1c);
+            color: white;
+            box-shadow: 0 3px 8px rgba(198, 40, 40, 0.25);
+        }
+        .btn-danger:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--medical-blue);
+            color: var(--medical-blue);
+        }
+        .btn-outline:hover {
+            background: var(--medical-blue);
+            color: white;
+            border-color: var(--medical-blue);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1.5px solid transparent;
+            color: var(--gray-600);
+        }
+        .btn-ghost:hover {
+            background: var(--gray-100);
+            color: var(--gray-900);
+        }
+
+        /* Button Sizes */
+        .btn-sm { padding: 7px 14px; font-size: 12px; min-height: 36px; }
+        .btn-lg { padding: 12px 24px; font-size: 14px; min-height: 44px; }
+        .btn-icon { width: 40px; height: 40px; padding: 0; border-radius: 50%; }
+
+        /* ============ PROFESSIONAL MEDICAL BADGES ============ */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: white;
+            border: none;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        .badge-primary { background: var(--medical-blue); }
+        .badge-success { background: var(--medical-green); }
+        .badge-warning { background: var(--medical-orange); }
+        .badge-danger { background: var(--medical-red); }
+        .badge-info { background: var(--medical-teal); }
+        .badge-gray { background: var(--medical-gray); }
+
+        .badge-outline {
+            background: transparent;
+            border: 1px solid;
+            color: inherit;
+        }
+        .badge-outline-primary { border-color: var(--medical-blue); color: var(--medical-blue); }
+        .badge-outline-success { border-color: var(--medical-green); color: var(--medical-green); }
+        .badge-outline-danger { border-color: var(--medical-red); color: var(--medical-red); }
+
+        /* ============ MEDICAL STATUS INDICATORS ============ */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            border: none;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        .status-active {
+            background: rgba(46, 125, 50, 0.1);
+            color: var(--medical-green);
+            border: 1px solid rgba(46, 125, 50, 0.2);
+        }
+
+        .status-busy {
+            background: rgba(245, 124, 0, 0.1);
+            color: var(--medical-orange);
+            border: 1px solid rgba(245, 124, 0, 0.2);
+        }
+
+        .status-critical {
+            background: rgba(198, 40, 40, 0.1);
+            color: var(--medical-red);
+            border: 1px solid rgba(198, 40, 40, 0.2);
+        }
+
+        .status-oncall {
+            background: rgba(0, 119, 190, 0.1);
+            color: var(--medical-blue);
+            border: 1px solid rgba(0, 119, 190, 0.2);
+        }
+
+        .status-available {
+            background: rgba(0, 131, 143, 0.1);
+            color: var(--medical-teal);
+            border: 1px solid rgba(0, 131, 143, 0.2);
+        }
+
+        .status-offline {
+            background: rgba(84, 110, 122, 0.1);
+            color: var(--medical-gray);
+            border: 1px solid rgba(84, 110, 122, 0.2);
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+        .status-dot.active { background: var(--medical-green); }
+        .status-dot.busy { background: var(--medical-orange); }
+        .status-dot.critical { background: var(--medical-red); }
+        .status-dot.oncall { background: var(--medical-blue); }
+        .status-dot.offline { background: var(--medical-gray); }
+
+        /* ============ PROFESSIONAL MEDICAL CARDS ============ */
+        .card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-normal) ease;
+            border: 1px solid var(--gray-200);
+            border-left: 4px solid var(--medical-blue);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+            border-left-color: var(--medical-teal);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--medical-light-blue);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .card-title i {
+            color: var(--medical-blue);
+            font-size: 15px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--gray-600);
+            margin-top: 4px;
+        }
+
+        /* ============ ENHANCED MEDICAL TABLES ============ */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: var(--border-radius-md);
+            background: white;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--medical-light-blue);
+            position: relative;
+        }
+
+        .table-responsive::-webkit-scrollbar {
+            height: 4px;
+        }
+        .table-responsive::-webkit-scrollbar-track {
+            background: var(--gray-100);
+        }
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: var(--medical-blue);
+            border-radius: 2px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 800px;
+        }
+
+        .table thead th {
+            padding: 14px 16px;
+            text-align: left;
+            color: var(--gray-700);
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: var(--gray-50);
+            border-bottom: 2px solid var(--gray-200);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table tbody tr {
+            transition: all var(--transition-fast) ease;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .table tbody tr:hover {
+            background: linear-gradient(90deg, rgba(0, 119, 190, 0.03) 0%, rgba(0, 119, 190, 0.08) 100%);
+            transform: translateX(4px);
+        }
+
+        .table tbody td {
+            padding: 16px;
+            font-size: 13px;
+            color: var(--gray-700);
+            vertical-align: middle;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Striped Medical Table */
+        .table-striped tbody tr:nth-child(even) {
+            background-color: var(--gray-50);
+        }
+        .table-striped tbody tr:nth-child(even):hover {
+            background: linear-gradient(90deg, rgba(0, 119, 190, 0.05) 0%, rgba(0, 119, 190, 0.1) 100%);
+        }
+
+        /* ============ TOAST NOTIFICATIONS ============ */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: white;
+            border-radius: var(--border-radius-md);
+            padding: 16px;
+            min-width: 300px;
+            max-width: 400px;
+            box-shadow: var(--shadow-lg);
+            border-left: 4px solid var(--medical-blue);
+            animation: toastSlideIn 0.3s ease;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .toast-icon {
+            font-size: 16px;
+            color: var(--medical-blue);
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: var(--gray-900);
+        }
+
+        .toast-message {
+            font-size: 12px;
+            color: var(--gray-700);
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--gray-500);
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all var(--transition-fast);
+            flex-shrink: 0;
+        }
+        .toast-close:hover { background: var(--gray-100); color: var(--gray-700); }
+
+        .toast-success { border-left-color: var(--medical-green); }
+        .toast-success .toast-icon { color: var(--medical-green); }
+        .toast-error { border-left-color: var(--medical-red); }
+        .toast-error .toast-icon { color: var(--medical-red); }
+        .toast-warning { border-left-color: var(--medical-orange); }
+        .toast-warning .toast-icon { color: var(--medical-orange); }
+        .toast-info { border-left-color: var(--medical-teal); }
+        .toast-info .toast-icon { color: var(--medical-teal); }
+
+        /* ============ LOGIN SCREEN ============ */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--medical-dark-blue) 0%, var(--medical-blue) 100%);
+        }
+
+        .login-card {
+            background: white;
+            border-radius: var(--border-radius-xl);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: var(--shadow-xl);
+            animation: fadeIn 0.8s ease;
+            border: 1px solid var(--medical-light-blue);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .login-logo i {
+            font-size: 36px;
+            color: var(--medical-blue);
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--medical-dark-blue);
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            color: var(--medical-gray);
+            font-size: 14px;
+        }
+
+        /* ============ MAIN LAYOUT ============ */
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+        }
+
+        /* ============ MEDICAL SIDEBAR ============ */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--medical-dark-blue) 0%, var(--medical-blue) 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            transition: all var(--transition-normal) ease;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar-collapsed {
+            width: var(--sidebar-collapsed);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 64px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .sidebar-logo i {
+            font-size: 20px;
+            color: white;
+        }
+
+        .sidebar-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: all var(--transition-fast) ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar-toggle:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-section-title {
+            padding: 0 20px 10px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 8px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu-item {
+            margin: 2px 0;
+        }
+
+        .sidebar-menu-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all var(--transition-fast) ease;
+            font-size: 13px;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+            min-height: 44px;
+            margin: 0 12px;
+            border-radius: 6px;
+        }
+
+        .sidebar-menu-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: #4fc3f7;
+        }
+
+        .sidebar-menu-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left-color: #4fc3f7;
+        }
+
+        .sidebar-menu-link i {
+            font-size: 14px;
+            width: 18px;
+            text-align: center;
+            transition: transform var(--transition-fast) ease;
+        }
+        .sidebar-menu-link:hover i {
+            transform: translateX(2px);
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4fc3f7, var(--medical-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-role {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Collapsed Sidebar */
+        .sidebar-collapsed .sidebar-header {
+            justify-content: center;
+        }
+        .sidebar-collapsed .sidebar-logo span,
+        .sidebar-collapsed .sidebar-section-title,
+        .sidebar-collapsed .sidebar-menu-link span,
+        .sidebar-collapsed .user-info,
+        .sidebar-collapsed .sidebar-toggle span {
+            display: none;
+        }
+        .sidebar-collapsed .sidebar-logo,
+        .sidebar-collapsed .sidebar-menu-link {
+            justify-content: center;
+        }
+        .sidebar-collapsed .sidebar-menu-link i {
+            font-size: 16px;
+        }
+
+        /* ============ MAIN CONTENT ============ */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            transition: all var(--transition-normal) ease;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content-expanded {
+            margin-left: var(--sidebar-collapsed);
+        }
+
+        /* ============ TOP NAVBAR ============ */
+        .top-navbar {
+            background: white;
+            padding: 14px 24px;
+            box-shadow: 0 2px 6px rgba(0, 119, 190, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid var(--medical-light-blue);
+            min-height: 64px;
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .navbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+        }
+
+        .navbar-subtitle {
+            font-size: 13px;
+            color: var(--medical-gray);
+            margin-left: 8px;
+            font-weight: 500;
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: var(--medical-blue);
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 6px;
+            width: 40px;
+            height: 40px;
+        }
+        .mobile-menu-toggle:hover { background: var(--medical-light-blue); }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* ============ ENHANCED SEARCH ============ */
+        .search-container {
+            position: relative;
+            width: 260px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 14px 10px 40px;
+            border: 1.5px solid var(--medical-light-blue);
+            border-radius: var(--border-radius-md);
+            font-size: 13px;
+            transition: all var(--transition-normal) ease;
+            background: white;
+            font-weight: 500;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--medical-blue);
+            box-shadow: 0 0 0 3px rgba(0, 119, 190, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--medical-blue);
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        /* ============ CONTENT AREA ============ */
+        .content-area {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background: var(--medical-light-gray);
+        }
+
+        /* ============ DASHBOARD ENHANCED ============ */
+        /* Quick Actions */
+        .quick-actions-bar {
+            display: flex;
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid var(--medical-light-blue);
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            background: var(--medical-light-blue);
+            border: none;
+            border-radius: var(--border-radius-md);
+            color: var(--medical-blue);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .action-btn:hover {
+            background: var(--medical-blue);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* Stats Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 20px;
+            border: 1px solid var(--medical-light-blue);
+            border-top: 4px solid var(--medical-blue);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--medical-light-blue);
+        }
+
+        .stat-header i {
+            font-size: 18px;
+            color: var(--medical-blue);
+        }
+
+        .stat-header h3 {
+            flex: 1;
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+        }
+
+        .stat-main-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--medical-dark-blue);
+            margin-bottom: 12px;
+        }
+
+        .stat-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--medical-light-blue);
+        }
+        .breakdown-item:last-child { border-bottom: none; }
+
+        .breakdown-item .label {
+            color: var(--medical-gray);
+            font-size: 12px;
+        }
+
+        .breakdown-item .value {
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            font-size: 13px;
+        }
+
+        /* ============ LIVE STATS SIDEBAR ============ */
+        .live-stats-sidebar {
+            position: fixed;
+            right: 0;
+            top: 64px;
+            width: 320px;
+            height: calc(100vh - 64px);
+            background: white;
+            border-left: 1px solid var(--medical-light-blue);
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
+            z-index: 90;
+            overflow-y: auto;
+            padding: 20px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .live-stats-sidebar.open {
+            transform: translateX(0);
+        }
+
+        .stats-toggle-btn {
+            position: fixed;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, var(--medical-blue), var(--medical-dark-blue));
+            color: white;
+            border: none;
+            border-radius: 6px 0 0 6px;
+            padding: 14px 6px;
+            cursor: pointer;
+            z-index: 91;
+            box-shadow: -2px 0 8px rgba(0, 119, 190, 0.25);
+            width: 40px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stats-toggle-btn:hover {
+            background: linear-gradient(135deg, var(--medical-dark-blue), var(--medical-blue));
+        }
+
+        .live-stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--medical-light-blue);
+        }
+
+        .live-stats-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .live-stats-title i {
+            font-size: 16px;
+            color: var(--medical-blue);
+        }
+
+        .live-stats-close {
+            background: var(--medical-light-blue);
+            border: none;
+            color: var(--medical-blue);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .live-stats-close:hover {
+            background: var(--medical-blue);
+            color: white;
+        }
+
+        /* ============ MODALS ============ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.2s ease-out;
+            padding: 20px;
+        }
+
+        .modal-container {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-wide {
+            max-width: 1000px;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--medical-light-blue);
+            background: linear-gradient(135deg, var(--medical-blue), var(--medical-dark-blue));
+            color: white;
+            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-title i {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 8px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-close:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .modal-body {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--medical-light-blue);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background: var(--gray-50);
+            border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+            position: sticky;
+            bottom: 0;
+        }
+
+        /* Modal Tabs */
+        .modal-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--medical-light-blue);
+            margin-bottom: 20px;
+            overflow-x: auto;
+            background: var(--gray-50);
+            border-radius: var(--border-radius-md);
+            padding: 4px;
+        }
+
+        .modal-tab {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-600);
+            cursor: pointer;
+            border-radius: var(--border-radius-sm);
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+            flex: 1;
+            text-align: center;
+        }
+        .modal-tab:hover {
+            background: var(--gray-100);
+            color: var(--gray-900);
+        }
+        .modal-tab.active {
+            background: var(--medical-blue);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ============ FORM STYLES ============ */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--gray-300);
+            border-radius: var(--border-radius-md);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            transition: all var(--transition-normal) ease;
+            background: white;
+            color: var(--gray-900);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--medical-blue);
+            box-shadow: 0 0 0 3px rgba(0, 119, 190, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: var(--gray-400);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--gray-300);
+            border-radius: var(--border-radius-md);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%230077be' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 14px;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--medical-blue);
+            box-shadow: 0 0 0 3px rgba(0, 119, 190, 0.1);
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .form-check-input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--medical-blue);
+        }
+
+        .form-check-label {
+            font-size: 13px;
+            color: var(--gray-700);
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* ============ DYNAMIC STAFF PROFILE ============ */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 2px solid var(--medical-light-blue);
+        }
+
+        .profile-avatar-large {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--medical-blue), var(--medical-teal));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 32px;
+            flex-shrink: 0;
+            box-shadow: 0 8px 24px rgba(0, 119, 190, 0.3);
+        }
+
+        .profile-basic-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--medical-dark-blue);
+            margin-bottom: 4px;
+        }
+
+        .profile-title {
+            font-size: 16px;
+            color: var(--medical-gray);
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .profile-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .profile-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--medical-gray);
+        }
+
+        .profile-meta-item i {
+            width: 14px;
+            color: var(--medical-blue);
+        }
+
+        .profile-status-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .profile-department-badge {
+            background: var(--medical-light-blue);
+            color: var(--medical-blue);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* Education Section */
+        .education-section {
+            background: var(--gray-50);
+            border-radius: var(--border-radius-md);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .education-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .education-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .education-label {
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            font-size: 12px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .education-value {
+            color: var(--gray-800);
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        /* Dynamic Status Grid */
+        .dynamic-status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .dynamic-status-card {
+            background: white;
+            border-radius: var(--border-radius-md);
+            padding: 20px;
+            border: 1px solid var(--medical-light-blue);
+        }
+
+        .dynamic-status-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--medical-light-blue);
+        }
+
+        .dynamic-status-header i {
+            font-size: 16px;
+            color: var(--medical-blue);
+        }
+
+        .dynamic-status-header h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            margin: 0;
+        }
+
+        .dynamic-status-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .status-data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .status-data-row:last-child { border-bottom: none; }
+
+        .status-data-label {
+            font-weight: 500;
+            color: var(--medical-gray);
+            font-size: 12px;
+        }
+
+        .status-data-value {
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            font-size: 13px;
+            text-align: right;
+        }
+
+        .status-data-value-large {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--medical-blue);
+        }
+
+        /* Assignments Section */
+        .assignments-section {
+            margin-top: 24px;
+        }
+
+        .assignments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .assignment-card {
+            background: white;
+            border-radius: var(--border-radius-md);
+            padding: 20px;
+            border: 1px solid var(--medical-light-blue);
+        }
+
+        .assignment-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--medical-light-blue);
+        }
+
+        .assignment-header i {
+            font-size: 16px;
+            color: var(--medical-blue);
+        }
+
+        .assignment-header h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            margin: 0;
+        }
+
+        .assignment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .assignment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: var(--gray-50);
+            border-radius: var(--border-radius-sm);
+        }
+
+        .assignment-time {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--medical-blue);
+        }
+
+        .assignment-details {
+            font-size: 13px;
+            color: var(--gray-800);
+        }
+
+        /* ============ COMMUNICATIONS STATS TAB ============ */
+        .stats-update-section {
+            background: var(--gray-50);
+            border-radius: var(--border-radius-md);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .update-type-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .update-type-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--medical-light-blue);
+            border-radius: var(--border-radius-md);
+            background: white;
+            color: var(--medical-gray);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .update-type-btn:hover {
+            border-color: var(--medical-blue);
+            color: var(--medical-blue);
+        }
+        .update-type-btn.active {
+            background: var(--medical-blue);
+            border-color: var(--medical-blue);
+            color: white;
+        }
+
+        .metric-inputs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .alert-options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .alert-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: white;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--gray-300);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        .alert-option:hover {
+            border-color: var(--medical-blue);
+            background: var(--gray-50);
+        }
+
+        /* ============ RESPONSIVE DESIGN ============ */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .dynamic-status-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+            .mobile-menu-toggle {
+                display: block;
+            }
+            .search-container {
+                width: 200px;
+            }
+            .live-stats-sidebar {
+                width: 100%;
+            }
+            .modal-container {
+                width: 95%;
+                margin: 10px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-navbar {
+                padding: 12px 16px;
+            }
+            .navbar-right {
+                flex-direction: column;
+                align-items: flex-end;
+            }
+            .search-container {
+                width: 100%;
+                max-width: 200px;
+            }
+            .content-area {
+                padding: 20px;
+            }
+            .modal-header {
+                padding: 16px;
+            }
+            .modal-body {
+                padding: 16px;
+            }
+            .modal-footer {
+                padding: 16px;
+            }
+            .dynamic-status-grid {
+                grid-template-columns: 1fr;
+            }
+            .assignments-grid {
+                grid-template-columns: 1fr;
+            }
+            .metric-inputs-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 32px 20px;
+            }
+            .modal-container {
+                width: 100%;
+                margin: 0;
+                border-radius: 0;
+                max-height: 100vh;
+            }
+            .modal-overlay {
+                padding: 0;
+            }
+            .top-navbar {
+                padding: 12px 16px;
+            }
+            .navbar-title {
+                font-size: 16px;
+            }
+            .modal-header {
+                padding: 16px;
+            }
+            .modal-body {
+                padding: 16px;
+            }
+            .modal-footer {
+                padding: 16px;
+            }
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 16px;
+            }
+            .profile-meta-row {
+                justify-content: center;
+            }
+        }
+
+        /* ============ CUSTOM SCROLLBAR ============ */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--medical-light-blue);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--medical-blue);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--medical-dark-blue);
+        }
+    </style>
+</head>
+<body>
+    <div id="app" v-cloak>
+
+        <!-- ============ TOAST CONTAINER ============ -->
+        <div class="toast-container">
+            <div v-for="toast in toasts" :key="toast.id" 
+                 :class="['toast', `toast-${toast.type}`]" 
+                 role="alert" aria-live="polite" aria-atomic="true">
+                <div class="toast-icon">
+                    <i :class="toast.icon"></i>
                 </div>
-            `;
-            throw new Error('Vue.js not loaded');
-        }
-        
-        console.log('✅ Vue.js loaded successfully:', Vue.version);
-        
-        const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
-        
-        // ============ 2. CONFIGURATION ============
-        const CONFIG = {
-            API_BASE_URL: 'https://backend-neumac.up.railway.app',
-            TOKEN_KEY: 'neumocare_token',
-            USER_KEY: 'neumocare_user',
-            APP_VERSION: '7.0',
-            DEBUG: window.location.hostname.includes('localhost')
-        };
-        
-        // ============ 3. ENHANCED UTILITIES ============
-        class EnhancedUtils {
-            static formatDate(dateString) {
-                if (!dateString) return 'N/A';
-                try {
-                    const date = new Date(dateString);
-                    if (isNaN(date.getTime())) return dateString;
-                    return date.toLocaleDateString('en-US', { 
-                        month: 'short', day: 'numeric', year: 'numeric' 
-                    });
-                } catch { return dateString; }
-            }
-            
-            static formatDateTime(dateString) {
-                if (!dateString) return 'N/A';
-                try {
-                    const date = new Date(dateString);
-                    if (isNaN(date.getTime())) return dateString;
-                    return date.toLocaleString('en-US', { 
-                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-                    });
-                } catch { return dateString; }
-            }
-            
-            static getInitials(name) {
-                if (!name || typeof name !== 'string') return '??';
-                return name.split(' ')
-                    .map(word => word[0])
-                    .join('')
-                    .toUpperCase()
-                    .substring(0, 2);
-            }
-            
-            static ensureArray(data) {
-                if (Array.isArray(data)) return data;
-                if (data && typeof data === 'object' && data.data && Array.isArray(data.data)) return data.data;
-                if (data && typeof data === 'object') return Object.values(data);
-                return [];
-            }
-            
-            static truncateText(text, maxLength = 100) {
-                if (!text) return '';
-                if (text.length <= maxLength) return text;
-                return text.substring(0, maxLength) + '...';
-            }
-            
-            static formatTime(dateString) {
-                if (!dateString) return '';
-                try {
-                    const date = new Date(dateString);
-                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                } catch { return dateString; }
-            }
-            
-            static formatRelativeTime(dateString) {
-                if (!dateString) return 'Just now';
-                try {
-                    const date = new Date(dateString);
-                    const now = new Date();
-                    const diffMs = now - date;
-                    const diffMins = Math.floor(diffMs / 60000);
-                    
-                    if (diffMins < 1) return 'Just now';
-                    if (diffMins < 60) return `${diffMins}m ago`;
-                    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-                    return `${Math.floor(diffMins / 1440)}d ago`;
-                } catch { return 'Just now'; }
-            }
-            
-            static calculateDateDifference(startDate, endDate) {
-                try {
-                    const start = new Date(startDate);
-                    const end = new Date(endDate);
-                    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
-                    const diffTime = Math.abs(end - start);
-                    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                } catch { return 0; }
-            }
-        }
-        
-        // ============ 4. API SERVICE ============
-        class ApiService {
-            constructor() {
-                this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
-            }
-            
-            getHeaders() {
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                };
-                
-                const token = localStorage.getItem(CONFIG.TOKEN_KEY);
-                if (token && token.trim()) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-                
-                return headers;
-            }
-            
-            async request(endpoint, options = {}) {
-                const url = `${CONFIG.API_BASE_URL}${endpoint}`;
-                
-                try {
-                    const config = {
-                        method: options.method || 'GET',
-                        headers: this.getHeaders(),
-                        mode: 'cors',
-                        cache: 'no-cache'
-                    };
-                    
-                    if (options.body && typeof options.body === 'object') {
-                        config.body = JSON.stringify(options.body);
-                    }
-                    
-                    const response = await fetch(url, config);
-                    
-                    if (response.status === 204) return null;
-                    
-                    if (!response.ok) {
-                        if (response.status === 401) {
-                            this.token = null;
-                            localStorage.removeItem(CONFIG.TOKEN_KEY);
-                            localStorage.removeItem(CONFIG.USER_KEY);
-                            throw new Error('Session expired. Please login again.');
-                        }
-                        
-                        let errorText;
-                        try {
-                            errorText = await response.text();
-                        } catch {
-                            errorText = `HTTP ${response.status}: ${response.statusText}`;
-                        }
-                        
-                        throw new Error(errorText);
-                    }
-                    
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        return await response.json();
-                    }
-                    
-                    return await response.text();
-                    
-                } catch (error) {
-                    if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error);
-                    throw error;
-                }
-            }
-            
-            // ===== AUTHENTICATION ENDPOINTS =====
-            async login(email, password) {
-                try {
-                    const data = await this.request('/api/auth/login', {
-                        method: 'POST',
-                        body: { email, password }
-                    });
-                    
-                    if (data.token) {
-                        this.token = data.token;
-                        localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
-                        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
-                    }
-                    
-                    return data;
-                } catch (error) {
-                    throw new Error('Login failed: ' + error.message);
-                }
-            }
-            
-            async logout() {
-                try {
-                    await this.request('/api/auth/logout', { method: 'POST' });
-                } finally {
-                    this.token = null;
-                    localStorage.removeItem(CONFIG.TOKEN_KEY);
-                    localStorage.removeItem(CONFIG.USER_KEY);
-                }
-            }
-            
-            // ===== DATA ENDPOINTS =====
-            async getMedicalStaff() {
-                try {
-                    const data = await this.request('/api/medical-staff');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createMedicalStaff(staffData) {
-                return await this.request('/api/medical-staff', {
-                    method: 'POST',
-                    body: staffData
-                });
-            }
-            
-            async updateMedicalStaff(id, staffData) {
-                return await this.request(`/api/medical-staff/${id}`, {
-                    method: 'PUT',
-                    body: staffData
-                });
-            }
-            
-            async deleteMedicalStaff(id) {
-                return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
-            }
-            
-            async getDepartments() {
-                try {
-                    const data = await this.request('/api/departments');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createDepartment(departmentData) {
-                return await this.request('/api/departments', {
-                    method: 'POST',
-                    body: departmentData
-                });
-            }
-            
-            async updateDepartment(id, departmentData) {
-                return await this.request(`/api/departments/${id}`, {
-                    method: 'PUT',
-                    body: departmentData
-                });
-            }
-            
-            async getTrainingUnits() {
-                try {
-                    const data = await this.request('/api/training-units');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createTrainingUnit(unitData) {
-                return await this.request('/api/training-units', {
-                    method: 'POST',
-                    body: unitData
-                });
-            }
-            
-            async updateTrainingUnit(id, unitData) {
-                return await this.request(`/api/training-units/${id}`, {
-                    method: 'PUT',
-                    body: unitData
-                });
-            }
-            
-            async getRotations() {
-                try {
-                    const data = await this.request('/api/rotations');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createRotation(rotationData) {
-                return await this.request('/api/rotations', {
-                    method: 'POST',
-                    body: rotationData
-                });
-            }
-            
-            async updateRotation(id, rotationData) {
-                return await this.request(`/api/rotations/${id}`, {
-                    method: 'PUT',
-                    body: rotationData
-                });
-            }
-            
-            async deleteRotation(id) {
-                return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
-            }
-            
-            async getOnCallSchedule() {
-                try {
-                    const data = await this.request('/api/oncall');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async getOnCallToday() {
-                try {
-                    const data = await this.request('/api/oncall/today');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createOnCall(scheduleData) {
-                return await this.request('/api/oncall', {
-                    method: 'POST',
-                    body: scheduleData
-                });
-            }
-            
-            async updateOnCall(id, scheduleData) {
-                return await this.request(`/api/oncall/${id}`, {
-                    method: 'PUT',
-                    body: scheduleData
-                });
-            }
-            
-            async deleteOnCall(id) {
-                return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
-            }
-            
-            async getAbsences() {
-                try {
-                    const data = await this.request('/api/absences');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createAbsence(absenceData) {
-                return await this.request('/api/absences', {
-                    method: 'POST',
-                    body: absenceData
-                });
-            }
-            
-            async updateAbsence(id, absenceData) {
-                return await this.request(`/api/absences/${id}`, {
-                    method: 'PUT',
-                    body: absenceData
-                });
-            }
-            
-            async deleteAbsence(id) {
-                return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
-            }
-            
-            async getAnnouncements() {
-                try {
-                    const data = await this.request('/api/announcements');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createAnnouncement(announcementData) {
-                return await this.request('/api/announcements', {
-                    method: 'POST',
-                    body: announcementData
-                });
-            }
-            
-            async updateAnnouncement(id, announcementData) {
-                return await this.request(`/api/announcements/${id}`, {
-                    method: 'PUT',
-                    body: announcementData
-                });
-            }
-            
-            async deleteAnnouncement(id) {
-                return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
-            }
-            
-            async getLiveUpdates() {
-                try {
-                    const data = await this.request('/api/live-updates');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createLiveUpdate(updateData) {
-                return await this.request('/api/live-updates', {
-                    method: 'POST',
-                    body: updateData
-                });
-            }
-            
-            async updateLiveUpdate(id, updateData) {
-                return await this.request(`/api/live-updates/${id}`, {
-                    method: 'PUT',
-                    body: updateData
-                });
-            }
-            
-            async getSystemStats() {
-                try {
-                    const data = await this.request('/api/system-stats');
-                    return data || {};
-                } catch {
-                    return {
-                        activeAttending: 0,
-                        activeResidents: 0,
-                        onCallNow: 0,
-                        inSurgery: 0,
-                        nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-                        pendingApprovals: 0
-                    };
-                }
-            }
-        }
-        
-        // Initialize API Service
-        const API = new ApiService();
-        
-        // ============ 5. CREATE VUE APP ============
-        const app = createApp({
-            setup() {
-                // ============ 6. REACTIVE STATE ============
-                
-                // 6.1 User State
-                const currentUser = ref(null);
-                const loginForm = reactive({
-                    email: '',
-                    password: '',
-                    remember_me: false
-                });
-                const loginLoading = ref(false);
-                
-                // 6.2 UI State
-                const currentView = ref('login');
-                const sidebarCollapsed = ref(false);
-                const mobileMenuOpen = ref(false);
-                const userMenuOpen = ref(false);
-                const statsSidebarOpen = ref(false);
-                const globalSearchQuery = ref('');
-                
-                // 6.3 Loading States
-                const loading = ref(false);
-                const saving = ref(false);
-                const loadingSchedule = ref(false);
-                
-                // 6.4 Data Stores
-                const medicalStaff = ref([]);
-                const departments = ref([]);
-                const trainingUnits = ref([]);
-                const rotations = ref([]);
-                const absences = ref([]);
-                const onCallSchedule = ref([]);
-                const announcements = ref([]);
-                const liveUpdates = ref([]);
-                
-                // 6.5 Dashboard Data
-                const systemStats = ref({
-                    totalStaff: 0,
-                    activeAttending: 0,
-                    activeResidents: 0,
-                    onCallNow: 0,
-                    inSurgery: 0,
-                    activeRotations: 0,
-                    endingThisWeek: 0,
-                    startingNextWeek: 0,
-                    onLeaveStaff: 0,
-                    departmentStatus: 'normal',
-                    activePatients: 0,
-                    icuOccupancy: 0,
-                    wardOccupancy: 0,
-                    pendingApprovals: 0,
-                    nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString()
-                });
-                
-                const todaysOnCall = ref([]);
-                const todaysOnCallCount = computed(() => todaysOnCall.value.length);
-                
-                // 6.6 Live Stats Data
-                const liveStatsEditMode = ref(false);
-                const liveStatsData = reactive({
-                    dailyUpdate: 'ER: 3 critical cases, ICU: 90% capacity, Ward A full',
-                    metric1: { label: 'ER Wait Time', value: '15 mins' },
-                    metric2: { label: 'ICU Bed Availability', value: '2 beds' },
-                    alerts: {
-                        erBusy: false,
-                        icuFull: false,
-                        wardFull: false,
-                        staffShortage: false
-                    },
-                    lastUpdated: new Date().toISOString(),
-                    updatedBy: ''
-                });
-                
-                const unreadLiveUpdates = computed(() => {
-                    const lastRead = localStorage.getItem('last_live_update_read') || '1970-01-01T00:00:00.000Z';
-                    return liveUpdates.value.filter(update => new Date(update.created_at) > new Date(lastRead)).length;
-                });
-                
-                const unreadAnnouncements = computed(() => {
-                    const lastRead = localStorage.getItem('last_announcement_read') || '1970-01-01T00:00:00.000Z';
-                    return announcements.value.filter(announcement => 
-                        new Date(announcement.created_at) > new Date(lastRead)
-                    ).length;
-                });
-                
-                // 6.7 UI Components
-                const toasts = ref([]);
-                const systemAlerts = ref([]);
-                
-                // 6.8 Filter States
-                const staffFilters = reactive({
-                    search: '',
-                    staffType: '',
-                    department: '',
-                    status: ''
-                });
-                
-                const onCallFilters = reactive({
-                    date: '',
-                    shiftType: '',
-                    physician: '',
-                    coverageArea: ''
-                });
-                
-                const rotationFilters = reactive({
-                    resident: '',
-                    status: '',
-                    trainingUnit: '',
-                    supervisor: ''
-                });
-                
-                const absenceFilters = reactive({
-                    staff: '',
-                    status: '',
-                    reason: '',
-                    startDate: ''
-                });
-                
-                // 6.9 Modal States
-                const staffProfileModal = reactive({
-                    show: false,
-                    staff: null,
-                    activeTab: 'clinical'
-                });
-                
-                const medicalStaffModal = reactive({
-                    show: false,
-                    mode: 'add',
-                    activeTab: 'basic',
-                    form: {
-                        full_name: '',
-                        staff_type: 'medical_resident',
-                        staff_id: '',
-                        employment_status: 'active',
-                        professional_email: '',
-                        department_id: '',
-                        academic_degree: '',
-                        specialization: '',
-                        resident_year: '',
-                        clinical_certificate: '',
-                        certificate_status: 'current'
-                    }
-                });
-                
-                const communicationsModal = reactive({
-                    show: false,
-                    activeTab: 'announcement',
-                    form: {
-                        title: '',
-                        content: '',
-                        priority: 'normal',
-                        target_audience: 'all_staff',
-                        updateType: 'daily',
-                        dailySummary: '',
-                        highlight1: '',
-                        highlight2: '',
-                        alerts: {
-                            erBusy: false,
-                            icuFull: false,
-                            wardFull: false,
-                            staffShortage: false
-                        },
-                        metricName: '',
-                        metricValue: '',
-                        metricTrend: 'stable',
-                        metricChange: '',
-                        metricNote: '',
-                        alertLevel: 'low',
-                        alertMessage: '',
-                        affectedAreas: {
-                            er: false,
-                            icu: false,
-                            ward: false,
-                            surgery: false
-                        }
-                    }
-                });
-                
-                const onCallModal = reactive({
-                    show: false,
-                    mode: 'add',
-                    form: {
-                        duty_date: new Date().toISOString().split('T')[0],
-                        shift_type: 'primary',
-                        start_time: '08:00',
-                        end_time: '17:00',
-                        primary_physician_id: '',
-                        backup_physician_id: '',
-                        coverage_area: 'emergency'
-                    }
-                });
-                
-                const rotationModal = reactive({
-                    show: false,
-                    mode: 'add',
-                    form: {
-                        rotation_id: '',
-                        resident_id: '',
-                        training_unit_id: '',
-                        rotation_start_date: new Date().toISOString().split('T')[0],
-                        rotation_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        rotation_status: 'scheduled',
-                        rotation_category: 'clinical_rotation',
-                        supervising_attending_id: ''
-                    }
-                });
-                
-                const trainingUnitModal = reactive({
-                    show: false,
-                    mode: 'add',
-                    form: {
-                        unit_name: '',
-                        unit_code: '',
-                        department_id: '',
-                        maximum_residents: 10,
-                        unit_status: 'active',
-                        specialty: '',
-                        supervising_attending_id: ''
-                    }
-                });
-                
-                const absenceModal = reactive({
-                    show: false,
-                    mode: 'add',
-                    activeTab: 'basic',
-                    form: {
-                        staff_member_id: '',
-                        absence_reason: 'vacation',
-                        start_date: new Date().toISOString().split('T')[0],
-                        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        status: 'active',
-                        replacement_staff_id: '',
-                        notes: ''
-                    }
-                });
-                
-                const departmentModal = reactive({
-                    show: false,
-                    mode: 'add',
-                    form: {
-                        name: '',
-                        code: '',
-                        status: 'active',
-                        head_of_department_id: ''
-                    }
-                });
-                
-                const userProfileModal = reactive({
-                    show: false,
-                    form: {
-                        full_name: '',
-                        email: '',
-                        department_id: ''
-                    }
-                });
-                
-                const confirmationModal = reactive({
-                    show: false,
-                    title: '',
-                    message: '',
-                    icon: 'fa-question-circle',
-                    confirmButtonText: 'Confirm',
-                    confirmButtonClass: 'btn-primary',
-                    cancelButtonText: 'Cancel',
-                    onConfirm: null,
-                    details: ''
-                });
-                
-                // 6.10 Permission Matrix
-                const PERMISSION_MATRIX = {
-                    system_admin: {
-                        medical_staff: ['create', 'read', 'update', 'delete'],
-                        oncall_schedule: ['create', 'read', 'update', 'delete'],
-                        resident_rotations: ['create', 'read', 'update', 'delete'],
-                        training_units: ['create', 'read', 'update', 'delete'],
-                        staff_absence: ['create', 'read', 'update', 'delete'],
-                        department_management: ['create', 'read', 'update', 'delete'],
-                        communications: ['create', 'read', 'update', 'delete'],
-                        system: ['manage_departments', 'manage_updates']
-                    },
-                    department_head: {
-                        medical_staff: ['read', 'update'],
-                        oncall_schedule: ['create', 'read', 'update'],
-                        resident_rotations: ['create', 'read', 'update'],
-                        training_units: ['read', 'update'],
-                        staff_absence: ['create', 'read', 'update'],
-                        department_management: ['read'],
-                        communications: ['create', 'read'],
-                        system: ['manage_updates']
-                    },
-                    attending_physician: {
-                        medical_staff: ['read'],
-                        oncall_schedule: ['read'],
-                        resident_rotations: ['read'],
-                        training_units: ['read'],
-                        staff_absence: ['read'],
-                        department_management: ['read'],
-                        communications: ['read']
-                    },
-                    medical_resident: {
-                        medical_staff: ['read'],
-                        oncall_schedule: ['read'],
-                        resident_rotations: ['read'],
-                        training_units: ['read'],
-                        staff_absence: ['read'],
-                        department_management: [],
-                        communications: ['read']
-                    }
-                };
-                const formatDateForBackend = (dateString) => {
-    if (!dateString) return '';
-    
-    console.log('📅 Formatting date:', dateString);
-    
-    // Already in YYYY-MM-DD format
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-        return dateString;
-    }
-    
-    // Try to parse DD/MM/YYYY format
-    if (dateString.includes('/')) {
-        const parts = dateString.split('/');
-        if (parts.length === 3) {
-            const [day, month, year] = parts;
-            const formatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-            console.log('✅ Converted to:', formatted);
-            return formatted;
-        }
-    }
-    
-    // Try to parse as Date object
-    const date = new Date(dateString);
-    if (!isNaN(date.getTime())) {
-        const formatted = date.toISOString().split('T')[0];
-        console.log('📆 Parsed as Date:', formatted);
-        return formatted;
-    }
-    
-    console.log('⚠️ Could not parse date, returning as-is:', dateString);
-    return dateString;
-};
-                // ============ 7. UTILITY FUNCTIONS ============
-                
-                // 7.1 Toast System
-                const showToast = (title, message, type = 'info', duration = 5000) => {
-                    const icons = {
-                        info: 'fas fa-info-circle',
-                        success: 'fas fa-check-circle',
-                        error: 'fas fa-exclamation-circle',
-                        warning: 'fas fa-exclamation-triangle'
-                    };
-                    
-                    const toast = {
-                        id: Date.now(),
-                        title,
-                        message,
-                        type,
-                        icon: icons[type],
-                        duration
-                    };
-                    
-                    toasts.value.push(toast);
-                    
-                    if (duration > 0) {
-                        setTimeout(() => removeToast(toast.id), duration);
-                    }
-                };
-                
-                const removeToast = (id) => {
-                    const index = toasts.value.findIndex(t => t.id === id);
-                    if (index > -1) toasts.value.splice(index, 1);
-                };
-                
-                // 7.2 Confirmation Modal
-                const showConfirmation = (options) => {
-                    Object.assign(confirmationModal, {
-                        show: true,
-                        ...options
-                    });
-                };
-                
-                const confirmAction = async () => {
-                    if (confirmationModal.onConfirm) {
-                        try {
-                            await confirmationModal.onConfirm();
-                        } catch (error) {
-                            showToast('Error', error.message, 'error');
-                        }
-                    }
-                    confirmationModal.show = false;
-                };
-                
-                const cancelConfirmation = () => {
-                    confirmationModal.show = false;
-                };
-                
-                // 7.3 Formatting Functions
-                const formatStaffType = (type) => {
-                    const map = {
-                        'medical_resident': 'Medical Resident',
-                        'attending_physician': 'Attending Physician',
-                        'fellow': 'Fellow',
-                        'nurse_practitioner': 'Nurse Practitioner'
-                    };
-                    return map[type] || type;
-                };
-                
-                const getStaffTypeClass = (type) => {
-                    const map = {
-                        'medical_resident': 'badge-primary',
-                        'attending_physician': 'badge-success',
-                        'fellow': 'badge-info',
-                        'nurse_practitioner': 'badge-warning'
-                    };
-                    return map[type] || 'badge-secondary';
-                };
-                
-                const formatEmploymentStatus = (status) => {
-                    const map = {
-                        'active': 'Active',
-                        'on_leave': 'On Leave',
-                        'inactive': 'Inactive'
-                    };
-                    return map[status] || status;
-                };
-                
-                const formatAbsenceReason = (reason) => {
-                    const map = {
-                        'vacation': 'Vacation',
-                        'sick_leave': 'Sick Leave',
-                        'conference': 'Conference',
-                        'training': 'Training',
-                        'personal': 'Personal',
-                        'other': 'Other'
-                    };
-                    return map[reason] || reason;
-                };
-                
-                const formatAbsenceStatus = (status) => {
-                    const map = {
-                        'active': 'Active',
-                        'upcoming': 'Upcoming',
-                        'completed': 'Completed'
-                    };
-                    return map[status] || status;
-                };
-                
-                const formatRotationStatus = (status) => {
-                    const map = {
-                        'scheduled': 'Scheduled',
-                        'active': 'Active',
-                        'completed': 'Completed',
-                        'cancelled': 'Cancelled'
-                    };
-                    return map[status] || status;
-                };
-                
-                const getUserRoleDisplay = (role) => {
-                    const map = {
-                        'system_admin': 'System Administrator',
-                        'department_head': 'Department Head',
-                        'attending_physician': 'Attending Physician',
-                        'medical_resident': 'Medical Resident'
-                    };
-                    return map[role] || role;
-                };
-                
-                const getCurrentViewTitle = () => {
-                    const map = {
-                        'dashboard': 'Dashboard Overview',
-                        'medical_staff': 'Medical Staff Management',
-                        'oncall_schedule': 'On-call Schedule',
-                        'resident_rotations': 'Resident Rotations',
-                        'training_units': 'Training Units',
-                        'staff_absence': 'Staff Absence Management',
-                        'department_management': 'Department Management',
-                        'communications': 'Communications Center'
-                    };
-                    return map[currentView.value] || 'NeumoCare Dashboard';
-                };
-                
-                const getCurrentViewSubtitle = () => {
-                    const map = {
-                        'dashboard': 'Real-time department overview and analytics',
-                        'medical_staff': 'Manage physicians, residents, and clinical staff',
-                        'oncall_schedule': 'View and manage on-call physician schedules',
-                        'resident_rotations': 'Track and manage resident training rotations',
-                        'training_units': 'Clinical training units and resident assignments',
-                        'staff_absence': 'Track staff absences and coverage assignments',
-                        'department_management': 'Organizational structure and clinical units',
-                        'communications': 'Department announcements and capacity updates'
-                    };
-                    return map[currentView.value] || 'Hospital Management System';
-                };
-                
-                const getSearchPlaceholder = () => {
-                    const map = {
-                        'dashboard': 'Search staff, units, rotations...',
-                        'medical_staff': 'Search by name, ID, or email...',
-                        'oncall_schedule': 'Search on-call schedules...',
-                        'resident_rotations': 'Search rotations by resident or unit...',
-                        'training_units': 'Search training units...',
-                        'staff_absence': 'Search absences by staff member...',
-                        'department_management': 'Search departments...',
-                        'communications': 'Search announcements...'
-                    };
-                    return map[currentView.value] || 'Search across system...';
-                };
-                
-                // 7.4 Data Helper Functions
-                const getDepartmentName = (departmentId) => {
-                    if (!departmentId) return 'Not assigned';
-                    const dept = departments.value.find(d => d.id === departmentId);
-                    return dept ? dept.name : 'Unknown Department';
-                };
-                
-                const getStaffName = (staffId) => {
-                    if (!staffId) return 'Not assigned';
-                    const staff = medicalStaff.value.find(s => s.id === staffId);
-                    return staff ? staff.full_name : 'Unknown Staff';
-                };
-                
-                const getTrainingUnitName = (unitId) => {
-                    if (!unitId) return 'Not assigned';
-                    const unit = trainingUnits.value.find(u => u.id === unitId);
-                    return unit ? unit.unit_name : 'Unknown Unit';
-                };
-                
-                const getSupervisorName = (supervisorId) => {
-                    return getStaffName(supervisorId);
-                };
-                
-                const getPhysicianName = (physicianId) => {
-                    return getStaffName(physicianId);
-                };
-                
-                const getResidentName = (residentId) => {
-                    return getStaffName(residentId);
-                };
-
-                
-                const getDepartmentUnits = (departmentId) => {
-                    return trainingUnits.value.filter(unit => unit.department_id === departmentId);
-                };
-                
-                const getDepartmentStaffCount = (departmentId) => {
-                    return medicalStaff.value.filter(staff => staff.department_id === departmentId).length;
-                };
-                
-               const getCurrentRotationForStaff = (staffId) => {
-    console.log('Looking for rotation for staffId:', staffId);
-    console.log('All rotations:', rotations.value);
-    
-    const rotation = rotations.value.find(r => {
-        console.log('Checking rotation:', r.resident_id, 'vs', staffId, 'status:', r.rotation_status);
-        return r.resident_id === staffId && r.rotation_status === 'active';
-    });
-    
-    console.log('Found rotation:', rotation);
-    return rotation || null;
-};
-                const calculateAbsenceDuration = (startDate, endDate) => {
-                    return EnhancedUtils.calculateDateDifference(startDate, endDate);
-                };
-                
-                // ============ NEW DYNAMIC PROFILE FUNCTIONS ============
-                // These are required by the new HTML
-                
-                const getCurrentUnit = (staffId) => {
-                    const rotation = rotations.value.find(r => 
-                        r.resident_id === staffId && r.rotation_status === 'active'
-                    );
-                    if (rotation) {
-                        const unit = trainingUnits.value.find(u => u.id === rotation.training_unit_id);
-                        return unit ? unit.unit_name : 'Not assigned';
-                    }
-                    return 'Not assigned';
-                };
-                
-                const getCurrentWard = (staffId) => {
-                    // This would come from real patient assignment data
-                    const rotation = rotations.value.find(r => 
-                        r.resident_id === staffId && r.rotation_status === 'active'
-                    );
-                    if (rotation) {
-                        return rotation.rotation_category === 'clinical_rotation' ? 'General Ward' : 'ICU';
-                    }
-                    return 'General';
-                };
-                
-                const getCurrentActivityStatus = (staffId) => {
-                    // Check if staff is on-call today
-                    const today = new Date().toISOString().split('T')[0];
-                    const onCall = onCallSchedule.value.find(s => 
-                        (s.primary_physician_id === staffId || s.backup_physician_id === staffId) &&
-                        s.duty_date === today
-                    );
-                    
-                    if (onCall) return 'oncall';
-                    
-                    // Check if staff is in surgery (simulated)
-                    const staff = medicalStaff.value.find(s => s.id === staffId);
-                    if (staff && staff.staff_type === 'attending_physician') {
-                        return Math.random() > 0.7 ? 'in-surgery' : 'available';
-                    }
-                    
-                    return 'available';
-                };
-                
-                const getCurrentPatientCount = (staffId) => {
-                    // Simulated patient count based on staff type
-                    const staff = medicalStaff.value.find(s => s.id === staffId);
-                    if (!staff) return 0;
-                    
-                    if (staff.staff_type === 'attending_physician') {
-                        return Math.floor(Math.random() * 15) + 10;
-                    } else if (staff.staff_type === 'medical_resident') {
-                        return Math.floor(Math.random() * 8) + 5;
-                    }
-                    
-                    return Math.floor(Math.random() * 5) + 2;
-                };
-                
-                const getICUPatientCount = (staffId) => {
-                    const total = getCurrentPatientCount(staffId);
-                    return Math.floor(total * 0.3);
-                };
-                
-                const getWardPatientCount = (staffId) => {
-                    const total = getCurrentPatientCount(staffId);
-                    return Math.floor(total * 0.7);
-                };
-                
-                const getTodaysSchedule = (staffId) => {
-                    // Generate simulated schedule
-                    const today = new Date().toISOString().split('T')[0];
-                    const staff = medicalStaff.value.find(s => s.id === staffId);
-                    
-                    if (!staff) return [];
-                    
-                    const baseSchedule = [
-                        { time: '08:00', activity: 'Morning Rounds', location: 'Ward A' },
-                        { time: '10:00', activity: 'Patient Consultations', location: 'Clinic 3' },
-                        { time: '13:00', activity: 'Lunch Break', location: 'Cafeteria' },
-                        { time: '14:00', activity: 'Teaching Session', location: 'Conference Room' },
-                        { time: '16:00', activity: 'Case Review', location: 'Department Office' }
-                    ];
-                    
-                    // Add specialty-specific activities
-                    if (staff.specialization === 'Pulmonology') {
-                        baseSchedule.splice(2, 0, { time: '11:00', activity: 'Bronchoscopy', location: 'Procedure Room' });
-                    }
-                    
-                    return baseSchedule;
-                };
-                
-                const isOnCallToday = (staffId) => {
-                    const today = new Date().toISOString().split('T')[0];
-                    return onCallSchedule.value.some(s => 
-                        (s.primary_physician_id === staffId || s.backup_physician_id === staffId) &&
-                        s.duty_date === today
-                    );
-                };
-                
-                const getOnCallShiftTime = (staffId) => {
-                    const today = new Date().toISOString().split('T')[0];
-                    const schedule = onCallSchedule.value.find(s => 
-                        (s.primary_physician_id === staffId || s.backup_physician_id === staffId) &&
-                        s.duty_date === today
-                    );
-                    
-                    return schedule ? `${schedule.start_time} - ${schedule.end_time}` : 'N/A';
-                };
-                
-                const getOnCallCoverage = (staffId) => {
-                    const today = new Date().toISOString().split('T')[0];
-                    const schedule = onCallSchedule.value.find(s => 
-                        (s.primary_physician_id === staffId || s.backup_physician_id === staffId) &&
-                        s.duty_date === today
-                    );
-                    
-                    return schedule ? schedule.coverage_area : 'N/A';
-                };
-                
-                const getRotationSupervisor = (staffId) => {
-                    const rotation = rotations.value.find(r => 
-                        r.resident_id === staffId && r.rotation_status === 'active'
-                    );
-                    
-                    if (rotation && rotation.supervising_attending_id) {
-                        return getStaffName(rotation.supervising_attending_id);
-                    }
-                    
-                    return 'Not assigned';
-                };
-                
-                const getRotationDaysLeft = (staffId) => {
-                    const rotation = rotations.value.find(r => 
-                        r.resident_id === staffId && r.rotation_status === 'active'
-                    );
-                    
-                    if (rotation && rotation.rotation_end_date) {
-                        const endDate = new Date(rotation.rotation_end_date);
-                        const today = new Date();
-                        const diffTime = endDate - today;
-                        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    }
-                    
-                    return 0;
-                };
-                
-                const getRecentActivities = (staffId) => {
-                    // Simulated recent activities
-                    const activities = [
-                        { timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), description: 'Admitted new patient', location: 'ER' },
-                        { timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), description: 'Completed discharge summary', location: 'Ward B' },
-                        { timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), description: 'Attended morning report', location: 'Conference Room' },
-                        { timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), description: 'Performed procedure', location: 'Procedure Room' },
-                        { timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), description: 'Teaching session with medical students', location: 'Classroom' }
-                    ];
-                    
-                    return activities;
-                };
-                
-                const formatTimeAgo = (dateString) => {
-                    return EnhancedUtils.formatRelativeTime(dateString);
-                };
-                
-                // ============ 7.5 Permission Functions ============
-                const hasPermission = (module, action = 'read') => {
-                    const role = currentUser.value?.user_role;
-                    if (!role) return false;
-                    
-                    if (role === 'system_admin') return true;
-                    
-                    const permissions = PERMISSION_MATRIX[role]?.[module];
-                    if (!permissions) return false;
-                    
-                    return permissions.includes(action) || permissions.includes('*');
-                };
-                
-                // 7.6 Live Stats Functions
-                const saveLiveStatsUpdates = async () => {
-                    saving.value = true;
-                    try {
-                        liveStatsData.lastUpdated = new Date().toISOString();
-                        liveStatsData.updatedBy = currentUser.value?.full_name;
-                        
-                        // Save to API
-                        await API.createLiveUpdate({
-                            type: 'stats_update',
-                            title: 'Live Department Update',
-                            content: liveStatsData.dailyUpdate,
-                            metrics: {
-                                metric1: liveStatsData.metric1,
-                                metric2: liveStatsData.metric2
-                            },
-                            alerts: liveStatsData.alerts,
-                            priority: 'high'
-                        });
-                        
-                        liveStatsEditMode.value = false;
-                        showToast('Success', 'Live stats updated successfully', 'success');
-                        loadLiveUpdates();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                // ============ 8. DATA LOADING FUNCTIONS ============
-                
-                // 8.1 Load Medical Staff
-                const loadMedicalStaff = async () => {
-                    try {
-                        const data = await API.getMedicalStaff();
-                        medicalStaff.value = data;
-                    } catch (error) {
-                        console.error('Failed to load medical staff:', error);
-                        showToast('Error', 'Failed to load medical staff', 'error');
-                    }
-                };
-                
-                // 8.2 Load Departments
-                const loadDepartments = async () => {
-                    try {
-                        const data = await API.getDepartments();
-                        departments.value = data;
-                    } catch (error) {
-                        console.error('Failed to load departments:', error);
-                        showToast('Error', 'Failed to load departments', 'error');
-                    }
-                };
-                
-                // 8.3 Load Training Units
-                const loadTrainingUnits = async () => {
-                    try {
-                        const data = await API.getTrainingUnits();
-                        trainingUnits.value = data;
-                    } catch (error) {
-                        console.error('Failed to load training units:', error);
-                        showToast('Error', 'Failed to load training units', 'error');
-                    }
-                };
-                
-                // 8.4 Load Rotations
-                const loadRotations = async () => {
-                    try {
-                        const data = await API.getRotations();
-                        rotations.value = data;
-                    } catch (error) {
-                        console.error('Failed to load rotations:', error);
-                        showToast('Error', 'Failed to load rotations', 'error');
-                    }
-                };
-                
-                // 8.5 Load Absences
-                const loadAbsences = async () => {
-                    try {
-                        const data = await API.getAbsences();
-                        absences.value = data;
-                    } catch (error) {
-                        console.error('Failed to load absences:', error);
-                        showToast('Error', 'Failed to load absences', 'error');
-                    }
-                };
-                
-                // 8.6 Load On-call Schedule
-                const loadOnCallSchedule = async () => {
-                    try {
-                        loadingSchedule.value = true;
-                        const data = await API.getOnCallSchedule();
-                        onCallSchedule.value = data;
-                    } catch (error) {
-                        console.error('Failed to load on-call schedule:', error);
-                        showToast('Error', 'Failed to load on-call schedule', 'error');
-                    } finally {
-                        loadingSchedule.value = false;
-                    }
-                };
-                
-                // 8.7 Load Today's On-call - FIXED VERSION
-const loadTodaysOnCall = async () => {
-  try {
-    loadingSchedule.value = true;
-    const data = await API.getOnCallToday();
-    
-    console.log('Raw on-call data:', data); // Debug log
-    
-    // Transform backend data to match frontend expectations
-    todaysOnCall.value = data.map(item => {
-      // 1. Format time (remove seconds from "08:00:00" → "08:00")
-      const startTime = item.start_time ? item.start_time.substring(0, 5) : 'N/A';
-      const endTime = item.end_time ? item.end_time.substring(0, 5) : 'N/A';
-      
-      // 2. Get physician name from nested object
-      const physicianName = item.primary_physician?.full_name || 'Unknown Physician';
-      const physicianEmail = item.primary_physician?.professional_email || '';
-      
-      // 3. Format shift type ("primary_call" → "Primary")
-      let shiftTypeDisplay = 'Unknown';
-      let shiftTypeClass = 'badge-secondary';
-      
-      if (item.shift_type === 'primary_call' || item.shift_type === 'primary') {
-        shiftTypeDisplay = 'Primary';
-        shiftTypeClass = 'badge-primary';
-      } else if (item.shift_type === 'backup_call' || item.shift_type === 'backup' || item.shift_type === 'secondary') {
-        shiftTypeDisplay = 'Backup';
-        shiftTypeClass = 'badge-secondary';
-      }
-      
-      // 4. Get coverage area from coverage_notes field
-      const coverageArea = item.coverage_notes || 'General Coverage';
-      
-      // 5. Get backup physician name
-      const backupPhysician = item.backup_physician?.full_name || null;
-      
-      // 6. Get contact info (phone or email)
-      const contactInfo = item.primary_physician?.mobile_phone || 
-                         item.primary_physician?.professional_email || 
-                         'No contact info';
-      
-      // 7. Get staff type by matching with medicalStaff data
-      let staffType = 'Physician';
-      const matchingStaff = medicalStaff.value.find(staff => 
-        staff.id === item.primary_physician_id ||
-        staff.professional_email === physicianEmail
-      );
-      
-      if (matchingStaff) {
-        staffType = formatStaffType(matchingStaff.staff_type);
-      }
-      
-      return {
-        id: item.id,
-        startTime,
-        endTime,
-        physicianName,
-        staffType,
-        shiftType: shiftTypeDisplay,
-        shiftTypeClass,
-        coverageArea,
-        backupPhysician,
-        contactInfo,
-        // Keep raw data for debugging
-        raw: item
-      };
-    });
-    
-    console.log('Transformed on-call data:', todaysOnCall.value); // Debug log
-    
-  } catch (error) {
-    console.error('Failed to load today\'s on-call:', error);
-    showToast('Error', 'Failed to load today\'s on-call schedule', 'error');
-    todaysOnCall.value = [];
-  } finally {
-    loadingSchedule.value = false;
-  }
-};
-                
-                // 8.8 Load Announcements
-                const loadAnnouncements = async () => {
-                    try {
-                        const data = await API.getAnnouncements();
-                        announcements.value = data;
-                    } catch (error) {
-                        console.error('Failed to load announcements:', error);
-                        showToast('Error', 'Failed to load announcements', 'error');
-                    }
-                };
-                
-                // 8.9 Load Live Updates
-                const loadLiveUpdates = async () => {
-                    try {
-                        const data = await API.getLiveUpdates();
-                        liveUpdates.value = data;
-                        
-                        // Get latest update for live stats
-                        if (data.length > 0) {
-                            const latest = data[0];
-                            if (latest.type === 'stats_update') {
-                                liveStatsData.dailyUpdate = latest.content;
-                                liveStatsData.lastUpdated = latest.created_at;
-                                liveStatsData.updatedBy = latest.author;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Failed to load live updates:', error);
-                    }
-                };
-                
-                // 8.10 Load System Stats
-                const loadSystemStats = async () => {
-                    try {
-                        const data = await API.getSystemStats();
-                        Object.assign(systemStats.value, data);
-                    } catch (error) {
-                        console.error('Failed to load system stats:', error);
-                    }
-                };
-                
-                // 8.11 Update Dashboard Stats
-                const updateDashboardStats = () => {
-                    // Calculate stats from loaded data
-                    systemStats.value.totalStaff = medicalStaff.value.length;
-                    systemStats.value.activeAttending = medicalStaff.value.filter(s => 
-                        s.staff_type === 'attending_physician' && s.employment_status === 'active'
-                    ).length;
-                    systemStats.value.activeResidents = medicalStaff.value.filter(s => 
-                        s.staff_type === 'medical_resident' && s.employment_status === 'active'
-                    ).length;
-                    systemStats.value.onLeaveStaff = medicalStaff.value.filter(s => 
-                        s.employment_status === 'on_leave'
-                    ).length;
-                    systemStats.value.activeRotations = rotations.value.filter(r => 
-                        r.rotation_status === 'active'
-                    ).length;
-                    
-                    // Calculate rotations ending this week
-                    const today = new Date();
-                    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    systemStats.value.endingThisWeek = rotations.value.filter(r => {
-                        if (r.rotation_status !== 'active') return false;
-                        const endDate = new Date(r.rotation_end_date);
-                        return endDate >= today && endDate <= nextWeek;
-                    }).length;
-                    
-                    // Calculate rotations starting next week
-                    const nextWeekStart = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    const twoWeeks = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
-                    systemStats.value.startingNextWeek = rotations.value.filter(r => {
-                        if (r.rotation_status !== 'scheduled') return false;
-                        const startDate = new Date(r.rotation_start_date);
-                        return startDate >= nextWeekStart && startDate <= twoWeeks;
-                    }).length;
-                };
-                
-                // 8.12 Load All Data
-                const loadAllData = async () => {
-                    loading.value = true;
-                    try {
-                        await Promise.all([
-                            loadMedicalStaff(),
-                            loadDepartments(),
-                            loadTrainingUnits(),
-                            loadRotations(),
-                            loadAbsences(),
-                            loadOnCallSchedule(),
-                            loadTodaysOnCall(),
-                            loadAnnouncements(),
-                            loadLiveUpdates(),
-                            loadSystemStats()
-                        ]);
-                        
-                        updateDashboardStats();
-                        showToast('Success', 'System data loaded successfully', 'success');
-                    } catch (error) {
-                        console.error('Failed to load data:', error);
-                        showToast('Error', 'Failed to load some data', 'error');
-                    } finally {
-                        loading.value = false;
-                    }
-                };
-                
-                // ============ 9. AUTHENTICATION FUNCTIONS ============
-                
-                const handleLogin = async () => {
-                    if (!loginForm.email || !loginForm.password) {
-                        showToast('Error', 'Email and password are required', 'error');
-                        return;
-                    }
-                    
-                    loginLoading.value = true;
-                    try {
-                        const response = await API.login(loginForm.email, loginForm.password);
-                        
-                        currentUser.value = response.user;
-                        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(response.user));
-                        
-                        showToast('Success', `Welcome, ${response.user.full_name}!`, 'success');
-                        
-                        await loadAllData();
-                        currentView.value = 'dashboard';
-                        
-                    } catch (error) {
-                        showToast('Error', error.message || 'Login failed', 'error');
-                    } finally {
-                        loginLoading.value = false;
-                    }
-                };
-                
-                const handleLogout = () => {
-                    showConfirmation({
-                        title: 'Logout',
-                        message: 'Are you sure you want to logout?',
-                        icon: 'fa-sign-out-alt',
-                        confirmButtonText: 'Logout',
-                        confirmButtonClass: 'btn-danger',
-                        onConfirm: async () => {
-                            try {
-                                await API.logout();
-                            } finally {
-                                currentUser.value = null;
-                                currentView.value = 'login';
-                                userMenuOpen.value = false;
-                                showToast('Info', 'Logged out successfully', 'info');
-                            }
-                        }
-                    });
-                };
-                
-                // ============ 10. NAVIGATION FUNCTIONS ============
-                
-                const switchView = (view) => {
-                    currentView.value = view;
-                    mobileMenuOpen.value = false;
-                };
-                
-                // ============ 11. UI FUNCTIONS ============
-                
-                const toggleStatsSidebar = () => {
-                    statsSidebarOpen.value = !statsSidebarOpen.value;
-                };
-                
-                const handleGlobalSearch = () => {
-                    if (globalSearchQuery.value.trim()) {
-                        showToast('Search', `Searching for "${globalSearchQuery.value}"`, 'info');
-                    }
-                };
-                
-                const dismissAlert = (id) => {
-                    const index = systemAlerts.value.findIndex(alert => alert.id === id);
-                    if (index > -1) systemAlerts.value.splice(index, 1);
-                };
-                
-                // ============ 12. MODAL SHOW FUNCTIONS ============
-                
-                const showAddMedicalStaffModal = () => {
-                    medicalStaffModal.mode = 'add';
-                    medicalStaffModal.activeTab = 'basic';
-                    medicalStaffModal.form = {
-                        full_name: '',
-                        staff_type: 'medical_resident',
-                        staff_id: `MD-${Date.now().toString().slice(-6)}`,
-                        employment_status: 'active',
-                        professional_email: '',
-                        department_id: '',
-                        academic_degree: '',
-                        specialization: '',
-                        resident_year: '',
-                        clinical_certificate: '',
-                        certificate_status: 'current'
-                    };
-                    medicalStaffModal.show = true;
-                };
-                
-                const showAddDepartmentModal = () => {
-                    departmentModal.mode = 'add';
-                    departmentModal.form = {
-                        name: '',
-                        code: '',
-                        status: 'active',
-                        head_of_department_id: ''
-                    };
-                    departmentModal.show = true;
-                };
-                
-                const showAddTrainingUnitModal = () => {
-                    trainingUnitModal.mode = 'add';
-                    trainingUnitModal.form = {
-                        unit_name: '',
-                        unit_code: '',
-                        department_id: '',
-                        maximum_residents: 10,
-                        unit_status: 'active',
-                        specialty: '',
-                        supervising_attending_id: ''
-                    };
-                    trainingUnitModal.show = true;
-                };
-                
-               const showAddRotationModal = () => {
-    rotationModal.mode = 'add';
-    rotationModal.form = {
-        rotation_id: `ROT-${Date.now().toString().slice(-6)}`,
-        resident_id: '',
-        training_unit_id: '',
-        // CORRECT FIELD NAMES:
-        start_date: new Date().toISOString().split('T')[0],  // ✅ CORRECT
-        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],  // ✅ CORRECT
-        rotation_status: 'active',  // ✅ CORRECT - must be: 'active', 'upcoming', 'completed', or 'cancelled'
-        rotation_category: 'clinical_rotation',
-        supervising_attending_id: ''
-    };
-    rotationModal.show = true;
-};
-                
-                const showAddOnCallModal = () => {
-                    onCallModal.mode = 'add';
-                    onCallModal.form = {
-                        duty_date: new Date().toISOString().split('T')[0],
-                        shift_type: 'primary',
-                        start_time: '08:00',
-                        end_time: '17:00',
-                        primary_physician_id: '',
-                        backup_physician_id: '',
-                        coverage_area: 'emergency'
-                    };
-                    onCallModal.show = true;
-                };
-                
-                const showAddAbsenceModal = () => {
-                    absenceModal.mode = 'add';
-                    absenceModal.form = {
-                        staff_member_id: '',
-                        absence_reason: 'vacation',
-                        start_date: new Date().toISOString().split('T')[0],
-                        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        status: 'active',
-                        replacement_staff_id: '',
-                        notes: ''
-                    };
-                    absenceModal.show = true;
-                };
-                
-                const showCommunicationsModal = () => {
-                    communicationsModal.show = true;
-                    communicationsModal.activeTab = 'announcement';
-                    communicationsModal.form = {
-                        title: '',
-                        content: '',
-                        priority: 'normal',
-                        target_audience: 'all_staff',
-                        updateType: 'daily',
-                        dailySummary: '',
-                        highlight1: '',
-                        highlight2: '',
-                        alerts: {
-                            erBusy: false,
-                            icuFull: false,
-                            wardFull: false,
-                            staffShortage: false
-                        },
-                        metricName: '',
-                        metricValue: '',
-                        metricTrend: 'stable',
-                        metricChange: '',
-                        metricNote: '',
-                        alertLevel: 'low',
-                        alertMessage: '',
-                        affectedAreas: {
-                            er: false,
-                            icu: false,
-                            ward: false,
-                            surgery: false
-                        }
-                    };
-                };
-                
-                const showUserProfileModal = () => {
-                    userProfileModal.form = {
-                        full_name: currentUser.value?.full_name || '',
-                        email: currentUser.value?.email || '',
-                        department_id: currentUser.value?.department_id || ''
-                    };
-                    userProfileModal.show = true;
-                    userMenuOpen.value = false;
-                };
-                
-                // ============ 13. VIEW/EDIT FUNCTIONS ============
-                
-                const viewStaffDetails = (staff) => {
-                    staffProfileModal.staff = staff;
-                    staffProfileModal.activeTab = 'clinical';
-                    staffProfileModal.show = true;
-                };
-                
-                const editMedicalStaff = (staff) => {
-                    medicalStaffModal.mode = 'edit';
-                    medicalStaffModal.form = { ...staff };
-                    medicalStaffModal.show = true;
-                };
-                
-                const editDepartment = (department) => {
-                    departmentModal.mode = 'edit';
-                    departmentModal.form = { ...department };
-                    departmentModal.show = true;
-                };
-                
-                const editTrainingUnit = (unit) => {
-                    trainingUnitModal.mode = 'edit';
-                    trainingUnitModal.form = { ...unit };
-                    trainingUnitModal.show = true;
-                };
-                
-                const editRotation = (rotation) => {
-                    rotationModal.mode = 'edit';
-                    rotationModal.form = { ...rotation };
-                    rotationModal.show = true;
-                };
-                
-                const editOnCallSchedule = (schedule) => {
-                    onCallModal.mode = 'edit';
-                    onCallModal.form = { ...schedule };
-                    onCallModal.show = true;
-                };
-                
-                const editAbsence = (absence) => {
-                    absenceModal.mode = 'edit';
-                    absenceModal.form = { ...absence };
-                    absenceModal.show = true;
-                };
-                
-                // ============ 14. SAVE FUNCTIONS ============
-                
-                const saveMedicalStaff = async () => {
-                    saving.value = true;
-                    try {
-                        if (medicalStaffModal.mode === 'add') {
-                            const result = await API.createMedicalStaff(medicalStaffModal.form);
-                            medicalStaff.value.unshift(result);
-                            showToast('Success', 'Medical staff added successfully', 'success');
-                        } else {
-                            const result = await API.updateMedicalStaff(medicalStaffModal.form.id, medicalStaffModal.form);
-                            const index = medicalStaff.value.findIndex(s => s.id === result.id);
-                            if (index !== -1) medicalStaff.value[index] = result;
-                            showToast('Success', 'Medical staff updated successfully', 'success');
-                        }
-                        medicalStaffModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveDepartment = async () => {
-                    saving.value = true;
-                    try {
-                        if (departmentModal.mode === 'add') {
-                            const result = await API.createDepartment(departmentModal.form);
-                            departments.value.unshift(result);
-                            showToast('Success', 'Department created successfully', 'success');
-                        } else {
-                            const result = await API.updateDepartment(departmentModal.form.id, departmentModal.form);
-                            const index = departments.value.findIndex(d => d.id === result.id);
-                            if (index !== -1) departments.value[index] = result;
-                            showToast('Success', 'Department updated successfully', 'success');
-                        }
-                        departmentModal.show = false;
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveTrainingUnit = async () => {
-                    saving.value = true;
-                    try {
-                        if (trainingUnitModal.mode === 'add') {
-                            const result = await API.createTrainingUnit(trainingUnitModal.form);
-                            trainingUnits.value.unshift(result);
-                            showToast('Success', 'Training unit created successfully', 'success');
-                        } else {
-                            const result = await API.updateTrainingUnit(trainingUnitModal.form.id, trainingUnitModal.form);
-                            const index = trainingUnits.value.findIndex(u => u.id === result.id);
-                            if (index !== -1) trainingUnits.value[index] = result;
-                            showToast('Success', 'Training unit updated successfully', 'success');
-                        }
-                        trainingUnitModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-const saveRotation = async () => {
-    // ========== VALIDATION ==========
-    if (!rotationModal.form.resident_id) {
-        showToast('Error', 'Please select a resident', 'error');
-        return;
-    }
-    
-    if (!rotationModal.form.training_unit_id) {
-        showToast('Error', 'Please select a training unit', 'error');
-        return;
-    }
-    
-    if (!rotationModal.form.start_date) {
-        showToast('Error', 'Please enter a start date', 'error');
-        return;
-    }
-    
-    if (!rotationModal.form.end_date) {
-        showToast('Error', 'Please enter an end date', 'error');
-        return;
-    }
-    
-    // Check end date is after start date
-    const start = new Date(formatDateForBackend(rotationModal.form.start_date));
-    const end = new Date(formatDateForBackend(rotationModal.form.end_date));
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        showToast('Error', 'Invalid date format. Please use YYYY-MM-DD', 'error');
-        return;
-    }
-    
-    if (end <= start) {
-        showToast('Error', 'End date must be after start date', 'error');
-        return;
-    }
-    
-    saving.value = true;
-    
-    try {
-        // ========== DATA TRANSFORMATION ==========
-        // Convert dates from DD/MM/YYYY to YYYY-MM-DD
-        const startDate = formatDateForBackend(rotationModal.form.start_date);
-        const endDate = formatDateForBackend(rotationModal.form.end_date);
-        
-        // Convert category to lowercase
-        const rotationCategory = rotationModal.form.rotation_category.toLowerCase();
-        
-        // Convert status to lowercase
-        const rotationStatus = rotationModal.form.rotation_status.toLowerCase();
-        
-        // Build the final data object
-        const rotationData = {
-            rotation_id: rotationModal.form.rotation_id,
-            resident_id: rotationModal.form.resident_id,
-            training_unit_id: rotationModal.form.training_unit_id,
-            supervising_attending_id: rotationModal.form.supervising_attending_id || null,
-            start_date: startDate,
-            end_date: endDate,
-            rotation_category: rotationCategory,
-            rotation_status: rotationStatus
-        };
-        
-        console.log('📤 Sending rotation data:', rotationData);
-        
-        // ========== API CALL ==========
-        if (rotationModal.mode === 'add') {
-            const result = await API.createRotation(rotationData);
-            rotations.value.unshift(result);
-            showToast('Success', 'Rotation scheduled successfully', 'success');
-        } else {
-            const result = await API.updateRotation(rotationModal.form.id, rotationData);
-            const index = rotations.value.findIndex(r => r.id === result.id);
-            if (index !== -1) rotations.value[index] = result;
-            showToast('Success', 'Rotation updated successfully', 'success');
-        }
-        
-        // ========== CLEANUP ==========
-        rotationModal.show = false;
-        await loadRotations();
-        updateDashboardStats();
-        
-    } catch (error) {
-        console.error('❌ Rotation creation error:', error);
-        showToast('Error', error.message || 'Failed to save rotation', 'error');
-    } finally {
-        saving.value = false;
-    }
-};
-
-                
-                const saveOnCallSchedule = async () => {
-                    saving.value = true;
-                    try {
-                        if (onCallModal.mode === 'add') {
-                            const result = await API.createOnCall(onCallModal.form);
-                            onCallSchedule.value.unshift(result);
-                            showToast('Success', 'On-call scheduled successfully', 'success');
-                        } else {
-                            const result = await API.updateOnCall(onCallModal.form.id, onCallModal.form);
-                            const index = onCallSchedule.value.findIndex(s => s.id === result.id);
-                            if (index !== -1) onCallSchedule.value[index] = result;
-                            showToast('Success', 'On-call updated successfully', 'success');
-                        }
-                        onCallModal.show = false;
-                        loadTodaysOnCall();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveAbsence = async () => {
-                    saving.value = true;
-                    try {
-                        if (absenceModal.mode === 'add') {
-                            const result = await API.createAbsence(absenceModal.form);
-                            absences.value.unshift(result);
-                            showToast('Success', 'Absence recorded successfully', 'success');
-                        } else {
-                            const result = await API.updateAbsence(absenceModal.form.id, absenceModal.form);
-                            const index = absences.value.findIndex(a => a.id === result.id);
-                            if (index !== -1) absences.value[index] = result;
-                            showToast('Success', 'Absence updated successfully', 'success');
-                        }
-                        absenceModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveCommunication = async () => {
-                    saving.value = true;
-                    try {
-                        if (communicationsModal.activeTab === 'announcement') {
-                            const result = await API.createAnnouncement({
-                                title: communicationsModal.form.title,
-                                content: communicationsModal.form.content,
-                                priority_level: communicationsModal.form.priority,
-                                target_audience: communicationsModal.form.target_audience,
-                                type: 'announcement'
-                            });
-                            
-                            announcements.value.unshift(result);
-                            showToast('Success', 'Announcement posted successfully', 'success');
-                        } else {
-                            // Save as live update
-                            const updateData = {
-                                type: 'stats_update',
-                                title: 'Live Department Update',
-                                content: communicationsModal.form.dailySummary,
-                                metrics: {
-                                    metric1: communicationsModal.form.metricName ? {
-                                        label: communicationsModal.form.metricName,
-                                        value: communicationsModal.form.metricValue
-                                    } : null,
-                                    metric2: communicationsModal.form.metricChange ? {
-                                        label: 'Change',
-                                        value: communicationsModal.form.metricChange
-                                    } : null
-                                },
-                                alerts: communicationsModal.form.alerts,
-                                priority: communicationsModal.form.alertLevel || 'normal'
-                            };
-                            
-                            const result = await API.createLiveUpdate(updateData);
-                            liveUpdates.value.unshift(result);
-                            
-                            // Update live stats display
-                            liveStatsData.dailyUpdate = communicationsModal.form.dailySummary;
-                            liveStatsData.lastUpdated = new Date().toISOString();
-                            liveStatsData.updatedBy = currentUser.value?.full_name;
-                            
-                            showToast('Success', 'Live stats updated successfully', 'success');
-                        }
-                        
-                        communicationsModal.show = false;
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveUserProfile = async () => {
-                    saving.value = true;
-                    try {
-                        // Update current user data
-                        currentUser.value.full_name = userProfileModal.form.full_name;
-                        currentUser.value.department_id = userProfileModal.form.department_id;
-                        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(currentUser.value));
-                        
-                        userProfileModal.show = false;
-                        showToast('Success', 'Profile updated successfully', 'success');
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                // ============ 15. ACTION FUNCTIONS ============
-                
-const contactPhysician = (shift) => {
-  if (shift.contactInfo && shift.contactInfo !== 'No contact info') {
-    showToast('Contact Physician', 
-      `Would contact ${shift.physicianName} via ${shift.contactInfo.includes('@') ? 'email' : 'phone'}`, 
-      'info');
-  } else {
-    showToast('No Contact Info', 
-      `No contact information available for ${shift.physicianName}`, 
-      'warning');
-  }
-};
-                
-                const viewAnnouncement = (announcement) => {
-                    showToast(announcement.title, EnhancedUtils.truncateText(announcement.content, 100), 'info');
-                };
-                
-                const viewDepartmentStaff = (department) => {
-                    showToast('Department Staff', `Viewing staff for ${department.name}`, 'info');
-                };
-                
-                const viewUnitResidents = (unit) => {
-                    showToast('Unit Residents', `Viewing residents for ${unit.unit_name}`, 'info');
-                };
-                
-                // ============ 16. COMPUTED PROPERTIES ============
-                
-                const availablePhysicians = computed(() => {
-                    return medicalStaff.value.filter(staff => 
-                        (staff.staff_type === 'attending_physician' || 
-                         staff.staff_type === 'fellow' || 
-                         staff.staff_type === 'nurse_practitioner') && 
-                        staff.employment_status === 'active'
-                    );
-                });
-                
-                const availableResidents = computed(() => {
-                    return medicalStaff.value.filter(staff => 
-                        staff.staff_type === 'medical_resident' && 
-                        staff.employment_status === 'active'
-                    );
-                });
-                
-                const availableAttendings = computed(() => {
-                    return medicalStaff.value.filter(staff => 
-                        staff.staff_type === 'attending_physician' && 
-                        staff.employment_status === 'active'
-                    );
-                });
-                
-                const availableHeadsOfDepartment = computed(() => {
-                    return availableAttendings.value;
-                });
-                
-                const availableReplacementStaff = computed(() => {
-                    return medicalStaff.value.filter(staff => 
-                        staff.employment_status === 'active' && 
-                        staff.staff_type === 'medical_resident'
-                    );
-                });
-                
-                const filteredMedicalStaff = computed(() => {
-                    let filtered = medicalStaff.value;
-                    
-                    if (staffFilters.search) {
-                        const search = staffFilters.search.toLowerCase();
-                        filtered = filtered.filter(staff =>
-                            staff.full_name?.toLowerCase().includes(search) ||
-                            staff.staff_id?.toLowerCase().includes(search) ||
-                            staff.professional_email?.toLowerCase().includes(search)
-                        );
-                    }
-                    
-                    if (staffFilters.staffType) {
-                        filtered = filtered.filter(staff => staff.staff_type === staffFilters.staffType);
-                    }
-                    
-                    if (staffFilters.department) {
-                        filtered = filtered.filter(staff => staff.department_id === staffFilters.department);
-                    }
-                    
-                    if (staffFilters.status) {
-                        filtered = filtered.filter(staff => staff.employment_status === staffFilters.status);
-                    }
-                    
-                    return filtered;
-                });
-                
-                const filteredOnCallSchedules = computed(() => {
-                    let filtered = onCallSchedule.value;
-                    
-                    if (onCallFilters.date) {
-                        filtered = filtered.filter(schedule => schedule.duty_date === onCallFilters.date);
-                    }
-                    
-                    if (onCallFilters.shiftType) {
-                        filtered = filtered.filter(schedule => schedule.shift_type === onCallFilters.shiftType);
-                    }
-                    
-                    if (onCallFilters.physician) {
-                        filtered = filtered.filter(schedule =>
-                            schedule.primary_physician_id === onCallFilters.physician ||
-                            schedule.backup_physician_id === onCallFilters.physician
-                        );
-                    }
-                    
-                    if (onCallFilters.coverageArea) {
-                        filtered = filtered.filter(schedule => schedule.coverage_area === onCallFilters.coverageArea);
-                    }
-                    
-                    return filtered;
-                });
-                
-                const filteredRotations = computed(() => {
-                    let filtered = rotations.value;
-                    
-                    if (rotationFilters.resident) {
-                        filtered = filtered.filter(rotation => rotation.resident_id === rotationFilters.resident);
-                    }
-                    
-                    if (rotationFilters.status) {
-                        filtered = filtered.filter(rotation => rotation.rotation_status === rotationFilters.status);
-                    }
-                    
-                    if (rotationFilters.trainingUnit) {
-                        filtered = filtered.filter(rotation => rotation.training_unit_id === rotationFilters.trainingUnit);
-                    }
-                    
-                    if (rotationFilters.supervisor) {
-                        filtered = filtered.filter(rotation => rotation.supervising_attending_id === rotationFilters.supervisor);
-                    }
-                    
-                    return filtered;
-                });
-                
-                const filteredAbsences = computed(() => {
-                    let filtered = absences.value;
-                    
-                    if (absenceFilters.staff) {
-                        filtered = filtered.filter(absence => absence.staff_member_id === absenceFilters.staff);
-                    }
-                    
-                    if (absenceFilters.status) {
-                        filtered = filtered.filter(absence => absence.status === absenceFilters.status);
-                    }
-                    
-                    if (absenceFilters.reason) {
-                        filtered = filtered.filter(absence => absence.absence_reason === absenceFilters.reason);
-                    }
-                    
-                    if (absenceFilters.startDate) {
-                        filtered = filtered.filter(absence => absence.start_date >= absenceFilters.startDate);
-                    }
-                    
-                    return filtered;
-                });
-                
-                const recentAnnouncements = computed(() => {
-                    return announcements.value.slice(0, 10);
-                });
-                
-                // ============ 17. LIFECYCLE ============
-                
-                onMounted(() => {
-                    console.log('🚀 Vue app mounted');
-                    
-                    // Check if user is already logged in
-                    const token = localStorage.getItem(CONFIG.TOKEN_KEY);
-                    const user = localStorage.getItem(CONFIG.USER_KEY);
-                    
-                    if (token && user) {
-                        try {
-                            currentUser.value = JSON.parse(user);
-                            loadAllData();
-                            currentView.value = 'dashboard';
-                        } catch {
-                            currentView.value = 'login';
-                        }
-                    } else {
-                        currentView.value = 'login';
-                    }
-                    
-                    // Auto-refresh data every 60 seconds
-                    setInterval(() => {
-                        if (currentUser.value) {
-                            loadTodaysOnCall();
-                            updateDashboardStats();
-                        }
-                    }, 60000);
-                    
-                    // Close modals on escape key
-                    document.addEventListener('keydown', (e) => {
-                        if (e.key === 'Escape') {
-                            const openModals = [
-                                medicalStaffModal,
-                                departmentModal,
-                                trainingUnitModal,
-                                rotationModal,
-                                onCallModal,
-                                absenceModal,
-                                communicationsModal,
-                                staffProfileModal,
-                                userProfileModal,
-                                confirmationModal
-                            ];
-                            
-                            openModals.forEach(modal => {
-                                if (modal.show) modal.show = false;
-                            });
-                        }
-                    });
-                });
-                
-                // Watch for data changes
-                watch([medicalStaff, rotations, trainingUnits, absences], 
-                    () => {
-                        updateDashboardStats();
-                    }, 
-                    { deep: true }
-                );
-                
-                // ============ 18. RETURN EXPOSED DATA/METHODS ============
-                return {
-                    // State
-                    currentUser,
-                    loginForm,
-                    loginLoading,
-                    loading,
-                    saving,
-                    loadingSchedule,
-                    
-                    currentView,
-                    sidebarCollapsed,
-                    mobileMenuOpen,
-                    userMenuOpen,
-                    statsSidebarOpen,
-                    globalSearchQuery,
-                    
-                    // Data
-                    medicalStaff,
-                    departments,
-                    trainingUnits,
-                    rotations,
-                    absences,
-                    onCallSchedule,
-                    announcements,
-                    
-                    // Dashboard
-                    systemStats,
-                    todaysOnCall,
-                    todaysOnCallCount,
-                    
-                    // Live Stats
-                    liveStatsEditMode,
-                    liveStatsData,
-                    unreadLiveUpdates,
-                    unreadAnnouncements,
-                    
-                    // UI
-                    toasts,
-                    systemAlerts,
-                    
-                    // Filters
-                    staffFilters,
-                    onCallFilters,
-                    rotationFilters,
-                    absenceFilters,
-                    
-                    // Modals
-                    staffProfileModal,
-                    medicalStaffModal,
-                    communicationsModal,
-                    onCallModal,
-                    rotationModal,
-                    trainingUnitModal,
-                    absenceModal,
-                    departmentModal,
-                    userProfileModal,
-                    confirmationModal,
-                    
-                    // Formatting Functions
-                    formatDate: EnhancedUtils.formatDate,
-                    formatDateTime: EnhancedUtils.formatDateTime,
-                    formatTime: EnhancedUtils.formatTime,
-                    formatRelativeTime: EnhancedUtils.formatRelativeTime,
-                    formatTimeAgo,
-                    getInitials: EnhancedUtils.getInitials,
-                    formatStaffType,
-                    getStaffTypeClass,
-                    formatEmploymentStatus,
-                    formatAbsenceReason,
-                    formatAbsenceStatus,
-                    formatRotationStatus,
-                    getUserRoleDisplay,
-                    getCurrentViewTitle,
-                    getCurrentViewSubtitle,
-                    getSearchPlaceholder,
-                    
-                    // Helper Functions
-                    getDepartmentName,
-                    getStaffName,
-                    getTrainingUnitName,
-                    getSupervisorName,
-                    getPhysicianName,
-                    getResidentName,
-                    getDepartmentUnits,
-                    getDepartmentStaffCount,
-                    getCurrentRotationForStaff,
-                    calculateAbsenceDuration,
-                    
-                    // NEW DYNAMIC PROFILE FUNCTIONS
-                    getCurrentUnit,
-                    getCurrentWard,
-                    getCurrentActivityStatus,
-                    getCurrentPatientCount,
-                    getICUPatientCount,
-                    getWardPatientCount,
-                    getTodaysSchedule,
-                    isOnCallToday,
-                    getOnCallShiftTime,
-                    getOnCallCoverage,
-                    getRotationSupervisor,
-                    getRotationDaysLeft,
-                    getRecentActivities,
-                    
-                    // Permission Functions
-                    hasPermission,
-                    
-                    // Toast Functions
-                    showToast,
-                    removeToast,
-                    dismissAlert,
-                    
-                    // Confirmation Modal
-                    showConfirmation,
-                    confirmAction,
-                    cancelConfirmation,
-                    
-                    // Authentication
-                    handleLogin,
-                    handleLogout,
-                    
-                    // Navigation
-                    switchView,
-                    
-                    // UI Functions
-                    toggleStatsSidebar,
-                    handleGlobalSearch,
-                    
-                    // Live Stats
-                    saveLiveStatsUpdates,
-                    
-                    // Modal Show Functions
-                    showAddMedicalStaffModal,
-                    showAddDepartmentModal,
-                    showAddTrainingUnitModal,
-                    showAddRotationModal,
-                    showAddOnCallModal,
-                    showAddAbsenceModal,
-                    showCommunicationsModal,
-                    showUserProfileModal,
-                    
-                    // View/Edit Functions
-                    viewStaffDetails,
-                    editMedicalStaff,
-                    editDepartment,
-                    editTrainingUnit,
-                    editRotation,
-                    editOnCallSchedule,
-                    editAbsence,
-                    
-                    // Action Functions
-                    contactPhysician,
-                    viewAnnouncement,
-                    viewDepartmentStaff,
-                    viewUnitResidents,
-                    
-                    // Save Functions
-                    saveMedicalStaff,
-                    saveDepartment,
-                    saveTrainingUnit,
-                    saveRotation,
-                    saveOnCallSchedule,
-                    saveAbsence,
-                    saveCommunication,
-                    saveUserProfile,
-                    
-                    // Computed Properties
-                    availablePhysicians,
-                    availableResidents,
-                    availableAttendings,
-                    availableHeadsOfDepartment,
-                    availableReplacementStaff,
-                    filteredMedicalStaff,
-                    filteredOnCallSchedules,
-                    filteredRotations,
-                    filteredAbsences,
-                    recentAnnouncements
-                };
-            }
-        });
-        
-        // ============ 19. MOUNT APP ============
-        app.mount('#app');
-        
-        console.log('✅ NeumoCare v7.0 mounted successfully!');
-        
-    } catch (error) {
-        console.error('💥 FATAL ERROR mounting app:', error);
-        
-        document.body.innerHTML = `
-            <div style="padding: 40px; text-align: center; margin-top: 100px; color: #333; font-family: Arial, sans-serif;">
-                <h2 style="color: #dc3545;">⚠️ Application Error</h2>
-                <p style="margin: 20px 0; color: #666;">
-                    The application failed to load properly. Please try refreshing the page.
-                </p>
-                <button onclick="window.location.reload()" 
-                        style="padding: 12px 24px; background: #007bff; color: white; 
-                               border: none; border-radius: 6px; cursor: pointer; margin-top: 20px;">
-                    🔄 Refresh Page
+                <div class="toast-content">
+                    <div class="toast-title">{{ toast.title }}</div>
+                    <div class="toast-message">{{ toast.message }}</div>
+                </div>
+                <button class="toast-close" @click="removeToast(toast.id)" aria-label="Close notification">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
-        `;
-        
-        throw error;
-    }
-});
+        </div>
+
+        <!-- ============ LOGIN SCREEN ============ -->
+        <div v-if="!currentUser" class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="login-logo">
+                        <i class="fas fa-lungs"></i>
+                        <span class="login-title">NeumoCare</span>
+                    </div>
+                    <p class="login-subtitle">Pulmonology Management System</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-email" class="form-label">Email Address</label>
+                    <input type="email" id="login-email" class="form-control" 
+                           v-model="loginForm.email" placeholder="admin@neumocare.org" 
+                           required aria-required="true" name="email" autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password" class="form-label">Password</label>
+                    <input type="password" id="login-password" class="form-control" 
+                           v-model="loginForm.password" placeholder="••••••••" 
+                           required aria-required="true" name="password" autocomplete="current-password">
+                </div>
+                
+                <button class="btn btn-primary btn-lg w-100" @click="handleLogin" 
+                        :disabled="loginLoading" aria-label="Login to NeumoCare system">
+                    <span v-if="loginLoading">
+                        <i class="fas fa-spinner fa-spin"></i> Authenticating...
+                    </span>
+                    <span v-else>
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============ MAIN APPLICATION ============ -->
+        <div v-else class="app-layout">
+            
+            <!-- Medical Sidebar -->
+            <aside class="sidebar" :class="{ 'sidebar-collapsed': sidebarCollapsed, 'mobile-open': mobileMenuOpen }" 
+                   aria-label="Main navigation">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <i class="fas fa-lungs"></i>
+                        <span v-if="!sidebarCollapsed">NeumoCare</span>
+                    </div>
+                    <button class="sidebar-toggle" @click="sidebarCollapsed = !sidebarCollapsed" 
+                            :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+                        <i class="fas" :class="sidebarCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+                        <span v-if="!sidebarCollapsed">{{ sidebarCollapsed ? 'Expand' : 'Collapse' }}</span>
+                    </button>
+                </div>
+                
+                <nav class="sidebar-nav" aria-label="Primary navigation">
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-title" v-if="!sidebarCollapsed">Dashboard</div>
+                        <ul class="sidebar-menu">
+                            <li class="sidebar-menu-item">
+                                <a href="#" class="sidebar-menu-link" :class="{ active: currentView === 'dashboard' }" 
+                                   @click.prevent="switchView('dashboard'); mobileMenuOpen = false"
+                                   :aria-label="sidebarCollapsed ? 'Dashboard overview' : ''"
+                                   :aria-current="currentView === 'dashboard' ? 'page' : null">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span v-if="!sidebarCollapsed">Overview</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-title" v-if="!sidebarCollapsed">Clinical Operations</div>
+                        <ul class="sidebar-menu">
+                            <li class="sidebar-menu-item">
+                                <a href="#" class="sidebar-menu-link" :class="{ active: currentView === 'medical_staff' }" 
+                                   @click.prevent="switchView('medical_staff'); mobileMenuOpen = false" 
+                                   v-if="hasPermission('medical_staff', 'read')"
+                                   :aria-label="sidebarCollapsed ? 'Medical Staff' : ''"
+                                   :aria-current="currentView === 'medical_staff' ? 'page' : null">
+                                    <i class="fas fa-stethoscope"></i>
+                                    <span v-if="!sidebarCollapsed">Medical Staff</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-menu-item">
+                                <a href="#" class="sidebar-menu-link" :class="{ active: currentView === 'oncall_schedule' }" 
+                                   @click.prevent="switchView('oncall_schedule'); mobileMenuOpen = false" 
+                                   v-if="hasPermission('oncall_schedule', 'read')"
+                                   :aria-label="sidebarCollapsed ? 'On-call Schedule' : ''"
+                                   :aria-current="currentView === 'oncall_schedule' ? 'page' : null">
+                                    <i class="fas fa-phone-medical"></i>
+                                    <span v-if="!sidebarCollapsed">On-call</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-title" v-if="!sidebarCollapsed">Training & Education</div>
+                        <ul class="sidebar-menu">
+                            <li class="sidebar-menu-item">
+                                <a href="#" class="sidebar-menu-link" :class="{ active: currentView === 'resident_rotations' }" 
+                                   @click.prevent="switchView('resident_rotations'); mobileMenuOpen = false" 
+                                   v-if="hasPermission('resident_rotations', 'read')"
+                                   :aria-label="sidebarCollapsed ? 'Resident Rotations' : ''"
+                                   :aria-current="currentView === 'resident_rotations' ? 'page' : null">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <span v-if="!sidebarCollapsed">Rotations</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-menu-item">
+                                <a href="#" class="sidebar-menu-link" :class="{ active: currentView === 'training_units' }" 
+                                   @click.prevent="switchView('training_units'); mobileMenuOpen = false" 
+                                   v-if="hasPermission('training_units', 'read')"
+                                   :aria-label="sidebarCollapsed ? 'Training Units' : ''"
+                                   :aria-current="currentView === 'training_units' ? 'page' : null">
+                                    <i class="fas fa-hospital-user"></i>
+                                    <span v-if="!sidebarCollapsed">Units</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-title" v-if="!sidebarCollapsed">Administration</div>
+                        <ul class="sidebar-menu">
+                            <li class="sidebar-menu-item">
+                                <a href="#" class="sidebar-menu-link" :class="{ active: currentView === 'staff_absence' }" 
+                                   @click.prevent="switchView('staff_absence'); mobileMenuOpen = false" 
+                                   v-if="hasPermission('staff_absence', 'read')"
+                                   :aria-label="sidebarCollapsed ? 'Staff Absence' : ''"
+                                   :aria-current="currentView === 'staff_absence' ? 'page' : null">
+                                    <i class="fas fa-user-clock"></i>
+                                    <span v-if="!sidebarCollapsed">Absence</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-menu-item">
+                                <a href="#" class="sidebar-menu-link" :class="{ active: currentView === 'department_management' }" 
+                                   @click.prevent="switchView('department_management'); mobileMenuOpen = false" 
+                                   v-if="hasPermission('system', 'manage_departments')"
+                                   :aria-label="sidebarCollapsed ? 'Department Management' : ''"
+                                   :aria-current="currentView === 'department_management' ? 'page' : null">
+                                    <i class="fas fa-sitemap"></i>
+                                    <span v-if="!sidebarCollapsed">Departments</span>
+                                </a>
+                            </li>
+                            <li class="sidebar-menu-item">
+                                <a href="#" class="sidebar-menu-link" :class="{ active: currentView === 'communications' }" 
+                                   @click.prevent="switchView('communications'); mobileMenuOpen = false" 
+                                   v-if="hasPermission('communications', 'read')"
+                                   :aria-label="sidebarCollapsed ? 'Communications' : ''"
+                                   :aria-current="currentView === 'communications' ? 'page' : null">
+                                    <i class="fas fa-bullhorn"></i>
+                                    <span v-if="!sidebarCollapsed">Communications</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                
+                <div class="sidebar-footer">
+                    <div class="sidebar-user">
+                        <div class="user-avatar" aria-hidden="true">{{ getInitials(currentUser.full_name) }}</div>
+                        <div class="user-info" v-if="!sidebarCollapsed">
+                            <div class="user-name">{{ currentUser.full_name }}</div>
+                            <div class="user-role">{{ getUserRoleDisplay(currentUser.user_role) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Live Stats Sidebar Toggle -->
+            <button class="stats-toggle-btn" @click="toggleStatsSidebar" 
+                    :aria-label="statsSidebarOpen ? 'Close live statistics sidebar' : 'Open live statistics sidebar'">
+                <i class="fas" :class="statsSidebarOpen ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+            </button>
+            
+            <!-- Live Statistics Sidebar -->
+            <div class="live-stats-sidebar" :class="{ open: statsSidebarOpen }" role="complementary" aria-label="Live department statistics">
+                <div class="live-stats-header">
+                    <div class="live-stats-title">
+                        <i class="fas fa-chart-line"></i>
+                        Live Department Updates
+                        <span class="badge badge-primary ml-2" v-if="unreadLiveUpdates > 0">{{ unreadLiveUpdates }}</span>
+                    </div>
+                    <button class="live-stats-close" @click="statsSidebarOpen = false" aria-label="Close statistics sidebar">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- EDIT MODE - Department Head Only -->
+                <div v-if="hasPermission('system', 'manage_updates') && liveStatsEditMode" class="live-stats-edit-mode">
+                    <div class="live-stats-edit-header">
+                        <h4>Edit Live Updates</h4>
+                        <button class="btn btn-sm btn-success" @click="saveLiveStatsUpdates">
+                            <i class="fas fa-save"></i> Publish
+                        </button>
+                    </div>
+                    
+                    <!-- Daily Status Update -->
+                    <div class="form-group">
+                        <label class="form-label">Daily Status Update *</label>
+                        <textarea class="form-control form-textarea" v-model="liveStatsData.dailyUpdate" 
+                                  rows="3" placeholder="Enter today's department status (e.g., ER: 3 critical cases, ICU: 90% capacity, Ward A full...)"
+                                  required></textarea>
+                        <small class="text-muted">Visible to all staff in real-time</small>
+                    </div>
+                    
+                    <!-- Key Metrics Input -->
+                    <div class="form-group">
+                        <label class="form-label">Key Metrics (Optional)</label>
+                        <div class="live-metric-input">
+                            <div class="metric-input-row">
+                                <input type="text" class="form-control" v-model="liveStatsData.metric1.label" 
+                                       placeholder="Metric name (e.g., ER Wait Time)">
+                                <input type="text" class="form-control" v-model="liveStatsData.metric1.value" 
+                                       placeholder="Value (e.g., 15 mins)">
+                            </div>
+                        </div>
+                        <div class="live-metric-input">
+                            <div class="metric-input-row">
+                                <input type="text" class="form-control" v-model="liveStatsData.metric2.label" 
+                                       placeholder="Metric name (e.g., ICU Bed Availability)">
+                                <input type="text" class="form-control" v-model="liveStatsData.metric2.value" 
+                                       placeholder="Value (e.g., 2 beds)">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Flags -->
+                    <div class="form-group">
+                        <label class="form-label">Status Alerts</label>
+                        <div class="status-flags-grid">
+                            <label class="status-flag-item">
+                                <input type="checkbox" v-model="liveStatsData.alerts.erBusy">
+                                <span class="status-flag-label">ER Busy</span>
+                            </label>
+                            <label class="status-flag-item">
+                                <input type="checkbox" v-model="liveStatsData.alerts.icuFull">
+                                <span class="status-flag-label">ICU Full</span>
+                            </label>
+                            <label class="status-flag-item">
+                                <input type="checkbox" v-model="liveStatsData.alerts.wardFull">
+                                <span class="status-flag-label">Ward Full</span>
+                            </label>
+                            <label class="status-flag-item">
+                                <input type="checkbox" v-model="liveStatsData.alerts.staffShortage">
+                                <span class="status-flag-label">Staff Shortage</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2 mt-4">
+                        <button class="btn btn-sm btn-outline flex-1" @click="liveStatsEditMode = false">
+                            Cancel
+                        </button>
+                        <button class="btn btn-sm btn-primary flex-1" @click="saveLiveStatsUpdates">
+                            <i class="fas fa-paper-plane"></i> Update All Staff
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- VIEW MODE - All Staff -->
+                <div v-else>
+                    <!-- Edit Toggle for Department Head -->
+                    <div v-if="hasPermission('system', 'manage_updates')" class="mb-4">
+                        <button class="btn btn-sm btn-outline w-100" @click="liveStatsEditMode = true">
+                            <i class="fas fa-edit"></i> Update Live Stats
+                        </button>
+                    </div>
+                    
+                    <!-- Daily Update Display -->
+                    <div class="live-update-display">
+                        <div v-if="liveStatsData.dailyUpdate" class="live-update-card">
+                            <div class="live-update-header">
+                                <h4>Current Department Status</h4>
+                                <span class="live-update-time">{{ formatRelativeTime(liveStatsData.lastUpdated) }}</span>
+                            </div>
+                            <div class="live-update-content">
+                                {{ liveStatsData.dailyUpdate }}
+                            </div>
+                            <div class="live-update-author" v-if="liveStatsData.updatedBy">
+                                <i class="fas fa-user-md text-xs"></i>
+                                <small>Updated by: {{ liveStatsData.updatedBy }}</small>
+                            </div>
+                        </div>
+                        <div v-else class="p-4 text-center text-gray-500 bg-gray-50 rounded-md">
+                            <i class="fas fa-info-circle mb-2"></i>
+                            <p class="text-sm">No status update available</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Key Metrics Display -->
+                    <div class="live-metrics-display" v-if="liveStatsData.metric1.label || liveStatsData.metric2.label">
+                        <div class="live-metric-card" v-if="liveStatsData.metric1.label">
+                            <div class="live-metric-label">{{ liveStatsData.metric1.label }}</div>
+                            <div class="live-metric-value">{{ liveStatsData.metric1.value }}</div>
+                        </div>
+                        <div class="live-metric-card" v-if="liveStatsData.metric2.label">
+                            <div class="live-metric-label">{{ liveStatsData.metric2.label }}</div>
+                            <div class="live-metric-value">{{ liveStatsData.metric2.value }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Clinicians Count -->
+                    <div class="active-clinicians-card">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Active Clinicians</h4>
+                        <div class="clinician-count-grid">
+                            <div class="clinician-count-item">
+                                <div class="clinician-count-value">{{ systemStats.activeAttending || 0 }}</div>
+                                <div class="clinician-count-label">Attending</div>
+                            </div>
+                            <div class="clinician-count-item">
+                                <div class="clinician-count-value">{{ systemStats.activeResidents || 0 }}</div>
+                                <div class="clinician-count-label">Residents</div>
+                            </div>
+                            <div class="clinician-count-item">
+                                <div class="clinician-count-value">{{ systemStats.onCallNow || 0 }}</div>
+                                <div class="clinician-count-label">On-call</div>
+                            </div>
+                            <div class="clinician-count-item">
+                                <div class="clinician-count-value">{{ systemStats.inSurgery || 0 }}</div>
+                                <div class="clinician-count-label">In Surgery</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Information -->
+                    <div class="bg-gray-50 rounded-md p-4">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">System Information</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-600">Next Shift Change:</span>
+                                <span class="text-xs font-medium">{{ formatTime(systemStats.nextShiftChange) }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-600">Pending Approvals:</span>
+                                <span class="text-xs font-medium">{{ systemStats.pendingApprovals || 0 }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-600">Unread Announcements:</span>
+                                <span class="text-xs font-medium">{{ unreadAnnouncements || 0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <main class="main-content" :class="{ 'main-content-expanded': sidebarCollapsed }">
+                
+                <!-- Top Navigation Bar -->
+                <header class="top-navbar">
+                    <div class="navbar-left">
+                        <button class="mobile-menu-toggle" @click="mobileMenuOpen = !mobileMenuOpen" 
+                                :aria-label="mobileMenuOpen ? 'Close mobile menu' : 'Open mobile menu'">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div>
+                            <span class="navbar-title">{{ getCurrentViewTitle() }}</span>
+                            <span class="navbar-subtitle" v-if="getCurrentViewSubtitle()">{{ getCurrentViewSubtitle() }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="navbar-right">
+                        <!-- Enhanced Search -->
+                        <div class="search-container">
+                            <div class="search-box">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" class="search-input" :placeholder="getSearchPlaceholder()" 
+                                       v-model="globalSearchQuery" @keyup.enter="handleGlobalSearch"
+                                       aria-label="Search across system">
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <!-- Communications Button -->
+                            <button class="btn btn-icon btn-secondary" @click="showCommunicationsModal" 
+                                    v-if="hasPermission('communications', 'create')" 
+                                    aria-label="Create communication or announcement">
+                                <i class="fas fa-bullhorn"></i>
+                            </button>
+                            
+                            <!-- User Menu -->
+                            <div class="relative">
+                                <button class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 transition" 
+                                        @click="userMenuOpen = !userMenuOpen" 
+                                        :aria-label="`${currentUser.full_name} profile menu`"
+                                        :aria-expanded="userMenuOpen">
+                                    <div class="user-avatar">{{ getInitials(currentUser.full_name) }}</div>
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </button>
+                                
+                                <div v-if="userMenuOpen" class="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                                    <div class="py-1">
+                                        <button class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2" 
+                                                @click="showUserProfileModal">
+                                            <i class="fas fa-user text-gray-500"></i>
+                                            <span>Profile Settings</span>
+                                        </button>
+                                        <button class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2" 
+                                                @click="handleLogout">
+                                            <i class="fas fa-sign-out-alt text-gray-500"></i>
+                                            <span>Logout</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Content Area -->
+                <div class="content-area">
+                    
+                    <!-- System Alert Banner -->
+                    <div v-if="systemAlerts.length > 0" class="mb-6">
+                        <div v-for="alert in systemAlerts.slice(0, 1)" :key="alert.id" 
+                             class="p-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg flex items-center justify-between shadow-md">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span class="font-medium">
+                                    {{ alert.message }}
+                                    <span v-if="systemAlerts.length > 1" class="text-sm opacity-90">
+                                        (and {{ systemAlerts.length - 1 }} more)
+                                    </span>
+                                </span>
+                            </div>
+                            <button class="p-1 hover:bg-white/10 rounded transition" 
+                                    @click="dismissAlert(alert.id)" 
+                                    aria-label="Dismiss alert">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Breadcrumb Navigation -->
+                    <nav class="flex items-center gap-2 mb-6 pb-4 border-b border-gray-200" aria-label="Breadcrumb">
+                        <button class="flex items-center gap-2 text-gray-600 hover:text-blue-600 text-sm transition" 
+                                @click="switchView('dashboard')">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </button>
+                        <span class="text-gray-400">/</span>
+                        <span class="text-blue-600 font-medium text-sm">{{ getCurrentViewTitle() }}</span>
+                    </nav>
+
+                    <!-- ============ DASHBOARD VIEW ============ -->
+                    <div v-if="currentView === 'dashboard'">
+                        
+                        <!-- NEUMAC ENHANCEMENT: Coverage Widget -->
+                        <div class="neumac-coverage-widget">
+                            <div class="neumac-coverage-header">
+                                <i class="fas fa-phone-medical"></i>
+                                <h3>Current Coverage Schedule</h3>
+                            </div>
+                            
+                            <div v-if="loadingSchedule">
+                                <div class="neumac-space-y-4">
+                                    <div class="neumac-coverage-item">
+                                        <div class="neumac-icon-text">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                            <span>Loading schedule...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div v-else-if="todaysOnCall.length === 0">
+                                <div class="neumac-coverage-item">
+                                    <div class="neumac-icon-text">
+                                        <i class="fas fa-phone-slash"></i>
+                                        <span>No on-call scheduled today</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div v-else class="neumac-space-y-2">
+                                <div v-for="shift in todaysOnCall" :key="shift.id" class="neumac-coverage-item">
+                                    <div class="neumac-coverage-physician">
+                                        <div class="neumac-icon-text">
+                                            <i class="fas fa-user-md"></i>
+                                            <span>{{ shift.physicianName }}</span>
+                                        </div>
+                                        <span class="neumac-status" :class="getShiftStatusClass(shift)">
+                                            <span class="neumac-status-dot"></span>
+                                            {{ shift.shiftType === 'primary' ? 'Primary' : 'Backup' }}
+                                        </span>
+                                    </div>
+                                    <div class="neumac-coverage-time">
+                                        {{ shift.startTime }} - {{ shift.endTime }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions Toolbar -->
+                        <div class="quick-actions-bar">
+                            <button class="action-btn" @click="showAddMedicalStaffModal" v-if="hasPermission('medical_staff', 'create')">
+                                <i class="fas fa-user-plus"></i> Add Staff
+                            </button>
+                            <button class="action-btn" @click="showAddOnCallModal" v-if="hasPermission('oncall_schedule', 'create')">
+                                <i class="fas fa-phone-medical"></i> Schedule On-call
+                            </button>
+                            <button class="action-btn" @click="showAddAbsenceModal" v-if="hasPermission('staff_absence', 'create')">
+                                <i class="fas fa-user-clock"></i> Record Absence
+                            </button>
+                            <button class="action-btn" @click="showAddRotationModal" v-if="hasPermission('resident_rotations', 'create')">
+                                <i class="fas fa-calendar-check"></i> Add Rotation
+                            </button>
+                            <div class="ml-auto">
+                                <button class="btn btn-primary btn-sm" @click="showCommunicationsModal" v-if="hasPermission('communications', 'create')">
+                                    <i class="fas fa-bullhorn"></i> New Announcement
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Real-time Stats Grid -->
+                        <div class="stats-grid">
+                            
+                            <!-- Medical Staff Stats -->
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <i class="fas fa-stethoscope"></i>
+                                    <h3>Medical Staff</h3>
+                                    <button class="btn btn-sm btn-outline" @click="switchView('medical_staff')">View All</button>
+                                </div>
+                                <div class="stat-main-value">{{ systemStats.totalStaff || 0 }}</div>
+                                <div class="stat-breakdown">
+                                    <div class="breakdown-item">
+                                        <span class="label">Attending Physicians</span>
+                                        <span class="value">{{ systemStats.activeAttending || 0 }}</span>
+                                        <span class="neumac-status neumac-status-active">
+                                            <span class="neumac-status-dot"></span>
+                                            Active
+                                        </span>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="label">Residents</span>
+                                        <span class="value">{{ systemStats.activeResidents || 0 }}</span>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="label">On Leave</span>
+                                        <span class="value">{{ systemStats.onLeaveStaff || 0 }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Rotations Stats -->
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <h3>Active Rotations</h3>
+                                    <button class="btn btn-sm btn-outline" @click="switchView('resident_rotations')">Manage</button>
+                                </div>
+                                <div class="stat-main-value">{{ systemStats.activeRotations || 0 }}</div>
+                                <div class="stat-breakdown">
+                                    <div class="breakdown-item">
+                                        <span class="label">Currently Active</span>
+                                        <span class="value">{{ systemStats.activeRotations || 0 }}</span>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="label">Ending This Week</span>
+                                        <span class="value">{{ systemStats.endingThisWeek || 0 }}</span>
+                                        <span class="neumac-status neumac-status-busy">
+                                            <span class="neumac-status-dot"></span>
+                                            Alert
+                                        </span>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="label">Starting Next Week</span>
+                                        <span class="value">{{ systemStats.startingNextWeek || 0 }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Today's On-call -->
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <i class="fas fa-phone-medical"></i>
+                                    <h3>Today's On-call</h3>
+                                    <button class="btn btn-sm btn-outline" @click="switchView('oncall_schedule')">Schedule</button>
+                                </div>
+                                <div class="stat-main-value">{{ todaysOnCallCount || 0 }}</div>
+                                <div class="stat-breakdown">
+                                    <div v-for="shift in todaysOnCall.slice(0, 3)" :key="shift.id" class="breakdown-item">
+                                        <span class="label">{{ shift.physicianName }}</span>
+                                        <span class="value">{{ shift.startTime }}</span>
+                                        <span class="neumac-status neumac-status-oncall">
+                                            <span class="neumac-status-dot"></span>
+                                            On-call
+                                        </span>
+                                    </div>
+                                    <div v-if="todaysOnCall.length === 0" class="breakdown-item">
+                                        <span class="label text-gray-500">No on-call scheduled today</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Department Status -->
+                            <div class="stat-card">
+                                <div class="stat-header">
+                                    <i class="fas fa-hospital"></i>
+                                    <h3>Department Status</h3>
+                                </div>
+                                <div class="stat-main-value" :class="{'text-green-600': systemStats.departmentStatus === 'normal', 'text-red-600': systemStats.departmentStatus === 'busy'}">
+                                    {{ systemStats.departmentStatus === 'normal' ? 'Normal' : 'Busy' }}
+                                </div>
+                                <div class="stat-breakdown">
+                                    <div class="breakdown-item">
+                                        <span class="label">Active Patients</span>
+                                        <span class="value">{{ systemStats.activePatients || 0 }}</span>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="label">ICU Occupancy</span>
+                                        <span class="value">{{ systemStats.icuOccupancy || '0' }}%</span>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="label">Ward Occupancy</span>
+                                        <span class="value">{{ systemStats.wardOccupancy || '0' }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Today's Schedule -->
+                        <div class="neumac-card-enhanced">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
+                                    <i class="fas fa-phone-medical"></i>
+                                    Today's On-call Schedule
+                                </div>
+                                <button class="btn btn-sm btn-primary" @click="showAddOnCallModal" v-if="hasPermission('oncall_schedule', 'create')">
+                                    <i class="fas fa-plus"></i> Add Schedule
+                                </button>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table neumac-table-enhanced">
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Physician</th>
+                                            <th>Type</th>
+                                            <th>Coverage Area</th>
+                                            <th>Backup</th>
+                                            <th>Contact</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-if="loadingSchedule">
+                                            <td colspan="6" class="text-center py-8">
+                                                <i class="fas fa-spinner fa-spin text-blue-600"></i>
+                                                <span class="ml-2 text-gray-600">Loading schedule...</span>
+                                            </td>
+                                        </tr>
+                                        <tr v-else-if="todaysOnCall.length === 0">
+                                            <td colspan="6" class="text-center py-8 text-gray-500">
+                                                <i class="fas fa-phone-slash text-2xl mb-2"></i>
+                                                <p>No on-call scheduled today</p>
+                                            </td>
+                                        </tr>
+                                        <tr v-else v-for="shift in todaysOnCall" :key="shift.id" 
+                                            :class="{'current-shift': isCurrentShift(shift)}">
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-clock"></i>
+                                                    {{ shift.startTime }} - {{ shift.endTime }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="user-avatar">{{ getInitials(shift.physicianName) }}</div>
+                                                    <div>
+                                                        <div class="font-medium">{{ shift.physicianName }}</div>
+                                                        <div class="neumac-text-xs neumac-color-muted">{{ shift.staffType }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="neumac-status" :class="getShiftStatusClass(shift)">
+                                                    <span class="neumac-status-dot"></span>
+                                                    {{ shift.shiftType === 'primary' ? 'Primary' : 'Backup' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-hospital"></i>
+                                                    {{ shift.coverageArea }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span v-if="shift.backupPhysician" class="neumac-icon-text">
+                                                    <i class="fas fa-user-shield"></i>
+                                                    {{ shift.backupPhysician }}
+                                                </span>
+                                                <span v-else class="neumac-text-xs neumac-color-muted">No backup</span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline neumac-btn-sm" 
+                                                        @click="contactPhysician(shift)"
+                                                        :disabled="!shift.contactInfo || shift.contactInfo === 'No contact info'"
+                                                        aria-label="Contact physician">
+                                                    <i class="fas" :class="shift.contactInfo && shift.contactInfo.includes('@') ? 'fa-envelope' : 'fa-phone'"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============ MEDICAL STAFF VIEW ============ -->
+                    <div v-if="currentView === 'medical_staff'">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
+                                    <i class="fas fa-stethoscope"></i>
+                                    Medical Staff Management
+                                </div>
+                                <button class="btn btn-primary" @click="showAddMedicalStaffModal" 
+                                        v-if="hasPermission('medical_staff', 'create')">
+                                    <i class="fas fa-plus"></i> Add Staff Member
+                                </button>
+                            </div>
+                            
+                            <!-- Filters -->
+                            <div class="neumac-p-4 border-b border-gray-200 bg-gray-50">
+                                <div class="grid grid-cols-4 gap-4">
+                                    <div>
+                                        <input type="text" class="form-control" v-model="staffFilters.search" 
+                                               placeholder="Search name, ID, or email..." aria-label="Search staff">
+                                    </div>
+                                    <div>
+                                        <select class="form-select" v-model="staffFilters.staffType" aria-label="Filter by staff type">
+                                            <option value="">All Types</option>
+                                            <option value="attending_physician">Attending Physician</option>
+                                            <option value="medical_resident">Medical Resident</option>
+                                            <option value="fellow">Fellow</option>
+                                            <option value="nurse_practitioner">Nurse Practitioner</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <select class="form-select" v-model="staffFilters.department" aria-label="Filter by department">
+                                            <option value="">All Departments</option>
+                                            <option v-for="dept in departments" :key="dept.id" :value="dept.id">
+                                                {{ dept.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <select class="form-select" v-model="staffFilters.status" aria-label="Filter by status">
+                                            <option value="">All Status</option>
+                                            <option value="active">Active</option>
+                                            <option value="on_leave">On Leave</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Staff Table -->
+                            <div class="table-responsive">
+                                <table class="table table-striped neumac-table-enhanced">
+                                    <thead>
+                                        <tr>
+                                            <th>Staff Member</th>
+                                            <th>Type</th>
+                                            <th>Staff ID</th>
+                                            <th>Department</th>
+                                            <th>Current Rotation</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="staff in filteredMedicalStaff" :key="staff.id">
+                                            <td>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="user-avatar">{{ getInitials(staff.full_name) }}</div>
+                                                    <div>
+                                                        <div class="font-medium">{{ staff.full_name }}</div>
+                                                        <div class="neumac-text-xs neumac-color-muted">{{ staff.professional_email }}</div>
+                                                        <div v-if="staff.resident_year" class="neumac-text-xs neumac-color-primary">
+                                                            {{ staff.resident_year }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas" :class="getStaffTypeIcon(staff.staff_type)"></i>
+                                                    {{ formatStaffType(staff.staff_type) }}
+                                                </div>
+                                            </td>
+                                            <td class="font-mono neumac-text-sm">{{ staff.staff_id }}</td>
+                                            <td>
+                                                <span v-if="getDepartmentName(staff.department_id)" class="neumac-icon-text">
+                                                    <i class="fas fa-building"></i>
+                                                    {{ getDepartmentName(staff.department_id) }}
+                                                </span>
+                                                <span v-else class="neumac-text-xs neumac-color-muted">Not assigned</span>
+                                            </td>
+                                            <td>
+                                                <span v-if="getCurrentRotationForStaff(staff.id)" class="neumac-icon-text">
+                                                    <i class="fas fa-calendar-check"></i>
+                                                    {{ getTrainingUnitName(getCurrentRotationForStaff(staff.id).training_unit_id) }}
+                                                </span>
+                                                <span v-else class="neumac-text-xs neumac-color-muted">Not assigned</span>
+                                            </td>
+                                            
+                                            <td>
+                                                <span class="neumac-status" :class="'neumac-status-' + staff.employment_status">
+                                                    <span class="neumac-status-dot"></span>
+                                                    {{ formatEmploymentStatus(staff.employment_status) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-action-buttons">
+                                                    <button class="btn btn-sm btn-outline neumac-btn-sm" @click="viewStaffDetails(staff)"
+                                                            aria-label="View staff details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline neumac-btn-sm" @click="editMedicalStaff(staff)" 
+                                                            v-if="hasPermission('medical_staff', 'update')"
+                                                            aria-label="Edit staff">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="filteredMedicalStaff.length === 0">
+                                            <td colspan="7" class="text-center py-8 text-gray-500">
+                                                <i class="fas fa-user-md text-2xl mb-2"></i>
+                                                <p>No medical staff found matching your criteria</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============ ON-CALL SCHEDULE VIEW ============ -->
+                    <div v-if="currentView === 'oncall_schedule'">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
+                                    <i class="fas fa-phone-medical"></i>
+                                    On-call Schedule Management
+                                </div>
+                                <button class="btn btn-primary" @click="showAddOnCallModal" v-if="hasPermission('oncall_schedule', 'create')">
+                                    <i class="fas fa-plus"></i> Add Schedule
+                                </button>
+                            </div>
+                            
+                            <!-- Filters -->
+                            <div class="neumac-p-4 border-b border-gray-200 bg-gray-50">
+                                <div class="grid grid-cols-4 gap-4">
+                                    <div>
+                                        <input type="date" class="form-control" v-model="onCallFilters.date" 
+                                               aria-label="Filter by date">
+                                    </div>
+                                    <div>
+                                        <select class="form-select" v-model="onCallFilters.shiftType" aria-label="Filter by shift type">
+                                            <option value="">All Shift Types</option>
+                                            <option value="primary">Primary</option>
+                                            <option value="backup">Backup</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <select class="form-select" v-model="onCallFilters.physician" aria-label="Filter by physician">
+                                            <option value="">All Physicians</option>
+                                            <option v-for="physician in availablePhysicians" :key="physician.id" :value="physician.id">
+                                                {{ physician.full_name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <select class="form-select" v-model="onCallFilters.coverageArea" aria-label="Filter by coverage area">
+                                            <option value="">All Areas</option>
+                                            <option value="emergency">Emergency</option>
+                                            <option value="icu">ICU</option>
+                                            <option value="ward">Ward</option>
+                                            <option value="consultation">Consultation</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Schedule Table -->
+                            <div class="table-responsive">
+                                <table class="table table-striped neumac-table-enhanced">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Physician</th>
+                                            <th>Shift Time</th>
+                                            <th>Type</th>
+                                            <th>Coverage Area</th>
+                                            <th>Backup Physician</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="schedule in filteredOnCallSchedules" :key="schedule.id">
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-calendar"></i>
+                                                    {{ formatDate(schedule.duty_date) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-user-md"></i>
+                                                    {{ getPhysicianName(schedule.primary_physician_id) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-clock"></i>
+                                                    {{ schedule.start_time }} - {{ schedule.end_time }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="neumac-status" :class="schedule.shift_type === 'primary' ? 'neumac-status-oncall' : 'neumac-status-busy'">
+                                                    <span class="neumac-status-dot"></span>
+                                                    {{ schedule.shift_type === 'primary' ? 'Primary' : 'Backup' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-hospital"></i>
+                                                    {{ schedule.coverage_area }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span v-if="schedule.backup_physician_id" class="neumac-icon-text">
+                                                    <i class="fas fa-user-shield"></i>
+                                                    {{ getPhysicianName(schedule.backup_physician_id) }}
+                                                </span>
+                                                <span v-else class="neumac-text-xs neumac-color-muted">No backup</span>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-action-buttons">
+                                                    <button class="btn btn-sm btn-outline neumac-btn-sm" @click="editOnCallSchedule(schedule)" 
+                                                            v-if="hasPermission('oncall_schedule', 'update')"
+                                                            aria-label="Edit schedule">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="filteredOnCallSchedules.length === 0">
+                                            <td colspan="7" class="text-center py-8 text-gray-500">
+                                                <i class="fas fa-phone-medical text-2xl mb-2"></i>
+                                                <p>No on-call schedules found</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============ RESIDENT ROTATIONS VIEW ============ -->
+                    <div v-if="currentView === 'resident_rotations'">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
+                                    <i class="fas fa-calendar-check"></i>
+                                    Resident Rotations Management
+                                </div>
+                                <button class="btn btn-primary" @click="showAddRotationModal" v-if="hasPermission('resident_rotations', 'create')">
+                                    <i class="fas fa-plus"></i> Add Rotation
+                                </button>
+                            </div>
+                            
+                            <!-- Filters -->
+                            <div class="neumac-p-4 border-b border-gray-200 bg-gray-50">
+                                <div class="grid grid-cols-4 gap-4">
+                                    <div>
+                                        <select class="form-select" v-model="rotationFilters.resident" aria-label="Filter by resident">
+                                            <option value="">All Residents</option>
+                                            <option v-for="resident in availableResidents" :key="resident.id" :value="resident.id">
+                                                {{ resident.full_name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <select class="form-select" v-model="rotationFilters.status" aria-label="Filter by status">
+                                            <option value="">All Status</option>
+                                            <option value="active">Active</option>
+                                            <option value="upcoming">Upcoming</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="cancelled">Cancelled</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <select class="form-select" v-model="rotationFilters.trainingUnit" aria-label="Filter by training unit">
+                                            <option value="">All Units</option>
+                                            <option v-for="unit in trainingUnits" :key="unit.id" :value="unit.id">
+                                                {{ unit.unit_name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <select class="form-select" v-model="rotationFilters.supervisor" aria-label="Filter by supervisor">
+                                            <option value="">All Supervisors</option>
+                                            <option v-for="supervisor in availableAttendings" :key="supervisor.id" :value="supervisor.id">
+                                                {{ supervisor.full_name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Rotations Table -->
+                            <div class="table-responsive">
+                                <table class="table table-striped neumac-table-enhanced">
+                                    <thead>
+                                        <tr>
+                                            <th>Rotation ID</th>
+                                            <th>Resident</th>
+                                            <th>Training Unit</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Status</th>
+                                            <th>Supervisor</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="rotation in filteredRotations" :key="rotation.id">
+                                            <td class="font-mono neumac-text-sm">{{ rotation.rotation_id }}</td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-user-graduate"></i>
+                                                    {{ getResidentName(rotation.resident_id) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-clinic-medical"></i>
+                                                    {{ getTrainingUnitName(rotation.training_unit_id) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-play-circle"></i>
+                                                    {{ formatDate(rotation.start_date) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-flag-checkered"></i>
+                                                    {{ formatDate(rotation.end_date) }}
+                                                </div>
+                                            </td>
+                                           
+                                            <td>
+                                                <span class="neumac-status" :class="'neumac-status-' + rotation.rotation_status">
+                                                    <span class="neumac-status-dot"></span>
+                                                    {{ formatRotationStatus(rotation.rotation_status) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span v-if="rotation.supervising_attending_id" class="neumac-icon-text">
+                                                    <i class="fas fa-user-md"></i>
+                                                    {{ getSupervisorName(rotation.supervising_attending_id) }}
+                                                </span>
+                                                <span v-else class="neumac-text-xs neumac-color-muted">Not assigned</span>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-action-buttons">
+                                                    <button class="btn btn-sm btn-outline neumac-btn-sm" @click="editRotation(rotation)" 
+                                                            v-if="hasPermission('resident_rotations', 'update')"
+                                                            aria-label="Edit rotation">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="filteredRotations.length === 0">
+                                            <td colspan="8" class="text-center py-8 text-gray-500">
+                                                <i class="fas fa-calendar-alt text-2xl mb-2"></i>
+                                                <p>No rotations found</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============ TRAINING UNITS VIEW ============ -->
+                    <div v-if="currentView === 'training_units'">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
+                                    <i class="fas fa-hospital-user"></i>
+                                    Training Units Management
+                                </div>
+                                <button class="btn btn-primary" @click="showAddTrainingUnitModal" v-if="hasPermission('training_units', 'create')">
+                                    <i class="fas fa-plus"></i> Add Unit
+                                </button>
+                            </div>
+                            
+                            <!-- NEUMAC ENHANCEMENT: Training Units Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                                <div v-for="unit in trainingUnits" :key="unit.id" class="neumac-unit-card">
+                                    <div class="neumac-unit-header">
+                                        <div>
+                                            <h3 class="neumac-unit-title">{{ unit.unit_name }}</h3>
+                                            <div class="neumac-text-xs neumac-color-muted">{{ unit.unit_code }}</div>
+                                        </div>
+                                        <span class="neumac-status" :class="'neumac-status-' + unit.unit_status">
+                                            <span class="neumac-status-dot"></span>
+                                            {{ unit.unit_status }}
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- NEUMAC ENHANCEMENT: Visual Capacity Indicator -->
+                                    <div v-if="unit.maximum_residents" class="neumac-visual-capacity">
+                                        <div class="neumac-visual-dots">
+                                            <span v-for="n in unit.maximum_residents" 
+                                                  :key="n"
+                                                  class="neumac-visual-dot"
+                                                  :class="getCapacityDotClass(n, unit.current_residents)"></span>
+                                        </div>
+                                        <div class="neumac-text-sm neumac-font-semibold">
+                                            {{ unit.current_residents || 0 }}/{{ unit.maximum_residents }}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Capacity Meter -->
+                                    <div v-if="unit.maximum_residents" class="neumac-capacity-meter">
+                                        <div class="neumac-meter-fill" :class="getMeterFillClass(unit.current_residents, unit.maximum_residents)"
+                                             :style="{width: calculateCapacityPercent(unit.current_residents, unit.maximum_residents) + '%'}"></div>
+                                    </div>
+                                    
+                                    <div class="neumac-capacity-label" v-if="unit.maximum_residents">
+                                        <span class="neumac-text-xs">Capacity</span>
+                                        <span class="neumac-text-xs neumac-font-medium">
+                                            {{ calculateCapacityPercent(unit.current_residents, unit.maximum_residents) }}%
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="neumac-unit-meta">
+                                        <div class="neumac-unit-meta-item">
+                                            <i class="fas fa-user-md"></i>
+                                            <span>{{ getSupervisorName(unit.supervising_attending_id) || 'Supervisor not assigned' }}</span>
+                                        </div>
+                                        <div class="neumac-unit-meta-item">
+                                            <i class="fas fa-building"></i>
+                                            <span>{{ getDepartmentName(unit.department_id) || 'Department not assigned' }}</span>
+                                        </div>
+                                        <div v-if="unit.specialty" class="neumac-unit-meta-item">
+                                            <i class="fas fa-stethoscope"></i>
+                                            <span>{{ unit.specialty }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="neumac-action-buttons">
+                                        <button class="btn btn-sm btn-outline flex-1 neumac-btn-sm" @click="editTrainingUnit(unit)" 
+                                                v-if="hasPermission('training_units', 'update')"
+                                                aria-label="Edit training unit">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button class="btn btn-sm btn-primary flex-1 neumac-btn-sm" @click="viewUnitResidents(unit)"
+                                                aria-label="View unit residents">
+                                            <i class="fas fa-users"></i> 
+                                            <span v-if="unit.current_residents">{{ unit.current_residents }}</span>
+                                            <span v-else>0</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div v-if="trainingUnits.length === 0" class="col-span-full text-center py-12 text-gray-500">
+                                    <i class="fas fa-hospital-user text-3xl mb-3"></i>
+                                    <p class="text-lg">No training units found</p>
+                                    <p class="text-sm mt-1">Add a training unit to get started</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============ STAFF ABSENCE VIEW ============ -->
+                    <div v-if="currentView === 'staff_absence'">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
+                                    <i class="fas fa-user-clock"></i>
+                                    Staff Absence Management
+                                </div>
+                                <button class="btn btn-primary" @click="showAddAbsenceModal" v-if="hasPermission('staff_absence', 'create')">
+                                    <i class="fas fa-plus"></i> Record Absence
+                                </button>
+                            </div>
+                            
+                            <!-- Filters -->
+                            <div class="neumac-p-4 border-b border-gray-200 bg-gray-50">
+                                <div class="grid grid-cols-4 gap-4">
+                                    <div>
+                                        <select class="form-select" v-model="absenceFilters.staff" aria-label="Filter by staff">
+                                            <option value="">All Staff</option>
+                                            <option v-for="staff in medicalStaff" :key="staff.id" :value="staff.id">
+                                                {{ staff.full_name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <select class="form-select" v-model="absenceFilters.status" aria-label="Filter by status">
+                                            <option value="">All Status</option>
+                                            <option value="active">Active</option>
+                                            <option value="upcoming">Upcoming</option>
+                                            <option value="completed">Completed</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <select class="form-select" v-model="absenceFilters.reason" aria-label="Filter by reason">
+                                            <option value="">All Reasons</option>
+                                            <option value="vacation">Vacation</option>
+                                            <option value="sick_leave">Sick Leave</option>
+                                            <option value="conference">Conference</option>
+                                            <option value="training">Training</option>
+                                            <option value="personal">Personal</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <input type="date" class="form-control" v-model="absenceFilters.startDate" 
+                                               aria-label="Filter by start date">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Absences Table -->
+                            <div class="table-responsive">
+                                <table class="table table-striped neumac-table-enhanced">
+                                    <thead>
+                                        <tr>
+                                            <th>Staff Member</th>
+                                            <th>Reason</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Duration</th>
+                                            <th>Replacement</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="absence in filteredAbsences" :key="absence.id">
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-user"></i>
+                                                    {{ getStaffName(absence.staff_member_id) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas" :class="getAbsenceReasonIcon(absence.absence_reason)"></i>
+                                                    {{ formatAbsenceReason(absence.absence_reason) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-play-circle"></i>
+                                                    {{ formatDate(absence.start_date) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-icon-text">
+                                                    <i class="fas fa-flag-checkered"></i>
+                                                    {{ formatDate(absence.end_date) }}
+                                                </div>
+                                            </td>
+                                            <td>{{ calculateAbsenceDuration(absence.start_date, absence.end_date) }} days</td>
+                                            <td>
+                                                <span v-if="absence.replacement_staff_id" class="neumac-icon-text">
+                                                    <i class="fas fa-user-shield"></i>
+                                                    {{ getStaffName(absence.replacement_staff_id) }}
+                                                </span>
+                                                <span v-else class="neumac-text-xs neumac-color-muted">No coverage</span>
+                                            </td>
+                                            <td>
+                                                <span class="neumac-status" :class="'neumac-status-' + absence.status">
+                                                    <span class="neumac-status-dot"></span>
+                                                    {{ formatAbsenceStatus(absence.status) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="neumac-action-buttons">
+                                                    <button class="btn btn-sm btn-outline neumac-btn-sm" @click="editAbsence(absence)" 
+                                                            v-if="hasPermission('staff_absence', 'update')"
+                                                            aria-label="Edit absence">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="filteredAbsences.length === 0">
+                                            <td colspan="8" class="text-center py-8 text-gray-500">
+                                                <i class="fas fa-user-clock text-2xl mb-2"></i>
+                                                <p>No absences found</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============ DEPARTMENT MANAGEMENT VIEW ============ -->
+                    <div v-if="currentView === 'department_management'">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
+                                    <i class="fas fa-sitemap"></i>
+                                    Department Management
+                                </div>
+                                <button class="btn btn-primary" @click="showAddDepartmentModal" 
+                                        v-if="hasPermission('system', 'manage_departments')">
+                                    <i class="fas fa-plus"></i> Add Department
+                                </button>
+                            </div>
+                            
+                            <!-- Departments Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+                                <div v-for="department in departments" :key="department.id" class="neumac-unit-card">
+                                    <div class="neumac-unit-header">
+                                        <div>
+                                            <h3 class="neumac-unit-title">{{ department.name }}</h3>
+                                            <div class="neumac-text-xs neumac-color-muted">{{ department.code }}</div>
+                                        </div>
+                                        <span class="neumac-status" :class="'neumac-status-' + department.status">
+                                            <span class="neumac-status-dot"></span>
+                                            {{ department.status }}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="neumac-unit-meta">
+                                        <div v-if="department.head_of_department_id" class="neumac-unit-meta-item">
+                                            <i class="fas fa-user-tie"></i>
+                                            <span>{{ getStaffName(department.head_of_department_id) }}</span>
+                                        </div>
+                                        <div class="neumac-unit-meta-item">
+                                            <i class="fas fa-users"></i>
+                                            <span>{{ getDepartmentStaffCount(department.id) }} staff members</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div v-if="getDepartmentUnits(department.id).length > 0" class="neumac-data-group">
+                                        <div class="neumac-data-group-title">
+                                            <i class="fas fa-clinic-medical"></i>
+                                            Clinical Units
+                                        </div>
+                                        <div class="neumac-space-y-2">
+                                            <div v-for="unit in getDepartmentUnits(department.id)" :key="unit.id" 
+                                                 class="neumac-icon-text">
+                                                <i class="fas fa-hospital-alt"></i>
+                                                {{ unit.name }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="neumac-action-buttons">
+                                        <button class="btn btn-sm btn-outline flex-1 neumac-btn-sm" @click="editDepartment(department)" 
+                                                v-if="hasPermission('system', 'manage_departments')"
+                                                aria-label="Edit department">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button class="btn btn-sm btn-primary flex-1 neumac-btn-sm" @click="viewDepartmentStaff(department)"
+                                                aria-label="View department staff">
+                                            <i class="fas fa-users"></i> Staff
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div v-if="departments.length === 0" class="col-span-full text-center py-12 text-gray-500">
+                                    <i class="fas fa-sitemap text-3xl mb-3"></i>
+                                    <p class="text-lg">No departments found</p>
+                                    <p class="text-sm mt-1">Add a department to get started</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============ COMMUNICATIONS VIEW ============ -->
+                    <div v-if="currentView === 'communications'">
+                        <div class="neumac-card-enhanced mb-6">
+                            <div class="neumac-card-header">
+                                <div class="neumac-card-title">
+                                    <i class="fas fa-bullhorn"></i>
+                                    Communications Center
+                                </div>
+                                <button class="btn btn-primary" @click="showCommunicationsModal" 
+                                        v-if="hasPermission('communications', 'create')">
+                                    <i class="fas fa-plus"></i> New Communication
+                                </button>
+                            </div>
+                            
+                            <!-- Communications List -->
+                            <div class="neumac-space-y-4">
+                                <div v-for="announcement in recentAnnouncements" :key="announcement.id" 
+                                     class="neumac-card-enhanced">
+                                    <div class="neumac-card-header">
+                                        <div>
+                                            <h4 class="neumac-font-medium neumac-text-lg">{{ announcement.title }}</h4>
+                                            <div class="flex items-center gap-2 mt-1">
+                                                <span class="neumac-text-xs neumac-color-muted">{{ announcement.author }}</span>
+                                                <span class="neumac-text-xs neumac-color-muted">•</span>
+                                                <span class="neumac-text-xs neumac-color-muted">{{ formatTimeAgo(announcement.created_at) }}</span>
+                                            </div>
+                                        </div>
+                                        <span class="neumac-status" :class="'neumac-status-' + announcement.priority_level">
+                                            <span class="neumac-status-dot"></span>
+                                            {{ announcement.priority_level }}
+                                        </span>
+                                    </div>
+                                    
+                                    <p class="neumac-text-sm neumac-color-muted mb-3">{{ announcement.content }}</p>
+                                    
+                                    <div class="flex items-center justify-between neumac-text-xs neumac-color-muted">
+                                        <div class="neumac-icon-text">
+                                            <i class="fas fa-users"></i>
+                                            <span>{{ announcement.target_audience }}</span>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline neumac-btn-sm" @click="viewAnnouncement(announcement)"
+                                                aria-label="View announcement">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div v-if="recentAnnouncements.length === 0" class="text-center py-12 text-gray-500">
+                                    <i class="fas fa-bullhorn text-3xl mb-3"></i>
+                                    <p class="text-lg">No communications found</p>
+                                    <p class="text-sm mt-1">Post an announcement to get started</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+
+            <!-- ============ MODALS ============ -->
+            
+            <!-- MODAL 1: Dynamic Staff Profile (NEUMAC Enhanced) -->
+            <div v-if="staffProfileModal.show" class="modal-overlay">
+                <div class="modal-container modal-wide">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <i class="fas fa-user-md"></i>
+                            Staff Profile: {{ staffProfileModal.staff.full_name }}
+                        </div>
+                        <button class="modal-close" @click="staffProfileModal.show = false" aria-label="Close profile">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <!-- NEUMAC ENHANCEMENT: Profile Header -->
+                        <div class="neumac-modal-section">
+                            <div class="profile-header">
+                                <div class="profile-avatar-large">{{ getInitials(staffProfileModal.staff.full_name) }}</div>
+                                <div class="profile-basic-info">
+                                    <div class="profile-name">{{ staffProfileModal.staff.full_name }}</div>
+                                    <div class="profile-title">{{ formatStaffType(staffProfileModal.staff.staff_type) }}</div>
+                                    <div class="profile-meta-row">
+                                        <div class="profile-meta-item">
+                                            <i class="fas fa-id-badge"></i>
+                                            <span>{{ staffProfileModal.staff.staff_id }}</span>
+                                        </div>
+                                        <div class="profile-meta-item">
+                                            <i class="fas fa-envelope"></i>
+                                            <span>{{ staffProfileModal.staff.professional_email }}</span>
+                                        </div>
+                                        <span class="neumac-status" :class="'neumac-status-' + staffProfileModal.staff.employment_status">
+                                            <span class="neumac-status-dot"></span>
+                                            {{ formatEmploymentStatus(staffProfileModal.staff.employment_status) }}
+                                        </span>
+                                    </div>
+                                    <div class="profile-status-row">
+                                        <span class="profile-department-badge" v-if="getDepartmentName(staffProfileModal.staff.department_id)">
+                                            {{ getDepartmentName(staffProfileModal.staff.department_id) }}
+                                        </span>
+                                        <span v-if="isOnCallToday(staffProfileModal.staff.id)" class="neumac-status neumac-status-oncall">
+                                            <span class="neumac-status-dot"></span>
+                                            On-Call Today
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- NEUMAC ENHANCEMENT: Academic Information -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-graduation-cap"></i>
+                                Academic Information
+                            </div>
+                            <div class="education-grid">
+                                <div class="education-item">
+                                    <span class="education-label">Academic Degree</span>
+                                    <span class="education-value">{{ staffProfileModal.staff.academic_degree || 'MD' }}</span>
+                                </div>
+                                <div class="education-item" v-if="staffProfileModal.staff.specialization">
+                                    <span class="education-label">Specialization</span>
+                                    <span class="education-value">{{ staffProfileModal.staff.specialization }}</span>
+                                </div>
+                                <div class="education-item" v-if="staffProfileModal.staff.resident_year">
+                                    <span class="education-label">Resident Year</span>
+                                    <span class="education-value">{{ staffProfileModal.staff.resident_year }}</span>
+                                </div>
+                                <div class="education-item" v-if="staffProfileModal.staff.clinical_certificate">
+                                    <span class="education-label">Clinical Certificate</span>
+                                    <span class="education-value">{{ staffProfileModal.staff.clinical_certificate }}</span>
+                                    <span class="neumac-text-xs" :class="staffProfileModal.staff.certificate_status === 'expired' ? 'neumac-color-danger' : 'neumac-color-success'">
+                                        {{ staffProfileModal.staff.certificate_status === 'expired' ? 'Expired' : 'Current' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- NEUMAC ENHANCEMENT: Dynamic Tabs with Professional Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="modal-tabs">
+                                <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'clinical' }" 
+                                        @click="staffProfileModal.activeTab = 'clinical'">
+                                    <i class="fas fa-stethoscope"></i> Clinical Status
+                                </button>
+                                <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'assignments' }" 
+                                        @click="staffProfileModal.activeTab = 'assignments'">
+                                    <i class="fas fa-tasks"></i> Current Assignments
+                                </button>
+                                <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'activity' }" 
+                                        @click="staffProfileModal.activeTab = 'activity'">
+                                    <i class="fas fa-history"></i> Recent Activity
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Clinical Status Tab -->
+                        <div v-if="staffProfileModal.activeTab === 'clinical'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <div class="dynamic-status-grid">
+                                    <!-- Current Location -->
+                                    <div class="neumac-card-enhanced">
+                                        <div class="neumac-card-header">
+                                            <div class="neumac-card-title">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                Current Location
+                                            </div>
+                                        </div>
+                                        <div class="neumac-space-y-2">
+                                            <div class="neumac-icon-text">
+                                                <i class="fas fa-clinic-medical"></i>
+                                                <span>{{ getCurrentUnit(staffProfileModal.staff.id) || 'Not assigned' }}</span>
+                                            </div>
+                                            <div class="neumac-icon-text">
+                                                <i class="fas fa-hospital-alt"></i>
+                                                <span>{{ getCurrentWard(staffProfileModal.staff.id) || 'General' }}</span>
+                                            </div>
+                                            <div class="neumac-icon-text">
+                                                <i class="fas fa-running"></i>
+                                                <span class="neumac-status" :class="'neumac-status-' + getCurrentActivityStatus(staffProfileModal.staff.id)">
+                                                    <span class="neumac-status-dot"></span>
+                                                    {{ getCurrentActivityStatus(staffProfileModal.staff.id) || 'Available' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- On-call Status -->
+                                    <div class="neumac-card-enhanced">
+                                        <div class="neumac-card-header">
+                                            <div class="neumac-card-title">
+                                                <i class="fas fa-phone-medical"></i>
+                                                On-call Status
+                                            </div>
+                                        </div>
+                                        <div class="neumac-space-y-2">
+                                            <div class="neumac-icon-text">
+                                                <i class="fas fa-phone"></i>
+                                                <span v-if="isOnCallToday(staffProfileModal.staff.id)" class="neumac-status neumac-status-oncall">
+                                                    <span class="neumac-status-dot"></span>
+                                                    Scheduled Today
+                                                </span>
+                                                <span v-else class="neumac-text-sm neumac-color-muted">Not scheduled</span>
+                                            </div>
+                                            <div v-if="isOnCallToday(staffProfileModal.staff.id)" class="neumac-icon-text">
+                                                <i class="fas fa-clock"></i>
+                                                <span>{{ getOnCallShiftTime(staffProfileModal.staff.id) }}</span>
+                                            </div>
+                                            <div v-if="isOnCallToday(staffProfileModal.staff.id)" class="neumac-icon-text">
+                                                <i class="fas fa-hospital"></i>
+                                                <span>{{ getOnCallCoverage(staffProfileModal.staff.id) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current Assignments Tab -->
+                        <div v-if="staffProfileModal.activeTab === 'assignments'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <div class="assignments-grid">
+                                    <!-- Current Rotation -->
+                                    <div class="neumac-card-enhanced" v-if="getCurrentRotationForStaff(staffProfileModal.staff.id)">
+                                        <div class="neumac-card-header">
+                                            <div class="neumac-card-title">
+                                                <i class="fas fa-calendar-check"></i>
+                                                Current Rotation
+                                            </div>
+                                        </div>
+                                        <div class="neumac-space-y-2">
+                                            <div class="neumac-icon-text">
+                                                <i class="fas fa-clinic-medical"></i>
+                                                <span>{{ getCurrentRotationForStaff(staffProfileModal.staff.id).unitName }}</span>
+                                            </div>
+                                            <div class="neumac-icon-text">
+                                                <i class="fas fa-calendar"></i>
+                                                <span>{{ getRotationDaysLeft(staffProfileModal.staff.id) }} days remaining</span>
+                                            </div>
+                                            <div v-if="getCurrentRotationForStaff(staffProfileModal.staff.id).supervisor" class="neumac-icon-text">
+                                                <i class="fas fa-user-md"></i>
+                                                <span>Supervisor: {{ getCurrentRotationForStaff(staffProfileModal.staff.id).supervisor }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Today's Schedule -->
+                                    <div class="neumac-card-enhanced">
+                                        <div class="neumac-card-header">
+                                            <div class="neumac-card-title">
+                                                <i class="fas fa-clock"></i>
+                                                Today's Schedule
+                                            </div>
+                                        </div>
+                                        <div class="neumac-space-y-2">
+                                            <div v-for="item in getTodaysSchedule(staffProfileModal.staff.id)" :key="item.id" 
+                                                 class="neumac-icon-text">
+                                                <i class="fas" :class="getScheduleIcon(item.activity)"></i>
+                                                <span>{{ item.activity }}</span>
+                                                <span class="neumac-text-xs neumac-color-muted ml-auto">{{ item.time }}</span>
+                                            </div>
+                                            <div v-if="getTodaysSchedule(staffProfileModal.staff.id).length === 0" 
+                                                 class="neumac-icon-text">
+                                                <i class="fas fa-calendar-times"></i>
+                                                <span class="neumac-text-sm neumac-color-muted">No scheduled activities today</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity Tab -->
+                        <div v-if="staffProfileModal.activeTab === 'activity'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <div class="neumac-card-enhanced">
+                                    <div class="neumac-card-header">
+                                        <div class="neumac-card-title">
+                                            <i class="fas fa-history"></i>
+                                            Recent Clinical Activity
+                                        </div>
+                                    </div>
+                                    <div class="neumac-space-y-2">
+                                        <div v-for="activity in getRecentActivities(staffProfileModal.staff.id)" :key="activity.id" 
+                                             class="neumac-timeline-item">
+                                            <div class="neumac-timeline-time">{{ formatTime(activity.timestamp) }}</div>
+                                            <div class="neumac-icon-text">
+                                                <i class="fas" :class="activity.icon || 'fa-stethoscope'"></i>
+                                                <span>{{ activity.description }}</span>
+                                                <span class="neumac-text-xs neumac-color-muted ml-auto">{{ activity.location }}</span>
+                                            </div>
+                                        </div>
+                                        <div v-if="getRecentActivities(staffProfileModal.staff.id).length === 0" 
+                                             class="neumac-icon-text">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span class="neumac-text-sm neumac-color-muted">No recent activities recorded</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="staffProfileModal.show = false">Close</button>
+                        <button class="btn btn-primary" @click="editMedicalStaff(staffProfileModal.staff)"
+                                v-if="hasPermission('medical_staff', 'update')">
+                            <i class="fas fa-edit"></i> Edit Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL 2: Add/Edit Medical Staff (NEUMAC Enhanced) -->
+            <div v-if="medicalStaffModal.show" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <i class="fas fa-user-md"></i>
+                            {{ medicalStaffModal.mode === 'add' ? 'Add Medical Staff' : 'Edit Medical Staff' }}
+                        </div>
+                        <button class="modal-close" @click="medicalStaffModal.show = false" aria-label="Close modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <!-- NEUMAC ENHANCEMENT: Professional Tab Navigation -->
+                        <div class="neumac-modal-section">
+                            <div class="modal-tabs">
+                                <button class="modal-tab" :class="{ active: medicalStaffModal.activeTab === 'basic' }" 
+                                        @click="medicalStaffModal.activeTab = 'basic'">
+                                    <i class="fas fa-user"></i> Basic Information
+                                </button>
+                                <button class="modal-tab" :class="{ active: medicalStaffModal.activeTab === 'professional' }" 
+                                        @click="medicalStaffModal.activeTab = 'professional'">
+                                    <i class="fas fa-graduation-cap"></i> Professional Details
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Basic Info Tab -->
+                        <div v-if="medicalStaffModal.activeTab === 'basic'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Full Name *</label>
+                                        <input type="text" class="form-control" v-model="medicalStaffModal.form.full_name" 
+                                               required aria-required="true">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Staff Type *</label>
+                                        <select class="form-select" v-model="medicalStaffModal.form.staff_type" 
+                                                required aria-required="true" aria-label="Staff type">
+                                            <option value="medical_resident">Medical Resident</option>
+                                            <option value="attending_physician">Attending Physician</option>
+                                            <option value="fellow">Fellow</option>
+                                            <option value="nurse_practitioner">Nurse Practitioner</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Staff ID</label>
+                                        <input type="text" class="form-control" v-model="medicalStaffModal.form.staff_id" 
+                                               aria-label="Staff ID">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Employment Status</label>
+                                        <select class="form-select" v-model="medicalStaffModal.form.employment_status" 
+                                                aria-label="Employment status">
+                                            <option value="active">Active</option>
+                                            <option value="on_leave">On Leave</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Professional Email *</label>
+                                        <input type="email" class="form-control" v-model="medicalStaffModal.form.professional_email" 
+                                               required aria-required="true" aria-label="Professional email">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Professional Details Tab -->
+                        <div v-if="medicalStaffModal.activeTab === 'professional'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Academic Degree</label>
+                                        <select class="form-select" v-model="medicalStaffModal.form.academic_degree" 
+                                                aria-label="Academic degree">
+                                            <option value="">Select Degree</option>
+                                            <option value="MD">MD</option>
+                                            <option value="MD-PhD">MD-PhD</option>
+                                            <option value="MD-MSc">MD-MSc</option>
+                                            <option value="DO">DO</option>
+                                            <option value="MBBS">MBBS</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Specialization</label>
+                                        <input type="text" class="form-control" v-model="medicalStaffModal.form.specialization" 
+                                               placeholder="e.g., Pulmonology, Critical Care" aria-label="Specialization">
+                                    </div>
+                                    <div v-if="medicalStaffModal.form.staff_type === 'medical_resident'" class="form-group">
+                                        <label class="form-label">Resident Year</label>
+                                        <select class="form-select" v-model="medicalStaffModal.form.resident_year" 
+                                                aria-label="Resident year">
+                                            <option value="">Select Year</option>
+                                            <option value="PGY-1">PGY-1</option>
+                                            <option value="PGY-2">PGY-2</option>
+                                            <option value="PGY-3">PGY-3</option>
+                                            <option value="PGY-4">PGY-4</option>
+                                            <option value="PGY-5">PGY-5</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Clinical Certificate</label>
+                                        <input type="text" class="form-control" v-model="medicalStaffModal.form.clinical_certificate" 
+                                               placeholder="e.g., Board Certified" aria-label="Clinical certificate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Certificate Status</label>
+                                        <select class="form-select" v-model="medicalStaffModal.form.certificate_status" 
+                                                aria-label="Certificate status">
+                                            <option value="current">Current</option>
+                                            <option value="expired">Expired</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Department</label>
+                                        <select class="form-select" v-model="medicalStaffModal.form.department_id" 
+                                                aria-label="Department">
+                                            <option value="">Select Department</option>
+                                            <option v-for="department in departments" :key="department.id" :value="department.id">
+                                                {{ department.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="medicalStaffModal.show = false">Cancel</button>
+                        <button class="btn btn-primary" @click="saveMedicalStaff">
+                            <i class="fas fa-save"></i> {{ medicalStaffModal.mode === 'add' ? 'Add Staff' : 'Save Changes' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL 3: Communications with Stats Update Tab (NEUMAC Enhanced) -->
+            <div v-if="communicationsModal.show" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <i class="fas fa-bullhorn"></i>
+                            Department Communications
+                        </div>
+                        <button class="modal-close" @click="communicationsModal.show = false" aria-label="Close modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <!-- NEUMAC ENHANCEMENT: Professional Tab Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="modal-tabs">
+                                <button class="modal-tab" :class="{ active: communicationsModal.activeTab === 'announcement' }" 
+                                        @click="communicationsModal.activeTab = 'announcement'">
+                                    <i class="fas fa-bullhorn"></i> Announcement
+                                </button>
+                                <button class="modal-tab" :class="{ active: communicationsModal.activeTab === 'stats_update' }" 
+                                        @click="communicationsModal.activeTab = 'stats_update'" v-if="hasPermission('system', 'manage_updates')">
+                                    <i class="fas fa-chart-line"></i> Live Stats Update
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Announcement Tab -->
+                        <div v-if="communicationsModal.activeTab === 'announcement'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <div class="neumac-space-y-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Title *</label>
+                                        <input type="text" class="form-control" v-model="communicationsModal.form.title" 
+                                               required aria-required="true" aria-label="Announcement title">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Content *</label>
+                                        <textarea class="form-control form-textarea" v-model="communicationsModal.form.content" 
+                                                  rows="4" required aria-required="true" aria-label="Announcement content"></textarea>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="form-group">
+                                            <label class="form-label">Priority Level</label>
+                                            <select class="form-select" v-model="communicationsModal.form.priority" aria-label="Priority level">
+                                                <option value="normal">Normal</option>
+                                                <option value="high">High</option>
+                                                <option value="urgent">Urgent</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Target Audience</label>
+                                            <select class="form-select" v-model="communicationsModal.form.target_audience" 
+                                                    aria-label="Target audience">
+                                                <option value="all_staff">All Staff</option>
+                                                <option value="medical_staff">Medical Staff Only</option>
+                                                <option value="residents">Residents Only</option>
+                                                <option value="attendings">Attending Physicians Only</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stats Update Tab -->
+                        <div v-if="communicationsModal.activeTab === 'stats_update'" class="neumac-space-y-4">
+                            <div class="neumac-modal-section">
+                                <!-- NEUMAC ENHANCEMENT: Update Type Buttons with Professional Styling -->
+                                <div class="neumac-data-group">
+                                    <div class="neumac-data-group-title">
+                                        <i class="fas fa-tasks"></i>
+                                        Update Type
+                                    </div>
+                                    <div class="update-type-buttons">
+                                        <button class="update-type-btn" :class="{ active: communicationsModal.form.updateType === 'daily' }"
+                                                @click="communicationsModal.form.updateType = 'daily'">
+                                            <i class="fas fa-sun"></i>
+                                            Daily Status
+                                        </button>
+                                        <button class="update-type-btn" :class="{ active: communicationsModal.form.updateType === 'metric' }"
+                                                @click="communicationsModal.form.updateType = 'metric'">
+                                            <i class="fas fa-chart-bar"></i>
+                                            Metric Update
+                                        </button>
+                                        <button class="update-type-btn" :class="{ active: communicationsModal.form.updateType === 'alert' }"
+                                                @click="communicationsModal.form.updateType = 'alert'">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            Alert Status
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Daily Status Update -->
+                                <div v-if="communicationsModal.form.updateType === 'daily'" class="neumac-space-y-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Daily Status Summary *</label>
+                                        <textarea class="form-control form-textarea" v-model="communicationsModal.form.dailySummary" 
+                                                  rows="3" placeholder="Brief summary of department status..." 
+                                                  required aria-required="true" aria-label="Daily status summary"></textarea>
+                                        <small class="neumac-text-xs neumac-color-muted">This will appear in the Live Statistics panel</small>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Key Highlights</label>
+                                        <div class="neumac-space-y-2">
+                                            <input type="text" class="form-control" v-model="communicationsModal.form.highlight1" 
+                                                   placeholder="Highlight 1 (e.g., ER: 3 critical cases)" aria-label="Highlight 1">
+                                            <input type="text" class="form-control" v-model="communicationsModal.form.highlight2" 
+                                                   placeholder="Highlight 2 (e.g., ICU: 90% capacity)" aria-label="Highlight 2">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Set Alert Status</label>
+                                        <div class="alert-options-grid">
+                                            <label class="alert-option">
+                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.alerts.erBusy">
+                                                <span>ER Busy</span>
+                                            </label>
+                                            <label class="alert-option">
+                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.alerts.icuFull">
+                                                <span>ICU at Capacity</span>
+                                            </label>
+                                            <label class="alert-option">
+                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.alerts.wardFull">
+                                                <span>Ward Full</span>
+                                            </label>
+                                            <label class="alert-option">
+                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.alerts.staffShortage">
+                                                <span>Staff Shortage</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Metric Update -->
+                                <div v-if="communicationsModal.form.updateType === 'metric'" class="neumac-space-y-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Metric Information</label>
+                                        <div class="metric-inputs-grid">
+                                            <div class="neumac-space-y-2">
+                                                <input type="text" class="form-control" v-model="communicationsModal.form.metricName" 
+                                                       placeholder="Metric name (e.g., ER Wait Time)" aria-label="Metric name">
+                                                <input type="text" class="form-control" v-model="communicationsModal.form.metricValue" 
+                                                       placeholder="Current value (e.g., 15 mins)" aria-label="Metric value">
+                                            </div>
+                                            <div class="neumac-space-y-2">
+                                                <select class="form-select" v-model="communicationsModal.form.metricTrend" aria-label="Metric trend">
+                                                    <option value="improved">Improved ↑</option>
+                                                    <option value="worsened">Worsened ↓</option>
+                                                    <option value="stable">Stable →</option>
+                                                </select>
+                                                <input type="text" class="form-control" v-model="communicationsModal.form.metricChange" 
+                                                       placeholder="Change amount (e.g., +5%)" aria-label="Change amount">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Context Note</label>
+                                        <textarea class="form-control" v-model="communicationsModal.form.metricNote" 
+                                                  rows="2" placeholder="Brief context about this metric..." aria-label="Metric context"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Alert Status -->
+                                <div v-if="communicationsModal.form.updateType === 'alert'" class="neumac-space-y-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Alert Level</label>
+                                        <select class="form-select" v-model="communicationsModal.form.alertLevel" aria-label="Alert level">
+                                            <option value="low">Low - Informational</option>
+                                            <option value="medium">Medium - Attention Required</option>
+                                            <option value="high">High - Immediate Action</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Alert Message *</label>
+                                        <textarea class="form-control form-textarea" v-model="communicationsModal.form.alertMessage" 
+                                                  rows="3" placeholder="Describe the alert situation..." 
+                                                  required aria-required="true" aria-label="Alert message"></textarea>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Affected Areas</label>
+                                        <div class="alert-options-grid">
+                                            <label class="alert-option">
+                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.affectedAreas.er">
+                                                <span>Emergency Room</span>
+                                            </label>
+                                            <label class="alert-option">
+                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.affectedAreas.icu">
+                                                <span>ICU</span>
+                                            </label>
+                                            <label class="alert-option">
+                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.affectedAreas.ward">
+                                                <span>Ward</span>
+                                            </label>
+                                            <label class="alert-option">
+                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.affectedAreas.surgery">
+                                                <span>Surgery</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="communicationsModal.show = false">Cancel</button>
+                        <button class="btn btn-primary" @click="saveCommunication">
+                            <i class="fas fa-paper-plane"></i> Publish Communication
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL 4: Add/Edit On-call Schedule (NEUMAC Enhanced) -->
+            <div v-if="onCallModal.show" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <i class="fas fa-phone-medical"></i>
+                            {{ onCallModal.mode === 'add' ? 'Schedule On-call' : 'Edit On-call Schedule' }}
+                        </div>
+                        <button class="modal-close" @click="onCallModal.show = false" aria-label="Close modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <!-- NEUMAC ENHANCEMENT: Professional Section Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-calendar-alt"></i>
+                                Schedule Details
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label class="form-label">Date *</label>
+                                    <input type="date" class="form-control" v-model="onCallModal.form.duty_date" 
+                                           required aria-required="true" aria-label="Duty date">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Shift Type *</label>
+                                    <select class="form-select" v-model="onCallModal.form.shift_type" 
+                                            required aria-required="true" aria-label="Shift type">
+                                        <option value="primary">Primary Call</option>
+                                        <option value="backup">Backup Call</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Primary Physician *</label>
+                                    <select class="form-select" v-model="onCallModal.form.primary_physician_id" 
+                                            required aria-required="true" aria-label="Primary physician">
+                                        <option value="">Select Physician</option>
+                                        <option v-for="physician in availablePhysicians" :key="physician.id" :value="physician.id">
+                                            {{ physician.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Backup Physician</label>
+                                    <select class="form-select" v-model="onCallModal.form.backup_physician_id" aria-label="Backup physician">
+                                        <option value="">No Backup</option>
+                                        <option v-for="physician in availablePhysicians" :key="physician.id" :value="physician.id">
+                                            {{ physician.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Start Time *</label>
+                                    <input type="time" class="form-control" v-model="onCallModal.form.start_time" 
+                                           required aria-required="true" aria-label="Start time">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">End Time *</label>
+                                    <input type="time" class="form-control" v-model="onCallModal.form.end_time" 
+                                           required aria-required="true" aria-label="End time">
+                                </div>
+                                <div class="form-group col-span-2">
+                                    <label class="form-label">Coverage Area</label>
+                                    <select class="form-select" v-model="onCallModal.form.coverage_area" aria-label="Coverage area">
+                                        <option value="emergency">Emergency Department</option>
+                                        <option value="icu">Intensive Care Unit</option>
+                                        <option value="ward">General Ward</option>
+                                        <option value="consultation">Consultations</option>
+                                        <option value="all">All Areas</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="onCallModal.show = false">Cancel</button>
+                        <button class="btn btn-primary" @click="saveOnCallSchedule">
+                            <i class="fas fa-save"></i> {{ onCallModal.mode === 'add' ? 'Schedule On-call' : 'Save Changes' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL 5: Add/Edit Rotation (NEUMAC Enhanced) -->
+            <div v-if="rotationModal.show" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <i class="fas fa-calendar-check"></i>
+                            {{ rotationModal.mode === 'add' ? 'Add Rotation' : 'Edit Rotation' }}
+                        </div>
+                        <button class="modal-close" @click="rotationModal.show = false" aria-label="Close modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <!-- NEUMAC ENHANCEMENT: Professional Section Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-calendar"></i>
+                                Rotation Details
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label class="form-label">Rotation ID</label>
+                                    <input type="text" class="form-control" v-model="rotationModal.form.rotation_id" 
+                                           aria-label="Rotation ID">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Status *</label>
+                                    <select class="form-select" v-model="rotationModal.form.rotation_status" 
+                                            required aria-required="true" aria-label="Rotation status">
+                                        <option value="scheduled">Scheduled</option>
+                                        <option value="active">Active</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Resident *</label>
+                                    <select class="form-select" v-model="rotationModal.form.resident_id" 
+                                            required aria-required="true" aria-label="Resident">
+                                        <option value="">Select Resident</option>
+                                        <option v-for="resident in availableResidents" :key="resident.id" :value="resident.id">
+                                            {{ resident.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Training Unit *</label>
+                                    <select class="form-select" v-model="rotationModal.form.training_unit_id" 
+                                            required aria-required="true" aria-label="Training unit">
+                                        <option value="">Select Unit</option>
+                                        <option v-for="unit in trainingUnits" :key="unit.id" :value="unit.id">
+                                            {{ unit.unit_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Start Date *</label>
+                                    <input type="date" class="form-control" v-model="rotationModal.form.start_date" 
+                                           required aria-required="true" aria-label="Start Date">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">End Date *</label>
+                                    <input type="date" class="form-control" v-model="rotationModal.form.end_date" 
+                                           required aria-required="true" aria-label="End Date">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Supervising Attending</label>
+                                    <select class="form-select" v-model="rotationModal.form.supervising_attending_id" 
+                                            aria-label="Supervising attending">
+                                        <option value="">Select Supervisor</option>
+                                        <option v-for="attending in availableAttendings" :key="attending.id" :value="attending.id">
+                                            {{ attending.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Rotation Category *</label>
+                                    <select class="form-select" v-model="rotationModal.form.rotation_category" 
+                                            required aria-required="true" aria-label="Rotation category">
+                                        <option value="clinical_rotation">Clinical Rotation</option>
+                                        <option value="elective_rotation">Elective Rotation</option>
+                                        <option value="research_rotation">Research</option>
+                                        <option value="vacation_rotation">Vacation</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="rotationModal.show = false">Cancel</button>
+                        <button class="btn btn-primary" @click="saveRotation">
+                            <i class="fas fa-save"></i> {{ rotationModal.mode === 'add' ? 'Add Rotation' : 'Save Changes' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL 6: Add/Edit Training Unit (NEUMAC Enhanced) -->
+            <div v-if="trainingUnitModal.show" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <i class="fas fa-hospital-user"></i>
+                            {{ trainingUnitModal.mode === 'add' ? 'Add Training Unit' : 'Edit Training Unit' }}
+                        </div>
+                        <button class="modal-close" @click="trainingUnitModal.show = false" aria-label="Close modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <!-- NEUMAC ENHANCEMENT: Professional Section Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-clinic-medical"></i>
+                                Unit Information
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label class="form-label">Unit Name *</label>
+                                    <input type="text" class="form-control" v-model="trainingUnitModal.form.unit_name" 
+                                           required aria-required="true" aria-label="Unit name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Unit Code *</label>
+                                    <input type="text" class="form-control" v-model="trainingUnitModal.form.unit_code" 
+                                           required aria-required="true" aria-label="Unit code">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Department *</label>
+                                    <select class="form-select" v-model="trainingUnitModal.form.department_id" 
+                                            required aria-required="true" aria-label="Department">
+                                        <option value="">Select Department</option>
+                                        <option v-for="department in departments" :key="department.id" :value="department.id">
+                                            {{ department.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Status *</label>
+                                    <select class="form-select" v-model="trainingUnitModal.form.unit_status" 
+                                            required aria-required="true" aria-label="Unit status">
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Maximum Residents *</label>
+                                    <input type="number" class="form-control" v-model="trainingUnitModal.form.maximum_residents" 
+                                           min="1" max="50" required aria-required="true" aria-label="Maximum residents">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Specialty</label>
+                                    <input type="text" class="form-control" v-model="trainingUnitModal.form.specialty" 
+                                           placeholder="e.g., Pulmonology, Critical Care" aria-label="Specialty">
+                                </div>
+                                <div class="form-group col-span-2">
+                                    <label class="form-label">Supervising Attending</label>
+                                    <select class="form-select" v-model="trainingUnitModal.form.supervising_attending_id" 
+                                            aria-label="Supervising attending">
+                                        <option value="">Select Supervisor</option>
+                                        <option v-for="attending in availableAttendings" :key="attending.id" :value="attending.id">
+                                            {{ attending.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- NEUMAC ENHANCEMENT: Capacity Preview -->
+                        <div v-if="trainingUnitModal.form.maximum_residents" class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-chart-bar"></i>
+                                Capacity Preview
+                            </div>
+                            <div class="neumac-data-group">
+                                <div class="neumac-visual-capacity">
+                                    <div class="neumac-visual-dots">
+                                        <span v-for="n in trainingUnitModal.form.maximum_residents" 
+                                              :key="n"
+                                              class="neumac-visual-dot"
+                                              :class="getCapacityDotClass(n, 0)"></span>
+                                    </div>
+                                    <div class="neumac-text-sm neumac-font-semibold">
+                                        0/{{ trainingUnitModal.form.maximum_residents }}
+                                    </div>
+                                </div>
+                                
+                                <div class="neumac-capacity-meter">
+                                    <div class="neumac-meter-fill" :style="{width: '0%'}"></div>
+                                </div>
+                                
+                                <div class="neumac-capacity-label">
+                                    <span class="neumac-text-xs">New unit will start empty (0% capacity)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="trainingUnitModal.show = false">Cancel</button>
+                        <button class="btn btn-primary" @click="saveTrainingUnit">
+                            <i class="fas fa-save"></i> {{ trainingUnitModal.mode === 'add' ? 'Add Unit' : 'Save Changes' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL 7: Add/Edit Absence (NEUMAC Enhanced) -->
+            <div v-if="absenceModal.show" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <i class="fas fa-user-clock"></i>
+                            {{ absenceModal.mode === 'add' ? 'Record Absence' : 'Edit Absence' }}
+                        </div>
+                        <button class="modal-close" @click="absenceModal.show = false" aria-label="Close modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <!-- NEUMAC ENHANCEMENT: Professional Section Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-user"></i>
+                                Staff Information
+                            </div>
+                            <div class="neumac-space-y-4">
+                                <div class="form-group">
+                                    <label class="form-label">Staff Member *</label>
+                                    <select class="form-select" v-model="absenceModal.form.staff_id" 
+                                            required aria-required="true" aria-label="Staff member">
+                                        <option value="">Select Staff Member</option>
+                                        <option v-for="staff in medicalStaff" :key="staff.id" :value="staff.id">
+                                            {{ staff.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Absence Reason</label>
+                                        <select class="form-select" v-model="absenceModal.form.absence_reason" aria-label="Absence reason">
+                                            <option value="vacation">Vacation</option>
+                                            <option value="sick_leave">Sick Leave</option>
+                                            <option value="conference">Conference</option>
+                                            <option value="training">Training</option>
+                                            <option value="personal">Personal</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Status</label>
+                                        <select class="form-select" v-model="absenceModal.form.status" aria-label="Absence status">
+                                            <option value="active">Active</option>
+                                            <option value="upcoming">Upcoming</option>
+                                            <option value="completed">Completed</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-calendar"></i>
+                                Duration
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label class="form-label">Start Date *</label>
+                                    <input type="date" class="form-control" v-model="absenceModal.form.start_date" 
+                                           required aria-required="true" aria-label="Start date">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">End Date *</label>
+                                    <input type="date" class="form-control" v-model="absenceModal.form.end_date" 
+                                           required aria-required="true" aria-label="End date">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-user-shield"></i>
+                                Coverage Arrangements
+                            </div>
+                            <div class="neumac-space-y-4">
+                                <div class="form-group">
+                                    <label class="form-label">Replacement Staff</label>
+                                    <select class="form-select" v-model="absenceModal.form.replacement_staff_id" aria-label="Replacement staff">
+                                        <option value="">No Replacement</option>
+                                        <option v-for="staff in availableReplacementStaff" :key="staff.id" :value="staff.id">
+                                            {{ staff.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Notes</label>
+                                    <textarea class="form-control" v-model="absenceModal.form.notes" rows="3" 
+                                              placeholder="Additional notes about this absence..." aria-label="Absence notes"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="absenceModal.show = false">Cancel</button>
+                        <button class="btn btn-primary" @click="saveAbsence">
+                            <i class="fas fa-save"></i> {{ absenceModal.mode === 'add' ? 'Record Absence' : 'Save Changes' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL 8: Add/Edit Department (NEUMAC Enhanced) -->
+            <div v-if="departmentModal.show" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <i class="fas fa-sitemap"></i>
+                            {{ departmentModal.mode === 'add' ? 'Add Department' : 'Edit Department' }}
+                        </div>
+                        <button class="modal-close" @click="departmentModal.show = false" aria-label="Close modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <!-- NEUMAC ENHANCEMENT: Professional Section Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-building"></i>
+                                Department Information
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label class="form-label">Department Name *</label>
+                                    <input type="text" class="form-control" v-model="departmentModal.form.name" 
+                                           required aria-required="true" aria-label="Department name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Department Code *</label>
+                                    <input type="text" class="form-control" v-model="departmentModal.form.code" 
+                                           required aria-required="true" aria-label="Department code">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Status *</label>
+                                    <select class="form-select" v-model="departmentModal.form.status" 
+                                            required aria-required="true" aria-label="Department status">
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                        <option value="archived">Archived</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Head of Department</label>
+                                    <select class="form-select" v-model="departmentModal.form.head_of_department_id" 
+                                            aria-label="Head of department">
+                                        <option value="">Select Head</option>
+                                        <option v-for="staff in availableHeadsOfDepartment" :key="staff.id" :value="staff.id">
+                                            {{ staff.full_name }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="departmentModal.show = false">Cancel</button>
+                        <button class="btn btn-primary" @click="saveDepartment">
+                            <i class="fas fa-save"></i> {{ departmentModal.mode === 'add' ? 'Add Department' : 'Save Changes' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL 9: User Profile (NEUMAC Enhanced) -->
+            <div v-if="userProfileModal.show" class="modal-overlay">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <i class="fas fa-user"></i> Profile Settings
+                        </div>
+                        <button class="modal-close" @click="userProfileModal.show = false" aria-label="Close modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <!-- NEUMAC ENHANCEMENT: Professional Section Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-modal-section-title">
+                                <i class="fas fa-id-card"></i>
+                                Personal Information
+                            </div>
+                            <div class="neumac-space-y-4">
+                                <div class="form-group">
+                                    <label class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control" v-model="userProfileModal.form.full_name" 
+                                           required aria-required="true" aria-label="Full name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Email *</label>
+                                    <input type="email" class="form-control" v-model="userProfileModal.form.email" 
+                                           required aria-required="true" aria-label="Email" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Department</label>
+                                    <select class="form-select" v-model="userProfileModal.form.department_id" aria-label="Department">
+                                        <option value="">Select Department</option>
+                                        <option v-for="department in departments" :key="department.id" :value="department.id">
+                                            {{ department.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="userProfileModal.show = false">Cancel</button>
+                        <button class="btn btn-primary" @click="saveUserProfile">
+                            <i class="fas fa-save"></i> Save Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL 10: Confirmation Modal (NEUMAC Enhanced) -->
+            <div v-if="confirmationModal.show" class="modal-overlay">
+                <div class="modal-container" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <div class="modal-title">
+                            <i class="fas" :class="confirmationModal.icon || 'fa-question-circle'"></i>
+                            {{ confirmationModal.title || 'Confirm Action' }}
+                        </div>
+                        <button class="modal-close" @click="cancelConfirmation" aria-label="Close modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <!-- NEUMAC ENHANCEMENT: Professional Message Styling -->
+                        <div class="neumac-modal-section">
+                            <div class="neumac-data-group">
+                                <div class="neumac-icon-text">
+                                    <i class="fas" :class="confirmationModal.icon || 'fa-question-circle'"></i>
+                                    <p class="neumac-text-sm neumac-font-medium">{{ confirmationModal.message || 'Are you sure you want to proceed?' }}</p>
+                                </div>
+                                <div v-if="confirmationModal.details" class="neumac-space-y-2 mt-3">
+                                    <div class="neumac-icon-text">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="neumac-text-xs">{{ confirmationModal.details }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="cancelConfirmation">
+                            {{ confirmationModal.cancelButtonText || 'Cancel' }}
+                        </button>
+                        <button class="btn" :class="confirmationModal.confirmButtonClass || 'btn-danger'" @click="confirmAction">
+                            <i :class="confirmationModal.confirmButtonIcon || 'fa-check'"></i>
+                            {{ confirmationModal.confirmButtonText || 'Confirm' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Vue Application -->
+    <script src="app.js"></script>
+    
+    <!-- Safety Check -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Vue === 'undefined') {
+                console.error('Vue.js failed to load!');
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:20px;text-align:center;z-index:99999;';
+                errorDiv.innerHTML = 'Vue.js failed to load. Please refresh the page or check your internet connection.';
+                document.body.appendChild(errorDiv);
+            }
+        });
+    </script>
+</body>
+</html>
