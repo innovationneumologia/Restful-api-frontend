@@ -140,118 +140,38 @@ const CONFIG = {
 class ApiService {
     constructor() {
         this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
-        this.isBackendAvailable = false;
-        this.backendCheckAttempted = false;
     }
     
-    getHeaders(includeAuth = true) {
+    getHeaders() {
         const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         };
         
-        if (includeAuth) {
-            const token = localStorage.getItem(CONFIG.TOKEN_KEY);
-            if (token && token.trim()) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
+        const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+        if (token && token.trim()) {
+            headers['Authorization'] = `Bearer ${token}`;
         }
         
         return headers;
     }
     
-    async checkBackendAvailability() {
-        if (this.backendCheckAttempted) {
-            return this.isBackendAvailable;
-        }
-        
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
-            
-            const testUrl = CONFIG.API_BASE_URL.replace('/api', '') + '/health';
-            
-            const response = await fetch(testUrl, {
-                method: 'GET',
-                mode: 'no-cors',
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            this.isBackendAvailable = true;
-            
-        } catch (error) {
-            try {
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(CONFIG.API_BASE_URL.replace('/api', '') + '/health')}`;
-                
-                const response = await fetch(proxyUrl, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                this.isBackendAvailable = response.ok;
-            } catch {
-                this.isBackendAvailable = false;
-            }
-        }
-        
-        this.backendCheckAttempted = true;
-        return this.isBackendAvailable;
-    }
-    
     async request(endpoint, options = {}) {
         const url = `${CONFIG.API_BASE_URL}${endpoint}`;
-        
-        if (!this.backendCheckAttempted) {
-            await this.checkBackendAvailability();
-        }
-        
-        if (!this.isBackendAvailable) {
-            throw new Error('BACKEND_UNAVAILABLE');
-        }
         
         try {
             const config = {
                 ...options,
-                headers: { ...this.getHeaders(), ...options.headers },
+                headers: this.getHeaders(),
                 mode: 'cors',
-                credentials: 'omit',
-                cache: 'no-cache',
-                redirect: 'follow'
+                cache: 'no-cache'
             };
-            
-            if (CONFIG.API_BASE_URL.includes('corsproxy.io')) {
-                delete config.mode;
-                delete config.credentials;
-            }
             
             if (options.body && typeof options.body === 'object') {
                 config.body = JSON.stringify(options.body);
             }
             
-            let response;
-            try {
-                response = await fetch(url, config);
-            } catch (fetchError) {
-                if (fetchError.name === 'TypeError' && fetchError.message.includes('Failed to fetch')) {
-                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                    const proxyConfig = {
-                        ...config,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        }
-                    };
-                    
-                    if (options.body) {
-                        proxyConfig.body = JSON.stringify(options.body);
-                    }
-                    
-                    response = await fetch(proxyUrl, proxyConfig);
-                } else {
-                    throw fetchError;
-                }
-            }
+            const response = await fetch(url, config);
             
             if (response.status === 204) {
                 return null;
@@ -261,10 +181,6 @@ class ApiService {
                 let errorText;
                 try {
                     errorText = await response.text();
-                    try {
-                        const errorJson = JSON.parse(errorText);
-                        errorText = errorJson.message || errorJson.error || errorText;
-                    } catch {}
                 } catch {
                     errorText = `HTTP ${response.status}: ${response.statusText}`;
                 }
@@ -276,6 +192,7 @@ class ApiService {
                     throw new Error('Session expired. Please login again.');
                 }
                 
+                // For 404 on list endpoints, return empty array
                 if (response.status === 404 && endpoint.match(/(staff|units|rotations|oncall|absences|announcements|departments)$/)) {
                     return [];
                 }
@@ -284,33 +201,28 @@ class ApiService {
             }
             
             const contentType = response.headers.get('content-type');
-            let data;
-            
             if (contentType && contentType.includes('application/json')) {
-                data = await response.json();
-            } else {
-                data = await response.text();
-                try {
-                    data = JSON.parse(data);
-                } catch {}
+                return await response.json();
             }
             
-            return data;
+            return await response.text();
             
         } catch (error) {
-            if (error.message === 'BACKEND_UNAVAILABLE') {
-                throw error;
-            }
-            
+            // Handle network errors gracefully
             if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                this.isBackendAvailable = false;
-                throw new Error('Cannot connect to the backend server.');
+                console.warn(`Network error for ${endpoint}:`, error.message);
+                // Return empty array/object for list endpoints, throw for others
+                if (endpoint.match(/(staff|units|rotations|oncall|absences|announcements|departments)$/)) {
+                    return [];
+                }
+                if (endpoint === '/api/settings') {
+                    return {
+                        hospital_name: 'NeumoCare Hospital',
+                        system_version: '6.0',
+                        maintenance_mode: false
+                    };
+                }
             }
-            
-            if (error.name === 'AbortError') {
-                throw new Error('Request timeout.');
-            }
-            
             throw error;
         }
     }
@@ -331,9 +243,6 @@ class ApiService {
             
             return data;
         } catch (error) {
-            if (error.message.includes('Failed to fetch')) {
-                throw new Error('Cannot connect to authentication server.');
-            }
             throw new Error('Login failed: ' + error.message);
         }
     }
@@ -342,7 +251,7 @@ class ApiService {
         try {
             await this.request('/api/auth/logout', { method: 'POST' });
         } catch (error) {
-            // Silently fail if backend is unavailable
+            // Ignore logout errors
         } finally {
             this.token = null;
             localStorage.removeItem(CONFIG.TOKEN_KEY);
@@ -549,20 +458,10 @@ class ApiService {
             body: settingsData
         });
     }
-    
-    async healthCheck() {
-        try {
-            const response = await this.request('/health');
-            return response && response.status === 'ok';
-        } catch {
-            return false;
-        }
-    }
-} 
+}
 
 // ============ INITIALIZE API SERVICE ============
-        const API = new ApiService();
-        
+const API = new ApiService();
         // ============ CREATE VUE APP ============
         const app = createApp({
             setup() {
