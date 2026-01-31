@@ -2458,6 +2458,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     staffDetailsModal,
                     userProfileModal,
                     systemSettingsModal,
+                     getCurrentTitle,
+    getCurrentSubtitle,
+    
                     
                     // Formatting Functions
                     formatDate: EnhancedUtils.formatDate,
