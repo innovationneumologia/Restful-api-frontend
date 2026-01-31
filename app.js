@@ -1,11 +1,12 @@
 // ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM v6.0 ============
-// 100% COMPATIBLE VERSION - FULLY SYNCED WITH HTML AND BACKEND
-// ================================================================
+// COMPLETE PRODUCTION VERSION WITH ALL UI FUNCTIONS
+// ===================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 NeumoCare Hospital Management System v6.0 - FULLY COMPATIBLE VERSION loading...');
+    console.log('🚀 NeumoCare Hospital Management System v6.0 loading...');
     
     try {
+        // ============ 1. VUE VALIDATION ============
         if (typeof Vue === 'undefined') {
             document.body.innerHTML = `
                 <div style="padding: 40px; text-align: center; margin-top: 100px; color: #333;">
@@ -13,8 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p>Vue.js failed to load. Please refresh the page.</p>
                     <button onclick="window.location.reload()" 
                             style="padding: 12px 24px; background: #007bff; color: white; 
-                                   border: none; border-radius: 6px; cursor: pointer; 
-                                   margin-top: 20px;">
+                                   border: none; border-radius: 6px; cursor: pointer; margin-top: 20px;">
                         🔄 Refresh Page
                     </button>
                 </div>
@@ -26,18 +26,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
         
-const CONFIG = {
-    // Auto-detect environment
-    API_BASE_URL: window.location.hostname.includes('github.io') 
-        ? 'https://backend-neumac.up.railway.app'  // Production
-        : 'https://backend-neumac.up.railway.app', // Development (same for now)
-    
-    TOKEN_KEY: 'neumocare_token',
-    USER_KEY: 'neumocare_user',
-    APP_VERSION: '6.0',
-    DEBUG: window.location.hostname.includes('localhost') // Debug only locally
-};   
-        // ============ ENHANCED UTILITIES ============
+        // ============ 2. CONFIGURATION ============
+        const CONFIG = {
+            API_BASE_URL: 'https://backend-neumac.up.railway.app',
+            TOKEN_KEY: 'neumocare_token',
+            USER_KEY: 'neumocare_user',
+            APP_VERSION: '6.0',
+            DEBUG: window.location.hostname.includes('localhost')
+        };
+        
+        // ============ 3. ENHANCED UTILITIES ============
         class EnhancedUtils {
             static formatDate(dateString) {
                 if (!dateString) return 'N/A';
@@ -45,13 +43,9 @@ const CONFIG = {
                     const date = new Date(dateString);
                     if (isNaN(date.getTime())) return dateString;
                     return date.toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric', 
-                        year: 'numeric' 
+                        month: 'short', day: 'numeric', year: 'numeric' 
                     });
-                } catch {
-                    return dateString;
-                }
+                } catch { return dateString; }
             }
             
             static formatDateTime(dateString) {
@@ -60,37 +54,9 @@ const CONFIG = {
                     const date = new Date(dateString);
                     if (isNaN(date.getTime())) return dateString;
                     return date.toLocaleString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric', 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
                     });
-                } catch {
-                    return dateString;
-                }
-            }
-            
-            static formatTimeAgo(dateString) {
-                if (!dateString) return 'N/A';
-                try {
-                    const date = new Date(dateString);
-                    if (isNaN(date.getTime())) return dateString;
-                    
-                    const now = new Date();
-                    const diffMs = now - date;
-                    const diffMins = Math.floor(diffMs / 60000);
-                    const diffHours = Math.floor(diffMs / 3600000);
-                    const diffDays = Math.floor(diffMs / 86400000);
-                    
-                    if (diffMins < 1) return 'Just now';
-                    if (diffMins < 60) return `${diffMins}m ago`;
-                    if (diffHours < 24) return `${diffHours}h ago`;
-                    if (diffDays < 7) return `${diffDays}d ago`;
-                    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-                    return this.formatDate(dateString);
-                } catch {
-                    return dateString;
-                }
+                } catch { return dateString; }
             }
             
             static getInitials(name) {
@@ -102,27 +68,10 @@ const CONFIG = {
                     .substring(0, 2);
             }
             
-            static generateID(prefix = '') {
-                return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).substr(2, 5)}`;
-            }
-            
-            static calculateDaysBetween(start, end) {
-                try {
-                    const startDate = new Date(start);
-                    const endDate = new Date(end);
-                    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return 0;
-                    const diffTime = Math.abs(endDate - startDate);
-                    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                } catch {
-                    return 0;
-                }
-            }
-            
             static ensureArray(data) {
                 if (Array.isArray(data)) return data;
                 if (data && typeof data === 'object' && data.data && Array.isArray(data.data)) return data.data;
-                if (data && typeof data === 'object' && Array.isArray(Object.values(data))) return Object.values(data);
-                if (data && typeof data === 'object') return [data];
+                if (data && typeof data === 'object') return Object.values(data);
                 return [];
             }
             
@@ -133,87 +82,289 @@ const CONFIG = {
             }
         }
         
-   
-// ============ API SERVICE ============
-class ApiService {
-    constructor() {
-        this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
-    }
-    
-    getHeaders() {
-        const headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        };
-        
-        const token = localStorage.getItem(CONFIG.TOKEN_KEY);
-        if (token && token.trim()) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        return headers;
-    }
-    
-    async request(endpoint, options = {}) {
-        const url = `${CONFIG.API_BASE_URL}${endpoint}`;
-        
-        try {
-            const config = {
-                ...options,
-                headers: this.getHeaders(),
-                mode: 'cors',
-                cache: 'no-cache'
-            };
-            
-            if (options.body && typeof options.body === 'object') {
-                config.body = JSON.stringify(options.body);
+        // ============ 4. API SERVICE ============
+        class ApiService {
+            constructor() {
+                this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
             }
             
-            const response = await fetch(url, config);
-            
-            if (response.status === 204) {
-                return null;
-            }
-            
-            if (!response.ok) {
-                let errorText;
-                try {
-                    errorText = await response.text();
-                } catch {
-                    errorText = `HTTP ${response.status}: ${response.statusText}`;
+            // 4.1 Get headers with auth token
+            getHeaders() {
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                };
+                
+                const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+                if (token && token.trim()) {
+                    headers['Authorization'] = `Bearer ${token}`;
                 }
                 
-                if (response.status === 401) {
+                return headers;
+            }
+            
+            // 4.2 Main request handler
+            async request(endpoint, options = {}) {
+                const url = `${CONFIG.API_BASE_URL}${endpoint}`;
+                
+                try {
+                    const config = {
+                        method: options.method || 'GET',
+                        headers: this.getHeaders(),
+                        mode: 'cors',
+                        cache: 'no-cache'
+                    };
+                    
+                    if (options.body && typeof options.body === 'object') {
+                        config.body = JSON.stringify(options.body);
+                    }
+                    
+                    const response = await fetch(url, config);
+                    
+                    if (response.status === 204) return null;
+                    
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            this.token = null;
+                            localStorage.removeItem(CONFIG.TOKEN_KEY);
+                            localStorage.removeItem(CONFIG.USER_KEY);
+                            throw new Error('Session expired. Please login again.');
+                        }
+                        
+                        let errorText;
+                        try {
+                            errorText = await response.text();
+                        } catch {
+                            errorText = `HTTP ${response.status}: ${response.statusText}`;
+                        }
+                        
+                        throw new Error(errorText);
+                    }
+                    
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return await response.json();
+                    }
+                    
+                    return await response.text();
+                    
+                } catch (error) {
+                    if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error);
+                    throw error;
+                }
+            }
+            
+            // ===== 5. AUTHENTICATION ENDPOINTS =====
+            
+            // 5.1 Login
+            async login(email, password) {
+                try {
+                    const data = await this.request('/api/auth/login', {
+                        method: 'POST',
+                        body: { email, password }
+                    });
+                    
+                    if (data.token) {
+                        this.token = data.token;
+                        localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
+                        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
+                    }
+                    
+                    return data;
+                } catch (error) {
+                    throw new Error('Login failed: ' + error.message);
+                }
+            }
+            
+            // 5.2 Logout
+            async logout() {
+                try {
+                    await this.request('/api/auth/logout', { method: 'POST' });
+                } finally {
                     this.token = null;
                     localStorage.removeItem(CONFIG.TOKEN_KEY);
                     localStorage.removeItem(CONFIG.USER_KEY);
-                    throw new Error('Session expired. Please login again.');
                 }
-                
-                // For 404 on list endpoints, return empty array
-                if (response.status === 404 && endpoint.match(/(staff|units|rotations|oncall|absences|announcements|departments)$/)) {
-                    return [];
-                }
-                
-                throw new Error(errorText);
             }
             
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return await response.json();
+            // ===== 6. DATA ENDPOINTS =====
+            
+            // 6.1 Medical Staff
+            async getMedicalStaff() {
+                try {
+                    const data = await this.request('/api/medical-staff');
+                    return Array.isArray(data) ? data : [];
+                } catch { return []; }
             }
             
-            return await response.text();
+            async createMedicalStaff(staffData) {
+                return await this.request('/api/medical-staff', {
+                    method: 'POST',
+                    body: staffData
+                });
+            }
             
-        } catch (error) {
-            // Handle network errors gracefully
-            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                console.warn(`Network error for ${endpoint}:`, error.message);
-                // Return empty array/object for list endpoints, throw for others
-                if (endpoint.match(/(staff|units|rotations|oncall|absences|announcements|departments)$/)) {
-                    return [];
-                }
-                if (endpoint === '/api/settings') {
+            async updateMedicalStaff(id, staffData) {
+                return await this.request(`/api/medical-staff/${id}`, {
+                    method: 'PUT',
+                    body: staffData
+                });
+            }
+            
+            async deleteMedicalStaff(id) {
+                return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
+            }
+            
+            // 6.2 Departments
+            async getDepartments() {
+                try {
+                    const data = await this.request('/api/departments');
+                    return Array.isArray(data) ? data : [];
+                } catch { return []; }
+            }
+            
+            async createDepartment(departmentData) {
+                return await this.request('/api/departments', {
+                    method: 'POST',
+                    body: departmentData
+                });
+            }
+            
+            async updateDepartment(id, departmentData) {
+                return await this.request(`/api/departments/${id}`, {
+                    method: 'PUT',
+                    body: departmentData
+                });
+            }
+            
+            // 6.3 Training Units
+            async getTrainingUnits() {
+                try {
+                    const data = await this.request('/api/training-units');
+                    return Array.isArray(data) ? data : [];
+                } catch { return []; }
+            }
+            
+            async createTrainingUnit(unitData) {
+                return await this.request('/api/training-units', {
+                    method: 'POST',
+                    body: unitData
+                });
+            }
+            
+            async updateTrainingUnit(id, unitData) {
+                return await this.request(`/api/training-units/${id}`, {
+                    method: 'PUT',
+                    body: unitData
+                });
+            }
+            
+            // 6.4 Rotations
+            async getRotations() {
+                try {
+                    const data = await this.request('/api/rotations');
+                    return Array.isArray(data) ? data : [];
+                } catch { return []; }
+            }
+            
+            async createRotation(rotationData) {
+                return await this.request('/api/rotations', {
+                    method: 'POST',
+                    body: rotationData
+                });
+            }
+            
+            async updateRotation(id, rotationData) {
+                return await this.request(`/api/rotations/${id}`, {
+                    method: 'PUT',
+                    body: rotationData
+                });
+            }
+            
+            async deleteRotation(id) {
+                return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
+            }
+            
+            // 6.5 On-call Schedule
+            async getOnCallSchedule() {
+                try {
+                    const data = await this.request('/api/oncall');
+                    return Array.isArray(data) ? data : [];
+                } catch { return []; }
+            }
+            
+            async getOnCallToday() {
+                try {
+                    const data = await this.request('/api/oncall/today');
+                    return Array.isArray(data) ? data : [];
+                } catch { return []; }
+            }
+            
+            async createOnCall(scheduleData) {
+                return await this.request('/api/oncall', {
+                    method: 'POST',
+                    body: scheduleData
+                });
+            }
+            
+            async updateOnCall(id, scheduleData) {
+                return await this.request(`/api/oncall/${id}`, {
+                    method: 'PUT',
+                    body: scheduleData
+                });
+            }
+            
+            async deleteOnCall(id) {
+                return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
+            }
+            
+            // 6.6 Absences
+            async getAbsences() {
+                try {
+                    const data = await this.request('/api/absences');
+                    return Array.isArray(data) ? data : [];
+                } catch { return []; }
+            }
+            
+            async createAbsence(absenceData) {
+                return await this.request('/api/absences', {
+                    method: 'POST',
+                    body: absenceData
+                });
+            }
+            
+            async updateAbsence(id, absenceData) {
+                return await this.request(`/api/absences/${id}`, {
+                    method: 'PUT',
+                    body: absenceData
+                });
+            }
+            
+            async deleteAbsence(id) {
+                return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
+            }
+            
+            // 6.7 Announcements
+            async getAnnouncements() {
+                try {
+                    const data = await this.request('/api/announcements');
+                    return Array.isArray(data) ? data : [];
+                } catch { return []; }
+            }
+            
+            async createAnnouncement(announcementData) {
+                return await this.request('/api/announcements', {
+                    method: 'POST',
+                    body: announcementData
+                });
+            }
+            
+            // 6.8 Settings
+            async getSettings() {
+                try {
+                    const data = await this.request('/api/settings');
+                    return data || {};
+                } catch {
                     return {
                         hospital_name: 'NeumoCare Hospital',
                         system_version: '6.0',
@@ -221,286 +372,42 @@ class ApiService {
                     };
                 }
             }
-            throw error;
-        }
-    }
-    
-    // ===== AUTHENTICATION =====
-    async login(email, password) {
-        try {
-            const data = await this.request('/api/auth/login', {
-                method: 'POST',
-                body: { email, password }
-            });
             
-            if (data.token) {
-                this.token = data.token;
-                localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
-                localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
+            async updateSettings(settingsData) {
+                return await this.request('/api/settings', {
+                    method: 'PUT',
+                    body: settingsData
+                });
             }
-            
-            return data;
-        } catch (error) {
-            throw new Error('Login failed: ' + error.message);
         }
-    }
-    
-    async logout() {
-        try {
-            await this.request('/api/auth/logout', { method: 'POST' });
-        } catch (error) {
-            // Ignore logout errors
-        } finally {
-            this.token = null;
-            localStorage.removeItem(CONFIG.TOKEN_KEY);
-            localStorage.removeItem(CONFIG.USER_KEY);
-        }
-    }
-    
-    // ===== DATA ENDPOINTS =====
-    async getMedicalStaff() {
-        try {
-            const data = await this.request('/api/medical-staff');
-            return Array.isArray(data) ? data : [];
-        } catch {
-            return [];
-        }
-    }
-    
-    async createMedicalStaff(staffData) {
-        return await this.request('/api/medical-staff', {
-            method: 'POST',
-            body: staffData
-        });
-    }
-    
-    async updateMedicalStaff(id, staffData) {
-        return await this.request(`/api/medical-staff/${id}`, {
-            method: 'PUT',
-            body: staffData
-        });
-    }
-    
-    async deleteMedicalStaff(id) {
-        return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
-    }
-    
-    async getDepartments() {
-        try {
-            const data = await this.request('/api/departments');
-            return Array.isArray(data) ? data : [];
-        } catch {
-            return [];
-        }
-    }
-    
-    async createDepartment(departmentData) {
-        return await this.request('/api/departments', {
-            method: 'POST',
-            body: departmentData
-        });
-    }
-    
-    async updateDepartment(id, departmentData) {
-        return await this.request(`/api/departments/${id}`, {
-            method: 'PUT',
-            body: departmentData
-        });
-    }
-    
-    async getTrainingUnits() {
-        try {
-            const data = await this.request('/api/training-units');
-            return Array.isArray(data) ? data : [];
-        } catch {
-            return [];
-        }
-    }
-    
-    async createTrainingUnit(unitData) {
-        return await this.request('/api/training-units', {
-            method: 'POST',
-            body: unitData
-        });
-    }
-    
-    async updateTrainingUnit(id, unitData) {
-        return await this.request(`/api/training-units/${id}`, {
-            method: 'PUT',
-            body: unitData
-        });
-    }
-    
-    async getRotations() {
-        try {
-            const data = await this.request('/api/rotations');
-            return Array.isArray(data) ? data : [];
-        } catch {
-            return [];
-        }
-    }
-    
-    async createRotation(rotationData) {
-        return await this.request('/api/rotations', {
-            method: 'POST',
-            body: rotationData
-        });
-    }
-    
-    async updateRotation(id, rotationData) {
-        return await this.request(`/api/rotations/${id}`, {
-            method: 'PUT',
-            body: rotationData
-        });
-    }
-    
-    async deleteRotation(id) {
-        return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
-    }
-    
-    async getOnCallSchedule() {
-        try {
-            const data = await this.request('/api/oncall');
-            return Array.isArray(data) ? data : [];
-        } catch {
-            return [];
-        }
-    }
-    
-    async getOnCallToday() {
-        try {
-            const data = await this.request('/api/oncall/today');
-            return Array.isArray(data) ? data : [];
-        } catch {
-            return [];
-        }
-    }
-    
-    async createOnCall(scheduleData) {
-        return await this.request('/api/oncall', {
-            method: 'POST',
-            body: scheduleData
-        });
-    }
-    
-    async updateOnCall(id, scheduleData) {
-        return await this.request(`/api/oncall/${id}`, {
-            method: 'PUT',
-            body: scheduleData
-        });
-    }
-    
-    async deleteOnCall(id) {
-        return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
-    }
-    
-    async getAbsences() {
-        try {
-            const data = await this.request('/api/absences');
-            return Array.isArray(data) ? data : [];
-        } catch {
-            return [];
-        }
-    }
-    
-    async createAbsence(absenceData) {
-        return await this.request('/api/absences', {
-            method: 'POST',
-            body: absenceData
-        });
-    }
-    
-    async updateAbsence(id, absenceData) {
-        return await this.request(`/api/absences/${id}`, {
-            method: 'PUT',
-            body: absenceData
-        });
-    }
-    
-    async deleteAbsence(id) {
-        return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
-    }
-    
-    async getAnnouncements() {
-        try {
-            const data = await this.request('/api/announcements');
-            return Array.isArray(data) ? data : [];
-        } catch {
-            return [];
-        }
-    }
-    
-    async createAnnouncement(announcementData) {
-        return await this.request('/api/announcements', {
-            method: 'POST',
-            body: announcementData
-        });
-    }
-    
-    async getSettings() {
-        try {
-            const data = await this.request('/api/settings');
-            return data || {};
-        } catch {
-            return {
-                hospital_name: 'NeumoCare Hospital',
-                system_version: '6.0',
-                maintenance_mode: false
-            };
-        }
-    }
-    
-    async updateSettings(settingsData) {
-        return await this.request('/api/settings', {
-            method: 'PUT',
-            body: settingsData
-        });
-    }
-}
-
-// ============ INITIALIZE API SERVICE ============
-const API = new ApiService();
-        // ============ CREATE VUE APP ============
+        
+        // Initialize API Service
+        const API = new ApiService();
+        
+        // ============ 7. CREATE VUE APP ============
         const app = createApp({
             setup() {
-                 // 1. getCommunicationIcon function
-    const getCommunicationIcon = (tab) => {
-        return tab === 'announcement' ? 'fas fa-bullhorn' : 'fas fa-sticky-note';
-    };
-   
-    
-    // 2. getCommunicationButtonText function
-    const getCommunicationButtonText = (tab) => {
-        return tab === 'announcement' ? 'Post Announcement' : 'Save Note';
-    };
-                // ============ REACTIVE STATE ============
-                const currentUser = ref(JSON.parse(localStorage.getItem(CONFIG.USER_KEY)) || {
-                    id: '11111111-1111-1111-1111-111111111111',
-                    email: 'admin@neumocare.org',
-                    full_name: 'System Administrator',
-                    user_role: 'system_admin'
-                });
+                // ============ 8. REACTIVE STATE ============
                 
+                // 8.1 User State
+                const currentUser = ref(null);
                 const loginForm = reactive({
                     email: 'admin@neumocare.org',
                     password: 'password123',
-                    remember_me: true
+                    remember_me: false
                 });
                 
-                // UI State
-                const currentView = ref('daily_operations');
+                // 8.2 UI State
+                const currentView = ref('login');
                 const sidebarCollapsed = ref(false);
                 const mobileMenuOpen = ref(false);
                 const userMenuOpen = ref(false);
                 const statsSidebarOpen = ref(false);
-                
-                // Search
                 const searchQuery = ref('');
                 const searchScope = ref('All');
                 
-                // Loading States
+                // 8.3 Loading States
                 const loading = ref(false);
-                const loadingOncall = ref(false);
                 const saving = ref(false);
                 const loadingStaff = ref(false);
                 const loadingDepartments = ref(false);
@@ -510,9 +417,8 @@ const API = new ApiService();
                 const loadingOnCall = ref(false);
                 const loadingAnnouncements = ref(false);
                 const loadingSchedule = ref(false);
-                const loadingStats = ref(false);
                 
-                // Data Stores
+                // 8.4 Data Stores
                 const medicalStaff = ref([]);
                 const departments = ref([]);
                 const trainingUnits = ref([]);
@@ -522,7 +428,7 @@ const API = new ApiService();
                 const announcements = ref([]);
                 const settings = ref({});
                 
-                // Dashboard Data
+                // 8.5 Dashboard Data
                 const dashboardStats = ref({
                     totalStaff: 0,
                     activeStaff: 0,
@@ -539,95 +445,33 @@ const API = new ApiService();
                 
                 const todaysOnCallData = ref([]);
                 const editLiveStats = ref(false);
-
-// Update the liveStats to include the missing properties
-const liveStats = reactive({
-    occupancy: 65,
-    occupancyTrend: 2.5,
-    onDutyStaff: 24,
-    staffTrend: 1,
-    pendingRequests: 8,
-    activeRotations: 12,
-    // Add the missing properties referenced in HTML
-    dailyUpdate: 'ER: 3 critical, ICU: 90%, Ward A: Full',
-    updatedAt: new Date().toISOString(),
-    metric1: {
-        label: 'ER Wait',
-        value: '15 min'
-    },
-    metric2: {
-        label: 'ICU Beds',
-        value: '2'
-    }
-});
-                // ============ ADD MISSING roleModal STATE ============
-const roleModal = reactive({
-    show: false,
-    mode: 'add',
-    form: {
-        name: '',
-        description: '',
-        permissions: []
-    }
-});
-
-// Add these missing functions that are referenced in the HTML
-const showAddRoleModal = () => {
-    roleModal.mode = 'add';
-    roleModal.form = {
-        name: '',
-        description: '',
-        permissions: []
-    };
-    roleModal.show = true;
-};
-
-const saveRole = async () => {
-    saving.value = true;
-    try {
-        showToast('Success', 'Role saved successfully', 'success');
-        roleModal.show = false;
-    } catch (error) {
-        showToast('Error', error.message, 'error');
-    } finally {
-        saving.value = false;
-    }
-};
-
-const isPermissionSelected = (permissionId) => {
-    return roleModal.form.permissions.includes(permissionId);
-};
-
-const togglePermissionSelection = (permissionId) => {
-    const index = roleModal.form.permissions.indexOf(permissionId);
-    if (index === -1) {
-        roleModal.form.permissions.push(permissionId);
-    } else {
-        roleModal.form.permissions.splice(index, 1);
-    }
-};
-
-const formatPermissionName = (name) => {
-    return name.split('_').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-};
+                const liveStats = reactive({
+                    occupancy: 65,
+                    occupancyTrend: 2.5,
+                    onDutyStaff: 24,
+                    staffTrend: 1,
+                    pendingRequests: 8,
+                    activeRotations: 12,
+                    dailyUpdate: 'ER: 3 critical, ICU: 90%, Ward A: Full',
+                    updatedAt: new Date().toISOString(),
+                    metric1: { label: 'ER Wait', value: '15 min' },
+                    metric2: { label: 'ICU Beds', value: '2' }
+                });
                 
-                // UI Components
+                // 8.6 UI Components
                 const toasts = ref([]);
                 const activeAlerts = ref([]);
                 const unreadNotifications = ref(3);
                 const unreadAnnouncements = ref(0);
                 
-                // Filter States
+                // 8.7 Filter States
                 const staffFilter = reactive({ staff_type: '', employment_status: '' });
                 const staffSearch = ref('');
                 const rotationFilter = reactive({ resident_id: '', rotation_status: '', training_unit_id: '' });
                 const absenceFilter = reactive({ staff_member_id: '', status: '', start_date: '' });
                 const oncallFilter = reactive({ date: '', shift_type: '', physician_id: '' });
                 
-                // ============ MODAL STATES ============
-                // Medical Staff Modal (NO TEXTAREA - removed biography)
+                // 8.8 Modal States
                 const medicalStaffModal = reactive({
                     show: false,
                     mode: 'add',
@@ -649,7 +493,6 @@ const formatPermissionName = (name) => {
                     }
                 });
                 
-                // Department Modal (NO TEXTAREA - removed description)
                 const departmentModal = reactive({
                     show: false,
                     mode: 'add',
@@ -663,7 +506,6 @@ const formatPermissionName = (name) => {
                     }
                 });
                 
-                // Training Unit Modal (NO TEXTAREA - removed unit_description)
                 const trainingUnitModal = reactive({
                     show: false,
                     mode: 'add',
@@ -678,7 +520,6 @@ const formatPermissionName = (name) => {
                     }
                 });
                 
-                // Rotation Modal (NO TEXTAREA - removed clinical_notes & supervisor_evaluation)
                 const rotationModal = reactive({
                     show: false,
                     mode: 'add',
@@ -694,7 +535,6 @@ const formatPermissionName = (name) => {
                     }
                 });
                 
-                // On-Call Modal (NO TEXTAREA - removed coverage_notes)
                 const onCallModal = reactive({
                     show: false,
                     mode: 'add',
@@ -710,7 +550,6 @@ const formatPermissionName = (name) => {
                     }
                 });
                 
-                // Absence Modal (REDESIGNED - NO TEXTAREA, uses dropdowns)
                 const absenceModal = reactive({
                     show: false,
                     mode: 'add',
@@ -728,7 +567,6 @@ const formatPermissionName = (name) => {
                     }
                 });
                 
-                // Communications Modal (RETAINS TEXTAREAS as per HTML)
                 const communicationsModal = reactive({
                     show: false,
                     activeTab: 'announcement',
@@ -746,7 +584,6 @@ const formatPermissionName = (name) => {
                     }
                 });
                 
-                // Quick Placement Modal
                 const quickPlacementModal = reactive({
                     show: false,
                     form: {
@@ -758,7 +595,6 @@ const formatPermissionName = (name) => {
                     }
                 });
                 
-                // Confirmation Modal
                 const confirmationModal = reactive({
                     show: false,
                     title: '',
@@ -771,7 +607,6 @@ const formatPermissionName = (name) => {
                     details: ''
                 });
                 
-                // Staff Details Modal (NO TEXTAREA - removed biography)
                 const staffDetailsModal = reactive({
                     show: false,
                     staff: null,
@@ -786,7 +621,6 @@ const formatPermissionName = (name) => {
                     nextOncall: ''
                 });
                 
-                // User Profile Modal (NO TEXTAREA - removed biography)
                 const userProfileModal = reactive({
                     show: false,
                     activeTab: 'profile',
@@ -801,13 +635,22 @@ const formatPermissionName = (name) => {
                     }
                 });
                 
-                // System Settings Modal
                 const systemSettingsModal = reactive({
                     show: false,
                     settings: {}
                 });
                 
-                // ============ PERMISSIONS SYSTEM ============
+                const roleModal = reactive({
+                    show: false,
+                    mode: 'add',
+                    form: {
+                        name: '',
+                        description: '',
+                        permissions: []
+                    }
+                });
+                
+                // 8.9 Permission Matrix
                 const PERMISSION_MATRIX = {
                     system_admin: {
                         medical_staff: ['create', 'read', 'update', 'delete'],
@@ -830,37 +673,86 @@ const formatPermissionName = (name) => {
                     }
                 };
                 
-                const hasPermission = (module, action = 'read') => {
-                    if (currentUser.value?.user_role === 'system_admin') return true;
-                    if (currentUser.value?.email === 'admin@neumocare.org') return true;
-                    
-                    const role = currentUser.value?.user_role;
-                    if (!role || !PERMISSION_MATRIX[role]) return false;
-                    
-                    const permissions = PERMISSION_MATRIX[role][module];
-                    if (!permissions) return false;
-                    
-                    return permissions.includes(action) || permissions.includes('*');
-                };
                 const availablePermissions = ref([
-    { id: 1, name: 'read_medical_staff', module: 'medical_staff' },
-    { id: 2, name: 'update_medical_staff', module: 'medical_staff' },
-    { id: 3, name: 'delete_medical_staff', module: 'medical_staff' },
-    { id: 4, name: 'read_oncall_schedule', module: 'oncall_schedule' },
-    { id: 5, name: 'update_oncall_schedule', module: 'oncall_schedule' },
-    { id: 6, name: 'delete_oncall_schedule', module: 'oncall_schedule' }
-]);
-                // ============ FORMATTING FUNCTIONS ============
-                const getUserRoleDisplay = (role) => {
-                    const map = {
-                        'system_admin': 'System Administrator',
-                        'administrator': 'Administrator',
-                        'attending_physician': 'Attending Physician',
-                        'medical_resident': 'Medical Resident'
+                    { id: 1, name: 'read_medical_staff', module: 'medical_staff' },
+                    { id: 2, name: 'update_medical_staff', module: 'medical_staff' },
+                    { id: 3, name: 'delete_medical_staff', module: 'medical_staff' },
+                    { id: 4, name: 'read_oncall_schedule', module: 'oncall_schedule' },
+                    { id: 5, name: 'update_oncall_schedule', module: 'oncall_schedule' },
+                    { id: 6, name: 'delete_oncall_schedule', module: 'oncall_schedule' }
+                ]);
+                
+                // ============ 9. UTILITY FUNCTIONS ============
+                
+                // 9.1 Toast System
+                const showToast = (title, message, type = 'info', duration = 5000) => {
+                    const icons = {
+                        info: 'fas fa-info-circle',
+                        success: 'fas fa-check-circle',
+                        error: 'fas fa-exclamation-circle',
+                        warning: 'fas fa-exclamation-triangle'
                     };
-                    return map[role] || role;
+                    
+                    const toast = {
+                        id: Date.now(),
+                        title,
+                        message,
+                        type,
+                        icon: icons[type],
+                        duration
+                    };
+                    
+                    toasts.value.push(toast);
+                    
+                    if (duration > 0) {
+                        setTimeout(() => removeToast(toast.id), duration);
+                    }
                 };
                 
+                const removeToast = (id) => {
+                    const index = toasts.value.findIndex(t => t.id === id);
+                    if (index > -1) toasts.value.splice(index, 1);
+                };
+                
+                const dismissAlert = (id) => {
+                    const index = activeAlerts.value.findIndex(a => a.id === id);
+                    if (index > -1) activeAlerts.value.splice(index, 1);
+                };
+                
+                // 9.2 Confirmation Modal
+                const showConfirmation = (options) => {
+                    Object.assign(confirmationModal, {
+                        show: true,
+                        title: options.title || 'Confirm Action',
+                        message: options.message || 'Are you sure?',
+                        icon: options.icon || 'fa-question-circle',
+                        confirmButtonText: options.confirmButtonText || 'Confirm',
+                        confirmButtonClass: options.confirmButtonClass || 'btn-primary',
+                        cancelButtonText: options.cancelButtonText || 'Cancel',
+                        onConfirm: options.onConfirm || null,
+                        details: options.details || ''
+                    });
+                };
+                
+                const confirmAction = async () => {
+                    saving.value = true;
+                    try {
+                        if (confirmationModal.onConfirm) {
+                            await confirmationModal.onConfirm();
+                        }
+                        confirmationModal.show = false;
+                    } catch (error) {
+                        showToast('Error', error.message, 'error');
+                    } finally {
+                        saving.value = false;
+                    }
+                };
+                
+                const cancelConfirmation = () => {
+                    confirmationModal.show = false;
+                };
+                
+                // 9.3 Formatting Functions
                 const formatStaffType = (type) => {
                     const map = {
                         'medical_resident': 'Medical Resident',
@@ -960,6 +852,16 @@ const formatPermissionName = (name) => {
                     return map[type] || type;
                 };
                 
+                const getUserRoleDisplay = (role) => {
+                    const map = {
+                        'system_admin': 'System Administrator',
+                        'administrator': 'Administrator',
+                        'attending_physician': 'Attending Physician',
+                        'medical_resident': 'Medical Resident'
+                    };
+                    return map[role] || role;
+                };
+                
                 const getCurrentTitle = () => {
                     const map = {
                         'daily_operations': 'Daily Operations',
@@ -998,97 +900,12 @@ const formatPermissionName = (name) => {
                     return map[searchScope.value] || 'Search...';
                 };
                 
-                // ============ DATA HELPER FUNCTIONS ============
+                // 9.4 Data Helper Functions
                 const getDepartmentName = (departmentId) => {
                     if (!departmentId) return 'Unassigned';
                     const dept = departments.value.find(d => d.id === departmentId);
                     return dept ? dept.name : 'Unknown Department';
                 };
-                // Add these missing functions for staff details
-const getCurrentRotationUnit = (staffId) => {
-    const activeRotation = rotations.value.find(r => 
-        r.resident_id === staffId && r.rotation_status === 'active'
-    );
-    return activeRotation ? getTrainingUnitName(activeRotation.training_unit_id) : null;
-};
-
-const getRotationSupervisor = (staffId) => {
-    const activeRotation = rotations.value.find(r => 
-        r.resident_id === staffId && r.rotation_status === 'active'
-    );
-    return activeRotation ? getStaffName(activeRotation.supervising_attending_id) : null;
-};
-
-const getRotationDaysLeft = (staffId) => {
-    const activeRotation = rotations.value.find(r => 
-        r.resident_id === staffId && r.rotation_status === 'active'
-    );
-    if (!activeRotation) return null;
-    
-    const endDate = new Date(activeRotation.rotation_end_date);
-    const today = new Date();
-    const diffTime = endDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays : 0;
-};
-
-const getCurrentUnit = (staffId) => {
-    return getCurrentRotationUnit(staffId);
-};
-
-const getCurrentActivityStatus = (staffId) => {
-    // Check if staff is on-call today
-    const today = new Date().toISOString().split('T')[0];
-    const onCallToday = onCallSchedule.value.find(s => 
-        (s.primary_physician_id === staffId || s.backup_physician_id === staffId) &&
-        s.duty_date === today
-    );
-    
-    if (onCallToday) return 'oncall';
-    
-    // Check if staff is absent today
-    const absentToday = absences.value.find(a => 
-        a.staff_member_id === staffId &&
-        a.start_date <= today &&
-        a.end_date >= today &&
-        a.status === 'approved'
-    );
-    
-    if (absentToday) return 'absent';
-    
-    return 'active';
-};
-                // Add these helper functions
-const formatRelativeTime = (dateString) => {
-    if (!dateString) return 'Just now';
-    try {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        
-        if (diffMins < 1) return 'Just now';
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-        return `${Math.floor(diffMins / 1440)}d ago`;
-    } catch {
-        return 'Just now';
-    }
-};
-
-const saveLiveStats = async () => {
-    saving.value = true;
-    try {
-        // Here you would save to your backend
-        liveStats.updatedAt = new Date().toISOString();
-        showToast('Success', 'Live stats updated successfully', 'success');
-        editLiveStats.value = false;
-    } catch (error) {
-        showToast('Error', error.message, 'error');
-    } finally {
-        saving.value = false;
-    }
-};
                 
                 const getStaffName = (staffId) => {
                     if (!staffId) return 'Not Assigned';
@@ -1096,19 +913,14 @@ const saveLiveStats = async () => {
                     return staff ? staff.full_name : 'Unknown Staff';
                 };
                 
-                const getResidentName = (residentId) => {
-                    return getStaffName(residentId);
-                };
-                
-                const getPhysicianName = (physicianId) => {
-                    return getStaffName(physicianId);
-                };
-                
                 const getTrainingUnitName = (unitId) => {
                     if (!unitId) return 'Unassigned';
                     const unit = trainingUnits.value.find(u => u.id === unitId);
                     return unit ? unit.unit_name : 'Unknown Unit';
                 };
+                
+                const getResidentName = (residentId) => getStaffName(residentId);
+                const getPhysicianName = (physicianId) => getStaffName(physicianId);
                 
                 const getUnitResidents = (unitId) => {
                     return rotations.value
@@ -1123,93 +935,121 @@ const saveLiveStats = async () => {
                         })
                         .filter(Boolean);
                 };
-
-                
-                const getDepartmentUnits = (departmentId) => {
-                    return trainingUnits.value.filter(unit => unit.department_id === departmentId);
-                };
                 
                 const calculateAbsenceDuration = (startDate, endDate) => {
-                    return EnhancedUtils.calculateDaysBetween(startDate, endDate);
+                    try {
+                        const start = new Date(startDate);
+                        const end = new Date(endDate);
+                        if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+                        const diffTime = Math.abs(end - start);
+                        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    } catch { return 0; }
                 };
                 
-                const getUnitSupervisor = (unitId) => {
-                    const unit = trainingUnits.value.find(u => u.id === unitId);
-                    if (!unit || !unit.supervising_attending_id) return 'No supervisor';
-                    return getStaffName(unit.supervising_attending_id);
+                // 9.5 Communication Functions
+                const getCommunicationIcon = (tab) => {
+                    return tab === 'announcement' ? 'fas fa-bullhorn' : 'fas fa-sticky-note';
                 };
                 
-                const getUnitStatusClass = (unit) => {
-                    const current = unit.current_residents || 0;
-                    const max = unit.maximum_residents || 10;
-                    const percentage = (current / max) * 100;
+                const getCommunicationButtonText = (tab) => {
+                    return tab === 'announcement' ? 'Post Announcement' : 'Save Note';
+                };
+                
+                // 9.6 Staff Detail Functions
+                const getCurrentRotationUnit = (staffId) => {
+                    const activeRotation = rotations.value.find(r => 
+                        r.resident_id === staffId && r.rotation_status === 'active'
+                    );
+                    return activeRotation ? getTrainingUnitName(activeRotation.training_unit_id) : null;
+                };
+                
+                const getRotationSupervisor = (staffId) => {
+                    const activeRotation = rotations.value.find(r => 
+                        r.resident_id === staffId && r.rotation_status === 'active'
+                    );
+                    return activeRotation ? getStaffName(activeRotation.supervising_attending_id) : null;
+                };
+                
+                const getRotationDaysLeft = (staffId) => {
+                    const activeRotation = rotations.value.find(r => 
+                        r.resident_id === staffId && r.rotation_status === 'active'
+                    );
+                    if (!activeRotation) return null;
                     
-                    if (percentage >= 90) return 'danger';
-                    if (percentage >= 75) return 'warning';
-                    return '';
+                    const endDate = new Date(activeRotation.rotation_end_date);
+                    const today = new Date();
+                    const diffTime = endDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return diffDays > 0 ? diffDays : 0;
                 };
                 
-                // ============ TOAST SYSTEM ============
-                const showToast = (title, message, type = 'info', duration = 5000) => {
-                    const icons = {
-                        info: 'fas fa-info-circle',
-                        success: 'fas fa-check-circle',
-                        error: 'fas fa-exclamation-circle',
-                        warning: 'fas fa-exclamation-triangle'
+                const getCurrentUnit = (staffId) => getCurrentRotationUnit(staffId);
+                
+                const getCurrentActivityStatus = (staffId) => {
+                    const today = new Date().toISOString().split('T')[0];
+                    const onCallToday = onCallSchedule.value.find(s => 
+                        (s.primary_physician_id === staffId || s.backup_physician_id === staffId) &&
+                        s.duty_date === today
+                    );
+                    
+                    if (onCallToday) return 'oncall';
+                    
+                    const absentToday = absences.value.find(a => 
+                        a.staff_member_id === staffId &&
+                        a.leave_start_date <= today &&
+                        a.leave_end_date >= today &&
+                        a.approval_status === 'approved'
+                    );
+                    
+                    if (absentToday) return 'absent';
+                    
+                    return 'active';
+                };
+                
+                const formatRelativeTime = (dateString) => {
+                    if (!dateString) return 'Just now';
+                    try {
+                        const date = new Date(dateString);
+                        const now = new Date();
+                        const diffMs = now - date;
+                        const diffMins = Math.floor(diffMs / 60000);
+                        
+                        if (diffMins < 1) return 'Just now';
+                        if (diffMins < 60) return `${diffMins}m ago`;
+                        if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+                        return `${Math.floor(diffMins / 1440)}d ago`;
+                    } catch { return 'Just now'; }
+                };
+                
+                // 9.7 Permission Functions
+                const hasPermission = (module, action = 'read') => {
+                    if (currentUser.value?.user_role === 'system_admin') return true;
+                    if (currentUser.value?.email === 'admin@neumocare.org') return true;
+                    
+                    const role = currentUser.value?.user_role;
+                    if (!role || !PERMISSION_MATRIX[role]) return false;
+                    
+                    const permissions = PERMISSION_MATRIX[role][module];
+                    if (!permissions) return false;
+                    
+                    return permissions.includes(action) || permissions.includes('*');
+                };
+                
+                const showAddRoleModal = () => {
+                    roleModal.mode = 'add';
+                    roleModal.form = {
+                        name: '',
+                        description: '',
+                        permissions: []
                     };
-                    
-                    const toast = {
-                        id: Date.now(),
-                        title,
-                        message,
-                        type,
-                        icon: icons[type],
-                        duration
-                    };
-                    
-                    toasts.value.push(toast);
-                    
-                    if (duration > 0) {
-                        setTimeout(() => removeToast(toast.id), duration);
-                    }
+                    roleModal.show = true;
                 };
                 
-                const removeToast = (id) => {
-                    const index = toasts.value.findIndex(t => t.id === id);
-                    if (index > -1) {
-                        toasts.value.splice(index, 1);
-                    }
-                };
-                
-                const dismissAlert = (id) => {
-                    const index = activeAlerts.value.findIndex(a => a.id === id);
-                    if (index > -1) {
-                        activeAlerts.value.splice(index, 1);
-                    }
-                };
-                
-                // ============ CONFIRMATION MODAL ============
-                const showConfirmation = (options) => {
-                    Object.assign(confirmationModal, {
-                        show: true,
-                        title: options.title || 'Confirm Action',
-                        message: options.message || 'Are you sure you want to proceed?',
-                        icon: options.icon || 'fa-question-circle',
-                        confirmButtonText: options.confirmButtonText || 'Confirm',
-                        confirmButtonClass: options.confirmButtonClass || 'btn-primary',
-                        cancelButtonText: options.cancelButtonText || 'Cancel',
-                        onConfirm: options.onConfirm || null,
-                        details: options.details || ''
-                    });
-                };
-                
-                const confirmAction = async () => {
+                const saveRole = async () => {
                     saving.value = true;
                     try {
-                        if (confirmationModal.onConfirm) {
-                            await confirmationModal.onConfirm();
-                        }
-                        confirmationModal.show = false;
+                        showToast('Success', 'Role saved successfully', 'success');
+                        roleModal.show = false;
                     } catch (error) {
                         showToast('Error', error.message, 'error');
                     } finally {
@@ -1217,11 +1057,28 @@ const saveLiveStats = async () => {
                     }
                 };
                 
-                const cancelConfirmation = () => {
-                    confirmationModal.show = false;
+                const isPermissionSelected = (permissionId) => {
+                    return roleModal.form.permissions.includes(permissionId);
                 };
                 
-                // ============ DATA LOADING FUNCTIONS ============
+                const togglePermissionSelection = (permissionId) => {
+                    const index = roleModal.form.permissions.indexOf(permissionId);
+                    if (index === -1) {
+                        roleModal.form.permissions.push(permissionId);
+                    } else {
+                        roleModal.form.permissions.splice(index, 1);
+                    }
+                };
+                
+                const formatPermissionName = (name) => {
+                    return name.split('_').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1)
+                    ).join(' ');
+                };
+                
+                // ============ 10. DATA LOADING FUNCTIONS ============
+                
+                // 10.1 Load Medical Staff
                 const loadMedicalStaff = async () => {
                     try {
                         loadingStaff.value = true;
@@ -1235,6 +1092,7 @@ const saveLiveStats = async () => {
                     }
                 };
                 
+                // 10.2 Load Departments
                 const loadDepartments = async () => {
                     try {
                         loadingDepartments.value = true;
@@ -1248,6 +1106,7 @@ const saveLiveStats = async () => {
                     }
                 };
                 
+                // 10.3 Load Training Units
                 const loadTrainingUnits = async () => {
                     try {
                         loadingTrainingUnits.value = true;
@@ -1261,6 +1120,7 @@ const saveLiveStats = async () => {
                     }
                 };
                 
+                // 10.4 Load Rotations
                 const loadRotations = async () => {
                     try {
                         loadingRotations.value = true;
@@ -1274,6 +1134,7 @@ const saveLiveStats = async () => {
                     }
                 };
                 
+                // 10.5 Load Absences
                 const loadAbsences = async () => {
                     try {
                         loadingAbsences.value = true;
@@ -1287,6 +1148,7 @@ const saveLiveStats = async () => {
                     }
                 };
                 
+                // 10.6 Load On-call Schedule
                 const loadOnCallSchedule = async () => {
                     try {
                         loadingOnCall.value = true;
@@ -1302,6 +1164,7 @@ const saveLiveStats = async () => {
                     }
                 };
                 
+                // 10.7 Load Announcements
                 const loadAnnouncements = async () => {
                     try {
                         loadingAnnouncements.value = true;
@@ -1316,16 +1179,18 @@ const saveLiveStats = async () => {
                     }
                 };
                 
+                // 10.8 Load Settings
                 const loadSettings = async () => {
                     try {
                         const data = await API.getSettings();
-                        settings.value = data || {};
+                        settings.value = data;
                     } catch (error) {
                         console.error('Failed to load settings:', error);
                         settings.value = {};
                     }
                 };
                 
+                // 10.9 Load Today's On-call
                 const loadTodaysOnCall = async () => {
                     try {
                         const data = await API.getOnCallToday();
@@ -1336,6 +1201,7 @@ const saveLiveStats = async () => {
                     }
                 };
                 
+                // 10.10 Update Dashboard Stats
                 const updateDashboardStats = () => {
                     dashboardStats.value.totalStaff = medicalStaff.value.length;
                     dashboardStats.value.activeStaff = medicalStaff.value.filter(s => s.employment_status === 'active').length;
@@ -1355,6 +1221,7 @@ const saveLiveStats = async () => {
                     dashboardStats.value.pendingAbsences = absences.value.filter(a => a.status === 'pending').length;
                 };
                 
+                // 10.11 Load All Initial Data
                 const loadInitialData = async () => {
                     loading.value = true;
                     
@@ -1374,7 +1241,7 @@ const saveLiveStats = async () => {
                         updateDashboardStats();
                         updateLiveStats();
                         
-                        showToast('System Ready', 'All data loaded successfully', 'success');
+                        showToast('Success', 'System data loaded successfully', 'success');
                         
                     } catch (error) {
                         console.error('Failed to load initial data:', error);
@@ -1384,6 +1251,7 @@ const saveLiveStats = async () => {
                     }
                 };
                 
+                // 10.12 Update Live Stats
                 const updateLiveStats = () => {
                     const totalCapacity = trainingUnits.value.reduce((sum, unit) => 
                         sum + (parseInt(unit.maximum_residents) || 10), 0);
@@ -1400,7 +1268,23 @@ const saveLiveStats = async () => {
                         r.rotation_status === 'active').length;
                 };
                 
-                // ============ AUTHENTICATION ============
+                // 10.13 Save Live Stats
+                const saveLiveStats = async () => {
+                    saving.value = true;
+                    try {
+                        liveStats.updatedAt = new Date().toISOString();
+                        showToast('Success', 'Live stats updated successfully', 'success');
+                        editLiveStats.value = false;
+                    } catch (error) {
+                        showToast('Error', error.message, 'error');
+                    } finally {
+                        saving.value = false;
+                    }
+                };
+                
+                // ============ 11. AUTHENTICATION FUNCTIONS ============
+                
+                // 11.1 Handle Login
                 const handleLogin = async () => {
                     if (!loginForm.email || !loginForm.password) {
                         showToast('Error', 'Email and password are required', 'error');
@@ -1414,18 +1298,19 @@ const saveLiveStats = async () => {
                         currentUser.value = response.user;
                         localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(response.user));
                         
-                        showToast('Login Successful', `Welcome back, ${response.user.full_name}!`, 'success');
+                        showToast('Success', `Welcome, ${response.user.full_name}!`, 'success');
                         
                         await loadInitialData();
                         currentView.value = 'daily_operations';
                         
                     } catch (error) {
-                        showToast('Login Failed', error.message || 'Invalid credentials', 'error');
+                        showToast('Error', error.message || 'Login failed', 'error');
                     } finally {
                         loading.value = false;
                     }
                 };
                 
+                // 11.2 Handle Logout
                 const handleLogout = () => {
                     showConfirmation({
                         title: 'Logout',
@@ -1440,54 +1325,38 @@ const saveLiveStats = async () => {
                                 currentUser.value = null;
                                 currentView.value = 'login';
                                 userMenuOpen.value = false;
-                                showToast('Logged Out', 'You have been logged out successfully', 'info');
+                                showToast('Info', 'Logged out successfully', 'info');
                             }
                         }
                     });
                 };
                 
-                // ============ NAVIGATION ============
+                // ============ 12. NAVIGATION FUNCTIONS ============
+                
                 const switchView = (view) => {
-                    if (!currentUser.value && view !== 'login') {
-                        return;
-                    }
+                    if (!currentUser.value && view !== 'login') return;
                     
                     currentView.value = view;
                     mobileMenuOpen.value = false;
                     
                     switch (view) {
-                        case 'medical_staff':
-                            loadMedicalStaff();
-                            break;
-                        case 'department_management':
-                            loadDepartments();
-                            break;
-                        case 'training_units':
-                            loadTrainingUnits();
-                            break;
-                        case 'resident_rotations':
-                            loadRotations();
-                            break;
-                        case 'oncall_schedule':
-                            loadOnCallSchedule();
-                            break;
-                        case 'staff_absence':
-                            loadAbsences();
-                            break;
-                        case 'communications':
-                            loadAnnouncements();
-                            break;
+                        case 'medical_staff': loadMedicalStaff(); break;
+                        case 'department_management': loadDepartments(); break;
+                        case 'training_units': loadTrainingUnits(); break;
+                        case 'resident_rotations': loadRotations(); break;
+                        case 'oncall_schedule': loadOnCallSchedule(); break;
+                        case 'staff_absence': loadAbsences(); break;
+                        case 'communications': loadAnnouncements(); break;
                     }
                 };
                 
-                // ============ UI FUNCTIONS ============
+                // ============ 13. UI FUNCTIONS ============
+                
                 const toggleActionMenu = (event) => {
                     const menu = event.target.closest('.action-dropdown').querySelector('.action-menu');
                     const allMenus = document.querySelectorAll('.action-menu');
                     allMenus.forEach(m => { 
-                        if (m !== menu) {
-                            m.classList.remove('show'); 
-                        }
+                        if (m !== menu) m.classList.remove('show'); 
                     });
                     menu.classList.toggle('show');
                     const closeMenu = (e) => { 
@@ -1519,7 +1388,8 @@ const saveLiveStats = async () => {
                     }
                 };
                 
-                // ============ MODAL SHOW FUNCTIONS ============
+                // ============ 14. MODAL SHOW FUNCTIONS ============
+                
                 const showAddMedicalStaffModal = () => {
                     medicalStaffModal.mode = 'add';
                     medicalStaffModal.activeTab = 'basic';
@@ -1680,7 +1550,8 @@ const saveLiveStats = async () => {
                     unreadNotifications.value = 0;
                 };
                 
-                // ============ VIEW/EDIT FUNCTIONS ============
+                // ============ 15. VIEW/EDIT FUNCTIONS ============
+                
                 const viewStaffDetails = (staff) => {
                     staffDetailsModal.staff = staff;
                     staffDetailsModal.activeTab = 'personal';
@@ -1746,7 +1617,6 @@ const saveLiveStats = async () => {
                 
                 const editAbsence = (absence) => {
                     absenceModal.mode = 'edit';
-                    // Map backend fields to frontend fields
                     absenceModal.form = {
                         id: absence.id,
                         staff_member_id: absence.staff_member_id,
@@ -1762,7 +1632,8 @@ const saveLiveStats = async () => {
                     absenceModal.show = true;
                 };
                 
-                // ============ SAVE FUNCTIONS ============
+                // ============ 16. SAVE FUNCTIONS ============
+                
                 const saveMedicalStaff = async () => {
                     saving.value = true;
                     try {
@@ -1853,7 +1724,6 @@ const saveLiveStats = async () => {
                 const saveRotation = async () => {
                     saving.value = true;
                     try {
-                        // Map frontend fields to backend expected fields
                         const rotationData = {
                             resident_id: rotationModal.form.resident_id,
                             training_unit_id: rotationModal.form.training_unit_id,
@@ -1910,10 +1780,8 @@ const saveLiveStats = async () => {
                 const recordAbsence = async () => {
                     saving.value = true;
                     try {
-                        // Calculate total days
                         const days = calculateAbsenceDuration(absenceModal.form.start_date, absenceModal.form.end_date);
                         
-                        // Map frontend fields to backend expected fields
                         const absenceData = {
                             staff_member_id: absenceModal.form.staff_member_id,
                             leave_category: absenceModal.form.absence_type === 'other' ? 'other' : absenceModal.form.absence_type,
@@ -1965,7 +1833,6 @@ const saveLiveStats = async () => {
                             announcements.value.unshift(result);
                             showToast('Success', 'Announcement posted successfully', 'success');
                         } else {
-                            // Quick note - save locally
                             showToast('Info', 'Quick note saved locally', 'info');
                         }
                         
@@ -1981,7 +1848,6 @@ const saveLiveStats = async () => {
                 const saveQuickPlacement = async () => {
                     saving.value = true;
                     try {
-                        // Create rotation from quick placement
                         const rotationData = {
                             resident_id: quickPlacementModal.form.resident_id,
                             training_unit_id: quickPlacementModal.form.unit_id,
@@ -2035,7 +1901,8 @@ const saveLiveStats = async () => {
                     }
                 };
                 
-                // ============ ACTION FUNCTIONS ============
+                // ============ 17. ACTION FUNCTIONS ============
+                
                 const assignRotationToStaff = (staff) => {
                     rotationModal.mode = 'add';
                     rotationModal.form.resident_id = staff.id;
@@ -2050,7 +1917,6 @@ const saveLiveStats = async () => {
                         confirmButtonClass: 'btn-danger',
                         onConfirm: async () => {
                             try {
-                                // Find and update the rotation
                                 const rotation = rotations.value.find(r => 
                                     r.resident_id === residentId && 
                                     r.training_unit_id === unitId &&
@@ -2087,7 +1953,8 @@ const saveLiveStats = async () => {
                     showToast(announcement.title, EnhancedUtils.truncateText(announcement.content, 100), 'info');
                 };
                 
-                // ============ DELETE FUNCTIONS ============
+                // ============ 18. DELETE FUNCTIONS ============
+                
                 const deleteMedicalStaff = (staff) => {
                     showConfirmation({
                         title: 'Deactivate Staff',
@@ -2237,7 +2104,8 @@ const saveLiveStats = async () => {
                     });
                 };
                 
-                // ============ FILTER FUNCTIONS ============
+                // ============ 19. FILTER FUNCTIONS ============
+                
                 const applyStaffFilters = () => {
                     showToast('Filters Applied', 'Staff filters have been applied', 'info');
                 };
@@ -2282,31 +2150,33 @@ const saveLiveStats = async () => {
                     showToast('Filters Reset', 'Absence filters have been reset', 'info');
                 };
                 
-                // ============ COMPUTED PROPERTIES ============
+                // ============ 20. COMPUTED PROPERTIES ============
+                
                 const availableResidents = computed(() => {
                     return medicalStaff.value.filter(staff => 
                         staff.staff_type === 'medical_resident' && 
                         staff.employment_status === 'active'
                     );
                 });
-
-const upcomingRotationsCount = computed(() => {
-    return dashboardStats.value.upcomingRotations || 0;
-});
-
-const pendingActionsCount = computed(() => {
-    return dashboardStats.value.pendingAbsences || 0;
-});
-
-const availableReplacementStaff = computed(() => {
-    return medicalStaff.value.filter(staff => 
-        staff.employment_status === 'active' && 
-        staff.staff_type === 'medical_resident'
-    );
-});
+                
+                const upcomingRotationsCount = computed(() => {
+                    return dashboardStats.value.upcomingRotations || 0;
+                });
+                
+                const pendingActionsCount = computed(() => {
+                    return dashboardStats.value.pendingAbsences || 0;
+                });
+                
+                const availableReplacementStaff = computed(() => {
+                    return medicalStaff.value.filter(staff => 
+                        staff.employment_status === 'active' && 
+                        staff.staff_type === 'medical_resident'
+                    );
+                });
+                
                 const activeTrainingUnits = computed(() => {
-    return trainingUnits.value.filter(unit => unit.unit_status === 'active');
-});
+                    return trainingUnits.value.filter(unit => unit.unit_status === 'active');
+                });
                 
                 const availableAttendings = computed(() => {
                     return medicalStaff.value.filter(staff => 
@@ -2469,12 +2339,23 @@ const availableReplacementStaff = computed(() => {
                 
                 const stats = computed(() => dashboardStats.value);
                 
-                // ============ LIFECYCLE ============
+                // ============ 21. LIFECYCLE ============
+                
                 onMounted(() => {
                     console.log('🚀 Vue app mounted');
                     
-                    if (currentUser.value) {
-                        loadInitialData();
+                    // Check if user is already logged in
+                    const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+                    const user = localStorage.getItem(CONFIG.USER_KEY);
+                    
+                    if (token && user) {
+                        try {
+                            currentUser.value = JSON.parse(user);
+                            loadInitialData();
+                            currentView.value = 'daily_operations';
+                        } catch {
+                            currentView.value = 'login';
+                        }
                     } else {
                         currentView.value = 'login';
                     }
@@ -2509,7 +2390,7 @@ const availableReplacementStaff = computed(() => {
                     { deep: true }
                 );
                 
-                // ============ RETURN EVERYTHING ============
+                // ============ 22. RETURN EXPOSED DATA/METHODS ============
                 return {
                     // State
                     currentUser,
@@ -2524,7 +2405,6 @@ const availableReplacementStaff = computed(() => {
                     loadingOnCall,
                     loadingAnnouncements,
                     loadingSchedule,
-                    loadingStats,
                     
                     currentView,
                     sidebarCollapsed,
@@ -2543,18 +2423,14 @@ const availableReplacementStaff = computed(() => {
                     onCallSchedule,
                     announcements,
                     settings,
-                     roleModal,
-    availablePermissions,
-    showAddRoleModal,
-    saveRole,
-    isPermissionSelected,
-    togglePermissionSelection,
-    formatPermissionName,
+                    roleModal,
+                    availablePermissions,
                     
                     // Dashboard
                     dashboardStats,
                     todaysOnCallData,
                     liveStats,
+                    editLiveStats,
                     
                     // UI
                     toasts,
@@ -2586,7 +2462,6 @@ const availableReplacementStaff = computed(() => {
                     // Formatting Functions
                     formatDate: EnhancedUtils.formatDate,
                     formatDateTime: EnhancedUtils.formatDateTime,
-                    formatTimeAgo: EnhancedUtils.formatTimeAgo,
                     truncateText: EnhancedUtils.truncateText,
                     getInitials: EnhancedUtils.getInitials,
                     formatStaffType,
@@ -2602,41 +2477,25 @@ const availableReplacementStaff = computed(() => {
                     getUserRoleDisplay,
                     getDepartmentName,
                     getStaffName,
-                    getResidentName,
-                    getPhysicianName,
                     getTrainingUnitName,
-                    getUnitResidents,
-                    getDepartmentUnits,
-                    calculateAbsenceDuration,
-                    getUnitSupervisor,
-                    getUnitStatusClass,
-                    getCurrentTitle,
-                    getCurrentSubtitle,
-                    getSearchPlaceholder,
+                    getCommunicationIcon,
+                    getCommunicationButtonText,
+                    formatRelativeTime,
+                    
+                    // Helper Functions
+                    getCurrentRotationUnit,
+                    getRotationSupervisor,
+                    getRotationDaysLeft,
+                    getCurrentUnit,
+                    getCurrentActivityStatus,
                     
                     // Permission Functions
                     hasPermission,
-                            getCommunicationIcon,
-        getCommunicationButtonText,
-
-                    
-                    // Computed Properties
-                    availableResidents,
-                    availableAttendings,
-                    availablePhysicians,
-                    availableHeadsOfDepartment,
-                    filteredMedicalStaff,
-                    filteredRotations,
-                    filteredOncall,
-                    filteredAbsences,
-                    todaysOnCall,
-                    todaysAbsences,
-                    endingRotationsToday,
-                    recentAnnouncements,
-                    priorityItems,
-                    absenceTypes,
-                    canSubmitAbsence,
-                    stats,
+                    showAddRoleModal,
+                    saveRole,
+                    isPermissionSelected,
+                    togglePermissionSelection,
+                    formatPermissionName,
                     
                     // Toast Functions
                     showToast,
@@ -2702,6 +2561,7 @@ const availableReplacementStaff = computed(() => {
                     saveQuickPlacement,
                     saveUserProfile,
                     saveSystemSettings,
+                    saveLiveStats,
                     
                     // Department Functions
                     addClinicalUnit,
@@ -2714,21 +2574,8 @@ const availableReplacementStaff = computed(() => {
                     deleteRotation,
                     deleteAbsence,
                     deleteOnCallSchedule,
-                     getCommunicationIcon,
-        getCommunicationButtonText,
-                    editLiveStats,
-    formatRelativeTime,
-    saveLiveStats,
-    upcomingRotationsCount,
-    pendingActionsCount,
-    availableReplacementStaff,
-    getCurrentRotationUnit,
-    getRotationSupervisor,
-    getRotationDaysLeft,
-    getCurrentUnit,
-    getCurrentActivityStatus,
                     
-                    // Filter Function
+                    // Filter Functions
                     applyStaffFilters,
                     resetStaffFilters,
                     applyRotationFilters,
@@ -2736,21 +2583,37 @@ const availableReplacementStaff = computed(() => {
                     applyOncallFilters,
                     resetOncallFilters,
                     applyAbsenceFilters,
-                    resetAbsenceFilters
+                    resetAbsenceFilters,
                     
+                    // Computed Properties
+                    availableResidents,
+                    availableAttendings,
+                    availablePhysicians,
+                    availableHeadsOfDepartment,
+                    filteredMedicalStaff,
+                    filteredRotations,
+                    filteredOncall,
+                    filteredAbsences,
+                    todaysOnCall,
+                    todaysAbsences,
+                    endingRotationsToday,
+                    recentAnnouncements,
+                    priorityItems,
+                    absenceTypes,
+                    canSubmitAbsence,
+                    stats,
+                    upcomingRotationsCount,
+                    pendingActionsCount,
+                    availableReplacementStaff,
+                    activeTrainingUnits
                 };
             }
         });
         
-        // ============ MOUNT APP ============
+        // ============ 23. MOUNT APP ============
         app.mount('#app');
         
-        console.log('🎉 NeumoCare v6.0 - FULLY COMPATIBLE VERSION mounted successfully!');
-        console.log('✅ 100% SYNCED WITH HTML CHANGES');
-        console.log('✅ ALL TEXTAREAS REMOVED (except communications)');
-        console.log('✅ BACKEND API COMPATIBILITY MAINTAINED');
-        console.log('✅ ENHANCED DASHBOARD FULLY FUNCTIONAL');
-        console.log('✅ READY FOR PRODUCTION - FLAWLESS OPERATION GUARANTEED');
+        console.log('✅ NeumoCare v6.0 mounted successfully!');
         
     } catch (error) {
         console.error('💥 FATAL ERROR mounting app:', error);
@@ -2763,8 +2626,7 @@ const availableReplacementStaff = computed(() => {
                 </p>
                 <button onclick="window.location.reload()" 
                         style="padding: 12px 24px; background: #007bff; color: white; 
-                               border: none; border-radius: 6px; cursor: pointer; 
-                               margin-top: 20px;">
+                               border: none; border-radius: 6px; cursor: pointer; margin-top: 20px;">
                     🔄 Refresh Page
                 </button>
             </div>
