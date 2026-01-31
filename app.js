@@ -135,7 +135,8 @@ const CONFIG = {
             }
         }
         
-   // ============ API SERVICE ============
+   
+// ============ API SERVICE ============
 class ApiService {
     constructor() {
         this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
@@ -165,7 +166,6 @@ class ApiService {
         }
         
         try {
-            // Test connection to health endpoint
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000);
             
@@ -181,7 +181,6 @@ class ApiService {
             this.isBackendAvailable = true;
             
         } catch (error) {
-            // Try CORS proxy as fallback
             try {
                 const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(CONFIG.API_BASE_URL.replace('/api', '') + '/health')}`;
                 
@@ -203,7 +202,6 @@ class ApiService {
     async request(endpoint, options = {}) {
         const url = `${CONFIG.API_BASE_URL}${endpoint}`;
         
-        // Check backend availability on first request
         if (!this.backendCheckAttempted) {
             await this.checkBackendAvailability();
         }
@@ -222,7 +220,6 @@ class ApiService {
                 redirect: 'follow'
             };
             
-            // Remove CORS settings when using proxy
             if (CONFIG.API_BASE_URL.includes('corsproxy.io')) {
                 delete config.mode;
                 delete config.credentials;
@@ -236,7 +233,6 @@ class ApiService {
             try {
                 response = await fetch(url, config);
             } catch (fetchError) {
-                // Fallback to CORS proxy on network errors
                 if (fetchError.name === 'TypeError' && fetchError.message.includes('Failed to fetch')) {
                     const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
                     const proxyConfig = {
@@ -273,7 +269,6 @@ class ApiService {
                     errorText = `HTTP ${response.status}: ${response.statusText}`;
                 }
                 
-                // Handle authentication errors
                 if (response.status === 401) {
                     this.token = null;
                     localStorage.removeItem(CONFIG.TOKEN_KEY);
@@ -281,7 +276,6 @@ class ApiService {
                     throw new Error('Session expired. Please login again.');
                 }
                 
-                // Return empty array for 404 on list endpoints
                 if (response.status === 404 && endpoint.match(/(staff|units|rotations|oncall|absences|announcements|departments)$/)) {
                     return [];
                 }
@@ -289,7 +283,6 @@ class ApiService {
                 throw new Error(errorText);
             }
             
-            // Parse response
             const contentType = response.headers.get('content-type');
             let data;
             
@@ -305,7 +298,6 @@ class ApiService {
             return data;
             
         } catch (error) {
-            // Handle specific error types
             if (error.message === 'BACKEND_UNAVAILABLE') {
                 throw error;
             }
@@ -350,7 +342,7 @@ class ApiService {
         try {
             await this.request('/api/auth/logout', { method: 'POST' });
         } catch (error) {
-            // Silently fail logout if backend is unavailable
+            // Silently fail if backend is unavailable
         } finally {
             this.token = null;
             localStorage.removeItem(CONFIG.TOKEN_KEY);
@@ -558,7 +550,6 @@ class ApiService {
         });
     }
     
-    // Health check
     async healthCheck() {
         try {
             const response = await this.request('/health');
@@ -567,7 +558,10 @@ class ApiService {
             return false;
         }
     }
-}
+} 
+
+// ============ INITIALIZE API SERVICE ============
+        const API = new ApiService();
         
         // ============ CREATE VUE APP ============
         const app = createApp({
