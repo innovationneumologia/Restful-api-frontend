@@ -2221,7 +2221,6 @@ const saveLiveStats = async () => {
                         staff.employment_status === 'active'
                     );
                 });
-                const stats = computed(() => dashboardStats.value);
 
 const upcomingRotationsCount = computed(() => {
     return dashboardStats.value.upcomingRotations || 0;
