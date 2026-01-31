@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
 const CONFIG = {
     // Auto-detect environment
     API_BASE_URL: window.location.hostname.includes('github.io') 
-        ? 'https://backend-neumac.up.railway.app/api'  // Production
-        : 'https://backend-neumac.up.railway.app/api', // Development (same for now)
+        ? 'https://backend-neumac.up.railway.app'  // Production
+        : 'https://backend-neumac.up.railway.app', // Development (same for now)
     
     TOKEN_KEY: 'neumocare_token',
     USER_KEY: 'neumocare_user',
