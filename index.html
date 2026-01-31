@@ -4295,56 +4295,25 @@
         </div>
     </div>
 
-    <!-- Vue Application -->
+        <!-- Vue Application -->
     <script src="app.js"></script>
     
-    <!-- Safety Check -->
+    <!-- Simple Loading Check -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            if (typeof Vue === 'undefined') {
-                console.error('Vue.js failed to load!');
-                const errorDiv = document.createElement('div');
-                errorDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:var(--critical);color:white;padding:20px;text-align:center;z-index:99999;font-family:system-ui;';
-                errorDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Vue.js failed to load. Please refresh the page or check your internet connection.';
-                document.body.appendChild(errorDiv);
+            // Just hide any loading screens after app loads
+            setTimeout(function() {
+                const loadingDiv = document.getElementById('app-loading');
+                if (loadingDiv) {
+                    loadingDiv.style.display = 'none';
+                }
                 
-                const button = document.createElement('button');
-                button.style.cssText = 'margin-left:20px;padding:8px 16px;background:white;color:var(--critical);border:none;border-radius:6px;cursor:pointer;font-weight:600;';
-                button.textContent = 'Refresh Now';
-                button.onclick = () => location.reload();
-                errorDiv.appendChild(button);
-            }
-            
-            // Add loading indicator
-            const loadingDiv = document.createElement('div');
-            loadingDiv.id = 'app-loading';
-            loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:white;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.3s;';
-            loadingDiv.innerHTML = `
-                <div style="text-align:center;">
-                    <div class="loading-spinner" style="color:var(--medical-blue);width:40px;height:40px;margin:0 auto 20px;"></div>
-                    <p style="color:var(--medical-gray);font-size:14px;">Loading NeumoCare System...</p>
-                </div>
-            `;
-            document.body.appendChild(loadingDiv);
-            
-            // Remove loading when app mounts
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'v-cloak') {
-                        const app = document.getElementById('app');
-                        if (!app.hasAttribute('v-cloak')) {
-                            setTimeout(() => {
-                                loadingDiv.style.opacity = '0';
-                                setTimeout(() => {
-                                    loadingDiv.style.display = 'none';
-                                }, 300);
-                            }, 500);
-                        }
-                    }
-                });
-            });
-            
-            observer.observe(document.getElementById('app'), { attributes: true });
+                // Also check for v-cloak removal
+                const appElement = document.getElementById('app');
+                if (appElement && appElement.hasAttribute('v-cloak')) {
+                    appElement.removeAttribute('v-cloak');
+                }
+            }, 1000); // Wait 1 second then force show app
         });
     </script>
 </body>
