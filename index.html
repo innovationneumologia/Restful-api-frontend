@@ -2764,11 +2764,12 @@
                                                 <span v-else class="text-gray-500 text-xs">Not assigned</span>
                                             </td>
                                             <td>
-                                                <span v-if="getCurrentRotationForStaff(staff.id)">
-                                                    {{ getCurrentRotationForStaff(staff.id).unitName }}
-                                                </span>
-                                                <span v-else class="text-gray-500 text-xs">Not assigned</span>
-                                            </td>
+    <span v-if="getCurrentRotationForStaff(staff.id)">
+        {{ getTrainingUnitName(getCurrentRotationForStaff(staff.id).training_unit_id) }}
+    </span>
+    <span v-else class="text-gray-500 text-xs">Not assigned</span>
+</td>
+                                            
                                             <td>
                                                 <span class="status-indicator" :class="'status-' + staff.employment_status">
                                                     {{ formatEmploymentStatus(staff.employment_status) }}
