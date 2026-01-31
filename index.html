@@ -2637,34 +2637,37 @@
                                                 <p>No on-call scheduled today</p>
                                             </td>
                                         </tr>
-                                        <tr v-else v-for="shift in todaysOnCall" :key="shift.id">
-                                            <td>{{ shift.startTime }} - {{ shift.endTime }}</td>
-                                            <td>
-                                                <div class="flex items-center gap-3">
-                                                    <div class="user-avatar">{{ getInitials(shift.physicianName) }}</div>
-                                                    <div>
-                                                        <div class="font-medium">{{ shift.physicianName }}</div>
-                                                        <div class="text-xs text-gray-500">{{ shift.staffType }}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="badge" :class="shift.shiftType === 'primary' ? 'badge-primary' : 'badge-secondary'">
-                                                    {{ shift.shiftType === 'primary' ? 'Primary' : 'Backup' }}
-                                                </span>
-                                            </td>
-                                            <td>{{ shift.coverageArea }}</td>
-                                            <td>
-                                                <span v-if="shift.backupPhysician">{{ shift.backupPhysician }}</span>
-                                                <span v-else class="text-gray-500 text-xs">None</span>
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-sm btn-outline" @click="contactPhysician(shift)" 
-                                                        aria-label="Contact physician">
-                                                    <i class="fas fa-phone"></i> Contact
-                                                </button>
-                                            </td>
-                                        </tr>
+                                      <tr v-else v-for="shift in todaysOnCall" :key="shift.id">
+    <td>{{ shift.startTime }} - {{ shift.endTime }}</td>
+    <td>
+        <div class="flex items-center gap-3">
+            <div class="user-avatar">{{ getInitials(shift.physicianName) }}</div>
+            <div>
+                <div class="font-medium">{{ shift.physicianName }}</div>
+                <div class="text-xs text-gray-500">{{ shift.staffType }}</div>
+            </div>
+        </div>
+    </td>
+    <td>
+        <span class="badge" :class="shift.shiftTypeClass">
+            {{ shift.shiftType }}
+        </span>
+    </td>
+    <td>{{ shift.coverageArea }}</td>
+    <td>
+        <span v-if="shift.backupPhysician">{{ shift.backupPhysician }}</span>
+        <span v-else class="text-gray-500 text-xs">None</span>
+    </td>
+    <td>
+        <button class="btn btn-sm btn-outline" 
+                @click="contactPhysician(shift)"
+                :disabled="!shift.contactInfo || shift.contactInfo === 'No contact info'"
+                aria-label="Contact physician">
+            <i class="fas" :class="shift.contactInfo && shift.contactInfo.includes('@') ? 'fa-envelope' : 'fa-phone'"></i> 
+            {{ shift.contactInfo && shift.contactInfo.includes('@') ? 'Email' : 'Contact' }}
+        </button>
+    </td>
+</tr>
                                     </tbody>
                                 </table>
                             </div>
