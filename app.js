@@ -134,8 +134,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // ============ API SERVICE ============
         class ApiService {
             constructor() {
-                this.token = ref(localStorage.getItem(CONFIG.TOKEN_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjExMTExMTExLTExMTEtMTExMS0xMTExLTExMTExMTExMTExMSIsImVtYWlsIjoiYWRtaW5AbmV1bW9jYXJlLm9yZyIsInJvbGUiOiJzeXN0ZW1fYWRtaW4iLCJpYXQiOjE3MzU3MzI4MDAsImV4cCI6MTczNTgxOTIwMH0.QPivbbfDP_8h2rYqyp1N9zSdPY4MVSTYdR45Yc2AotM');
-            }
+    this.token = ref(localStorage.getItem(CONFIG.TOKEN_KEY) || null);
+}
+          
             
             getHeaders() {
                 const headers = { 'Content-Type': 'application/json' };
