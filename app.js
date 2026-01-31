@@ -26,14 +26,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
         
-        // ============ CONFIGURATION ============
-        const CONFIG = {
-            API_BASE_URL: 'https://backend-neumac.up.railway.app',
-            TOKEN_KEY: 'neumocare_token',
-            USER_KEY: 'neumocare_user',
-            APP_VERSION: '6.0',
-            DEBUG: false
-        };
+       // ============ CONFIGURATION ============
+const CONFIG = {
+    // Use CORS proxy for development
+    API_BASE_URL: 'https://backend-neumac.up.railway.app/api',
+    // OR for production without CORS issues:
+    // API_BASE_URL: 'https://your-production-domain.com/api',
+    
+    TOKEN_KEY: 'neumocare_token',
+    USER_KEY: 'neumocare_user',
+    APP_VERSION: '6.0',
+    DEBUG: true
+};
         
         // ============ ENHANCED UTILITIES ============
         class EnhancedUtils {
@@ -134,87 +138,220 @@ document.addEventListener('DOMContentLoaded', function() {
    // ============ API SERVICE ============
 class ApiService {
     constructor() {
-        // FIXED: Don't use ref() - plain property
         this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
+        this.isBackendAvailable = false;
+        this.backendCheckAttempted = false;
     }
     
-    getHeaders() {
-        const headers = { 'Content-Type': 'application/json' };
-        // Get token directly from localStorage each time
-        const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+    getHeaders(includeAuth = true) {
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        };
         
-        // Debug logging
-        console.log('🔑 getHeaders() - Token from localStorage:', token ? 'Found' : 'Missing');
-        
-        if (token && token.trim()) {
-            headers['Authorization'] = `Bearer ${token}`;
-            console.log('✅ Authorization header added');
+        if (includeAuth) {
+            const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+            if (token && token.trim()) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
         }
         
         return headers;
     }
     
+    async checkBackendAvailability() {
+        if (this.backendCheckAttempted) {
+            return this.isBackendAvailable;
+        }
+        
+        try {
+            // Test connection to health endpoint
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            
+            const testUrl = CONFIG.API_BASE_URL.replace('/api', '') + '/health';
+            
+            const response = await fetch(testUrl, {
+                method: 'GET',
+                mode: 'no-cors',
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            this.isBackendAvailable = true;
+            
+        } catch (error) {
+            // Try CORS proxy as fallback
+            try {
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(CONFIG.API_BASE_URL.replace('/api', '') + '/health')}`;
+                
+                const response = await fetch(proxyUrl, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                this.isBackendAvailable = response.ok;
+            } catch {
+                this.isBackendAvailable = false;
+            }
+        }
+        
+        this.backendCheckAttempted = true;
+        return this.isBackendAvailable;
+    }
+    
     async request(endpoint, options = {}) {
         const url = `${CONFIG.API_BASE_URL}${endpoint}`;
+        
+        // Check backend availability on first request
+        if (!this.backendCheckAttempted) {
+            await this.checkBackendAvailability();
+        }
+        
+        if (!this.isBackendAvailable) {
+            throw new Error('BACKEND_UNAVAILABLE');
+        }
         
         try {
             const config = {
                 ...options,
                 headers: { ...this.getHeaders(), ...options.headers },
-                credentials: 'include',
-                mode: 'cors'
+                mode: 'cors',
+                credentials: 'omit',
+                cache: 'no-cache',
+                redirect: 'follow'
             };
+            
+            // Remove CORS settings when using proxy
+            if (CONFIG.API_BASE_URL.includes('corsproxy.io')) {
+                delete config.mode;
+                delete config.credentials;
+            }
             
             if (options.body && typeof options.body === 'object') {
                 config.body = JSON.stringify(options.body);
             }
             
-            console.log(`🌐 API Request: ${options.method || 'GET'} ${endpoint}`);
+            let response;
+            try {
+                response = await fetch(url, config);
+            } catch (fetchError) {
+                // Fallback to CORS proxy on network errors
+                if (fetchError.name === 'TypeError' && fetchError.message.includes('Failed to fetch')) {
+                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                    const proxyConfig = {
+                        ...config,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    };
+                    
+                    if (options.body) {
+                        proxyConfig.body = JSON.stringify(options.body);
+                    }
+                    
+                    response = await fetch(proxyUrl, proxyConfig);
+                } else {
+                    throw fetchError;
+                }
+            }
             
-            const response = await fetch(url, config);
+            if (response.status === 204) {
+                return null;
+            }
             
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error(`❌ API Error ${endpoint}: ${response.status}`, errorText);
-                throw new Error(errorText || `HTTP ${response.status}`);
+                let errorText;
+                try {
+                    errorText = await response.text();
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorText = errorJson.message || errorJson.error || errorText;
+                    } catch {}
+                } catch {
+                    errorText = `HTTP ${response.status}: ${response.statusText}`;
+                }
+                
+                // Handle authentication errors
+                if (response.status === 401) {
+                    this.token = null;
+                    localStorage.removeItem(CONFIG.TOKEN_KEY);
+                    localStorage.removeItem(CONFIG.USER_KEY);
+                    throw new Error('Session expired. Please login again.');
+                }
+                
+                // Return empty array for 404 on list endpoints
+                if (response.status === 404 && endpoint.match(/(staff|units|rotations|oncall|absences|announcements|departments)$/)) {
+                    return [];
+                }
+                
+                throw new Error(errorText);
             }
             
+            // Parse response
             const contentType = response.headers.get('content-type');
-            if (contentType?.includes('application/json')) {
-                return await response.json();
+            let data;
+            
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                data = await response.text();
+                try {
+                    data = JSON.parse(data);
+                } catch {}
             }
             
-            return await response.text();
+            return data;
             
         } catch (error) {
-            console.error(`💥 API Request failed for ${endpoint}:`, error);
+            // Handle specific error types
+            if (error.message === 'BACKEND_UNAVAILABLE') {
+                throw error;
+            }
+            
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                this.isBackendAvailable = false;
+                throw new Error('Cannot connect to the backend server.');
+            }
+            
+            if (error.name === 'AbortError') {
+                throw new Error('Request timeout.');
+            }
+            
             throw error;
         }
     }
     
     // ===== AUTHENTICATION =====
     async login(email, password) {
-        const data = await this.request('/api/auth/login', {
-            method: 'POST',
-            body: { email, password }
-        });
-        
-        if (data.token) {
-            // FIXED: Direct assignment
-            this.token = data.token;
-            localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
-            localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
-            console.log('✅ Login successful, token saved to localStorage');
+        try {
+            const data = await this.request('/api/auth/login', {
+                method: 'POST',
+                body: { email, password }
+            });
+            
+            if (data.token) {
+                this.token = data.token;
+                localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
+                localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
+            }
+            
+            return data;
+        } catch (error) {
+            if (error.message.includes('Failed to fetch')) {
+                throw new Error('Cannot connect to authentication server.');
+            }
+            throw new Error('Login failed: ' + error.message);
         }
-        
-        return data;
     }
     
     async logout() {
         try {
             await this.request('/api/auth/logout', { method: 'POST' });
+        } catch (error) {
+            // Silently fail logout if backend is unavailable
         } finally {
-            // FIXED: Direct assignment
             this.token = null;
             localStorage.removeItem(CONFIG.TOKEN_KEY);
             localStorage.removeItem(CONFIG.USER_KEY);
@@ -223,8 +360,12 @@ class ApiService {
     
     // ===== DATA ENDPOINTS =====
     async getMedicalStaff() {
-        const data = await this.request('/api/medical-staff');
-        return EnhancedUtils.ensureArray(data);
+        try {
+            const data = await this.request('/api/medical-staff');
+            return Array.isArray(data) ? data : [];
+        } catch {
+            return [];
+        }
     }
     
     async createMedicalStaff(staffData) {
@@ -246,8 +387,12 @@ class ApiService {
     }
     
     async getDepartments() {
-        const data = await this.request('/api/departments');
-        return EnhancedUtils.ensureArray(data);
+        try {
+            const data = await this.request('/api/departments');
+            return Array.isArray(data) ? data : [];
+        } catch {
+            return [];
+        }
     }
     
     async createDepartment(departmentData) {
@@ -265,8 +410,12 @@ class ApiService {
     }
     
     async getTrainingUnits() {
-        const data = await this.request('/api/training-units');
-        return EnhancedUtils.ensureArray(data);
+        try {
+            const data = await this.request('/api/training-units');
+            return Array.isArray(data) ? data : [];
+        } catch {
+            return [];
+        }
     }
     
     async createTrainingUnit(unitData) {
@@ -284,8 +433,12 @@ class ApiService {
     }
     
     async getRotations() {
-        const data = await this.request('/api/rotations');
-        return EnhancedUtils.ensureArray(data);
+        try {
+            const data = await this.request('/api/rotations');
+            return Array.isArray(data) ? data : [];
+        } catch {
+            return [];
+        }
     }
     
     async createRotation(rotationData) {
@@ -307,13 +460,21 @@ class ApiService {
     }
     
     async getOnCallSchedule() {
-        const data = await this.request('/api/oncall');
-        return EnhancedUtils.ensureArray(data);
+        try {
+            const data = await this.request('/api/oncall');
+            return Array.isArray(data) ? data : [];
+        } catch {
+            return [];
+        }
     }
     
     async getOnCallToday() {
-        const data = await this.request('/api/oncall/today');
-        return EnhancedUtils.ensureArray(data);
+        try {
+            const data = await this.request('/api/oncall/today');
+            return Array.isArray(data) ? data : [];
+        } catch {
+            return [];
+        }
     }
     
     async createOnCall(scheduleData) {
@@ -335,8 +496,12 @@ class ApiService {
     }
     
     async getAbsences() {
-        const data = await this.request('/api/absences');
-        return EnhancedUtils.ensureArray(data);
+        try {
+            const data = await this.request('/api/absences');
+            return Array.isArray(data) ? data : [];
+        } catch {
+            return [];
+        }
     }
     
     async createAbsence(absenceData) {
@@ -358,8 +523,12 @@ class ApiService {
     }
     
     async getAnnouncements() {
-        const data = await this.request('/api/announcements');
-        return EnhancedUtils.ensureArray(data);
+        try {
+            const data = await this.request('/api/announcements');
+            return Array.isArray(data) ? data : [];
+        } catch {
+            return [];
+        }
     }
     
     async createAnnouncement(announcementData) {
@@ -371,7 +540,8 @@ class ApiService {
     
     async getSettings() {
         try {
-            return await this.request('/api/settings');
+            const data = await this.request('/api/settings');
+            return data || {};
         } catch {
             return {
                 hospital_name: 'NeumoCare Hospital',
@@ -387,10 +557,17 @@ class ApiService {
             body: settingsData
         });
     }
+    
+    // Health check
+    async healthCheck() {
+        try {
+            const response = await this.request('/health');
+            return response && response.status === 'ok';
+        } catch {
+            return false;
+        }
+    }
 }
-
-// Initialize API service
-const API = new ApiService();
         
         // ============ CREATE VUE APP ============
         const app = createApp({
