@@ -131,254 +131,266 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // ============ API SERVICE ============
-        class ApiService {
-            constructor() {
-    this.token = ref(localStorage.getItem(CONFIG.TOKEN_KEY) || null);
-}
-          
-            
-          getHeaders() {
-    const headers = { 'Content-Type': 'application/json' };
-    // Get token directly from localStorage each time
-    const token = localStorage.getItem(CONFIG.TOKEN_KEY);
-    if (token && token.trim()) {
-        headers['Authorization'] = `Bearer ${token}`;
+   // ============ API SERVICE ============
+class ApiService {
+    constructor() {
+        // FIXED: Don't use ref() - plain property
+        this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
     }
-    return headers;
-}
-            
-            async request(endpoint, options = {}) {
-                const url = `${CONFIG.API_BASE_URL}${endpoint}`;
-                
-                try {
-                    const config = {
-                        ...options,
-                        headers: { ...this.getHeaders(), ...options.headers },
-                        credentials: 'include',
-                        mode: 'cors'
-                    };
-                    
-                    if (options.body && typeof options.body === 'object') {
-                        config.body = JSON.stringify(options.body);
-                    }
-                    
-                    const response = await fetch(url, config);
-                    
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(errorText || `HTTP ${response.status}`);
-                    }
-                    
-                    const contentType = response.headers.get('content-type');
-                    if (contentType?.includes('application/json')) {
-                        return await response.json();
-                    }
-                    
-                    return await response.text();
-                    
-                } catch (error) {
-                    console.error(`API Request failed for ${endpoint}:`, error);
-                    throw error;
-                }
-            }
-            
-            // ===== AUTHENTICATION =====
-            async login(email, password) {
-                const data = await this.request('/api/auth/login', {
-                    method: 'POST',
-                    body: { email, password }
-                });
-                
-                if (data.token) {
-                    this.token.value = data.token;
-                    localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
-                    localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
-                }
-                
-                return data;
-            }
-            
-            async logout() {
-                try {
-                    await this.request('/api/auth/logout', { method: 'POST' });
-                } finally {
-                    this.token.value = null;
-                    localStorage.removeItem(CONFIG.TOKEN_KEY);
-                    localStorage.removeItem(CONFIG.USER_KEY);
-                }
-            }
-            
-            // ===== DATA ENDPOINTS =====
-            async getMedicalStaff() {
-                const data = await this.request('/api/medical-staff');
-                return EnhancedUtils.ensureArray(data);
-            }
-            
-            async createMedicalStaff(staffData) {
-                return await this.request('/api/medical-staff', {
-                    method: 'POST',
-                    body: staffData
-                });
-            }
-            
-            async updateMedicalStaff(id, staffData) {
-                return await this.request(`/api/medical-staff/${id}`, {
-                    method: 'PUT',
-                    body: staffData
-                });
-            }
-            
-            async deleteMedicalStaff(id) {
-                return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
-            }
-            
-            async getDepartments() {
-                const data = await this.request('/api/departments');
-                return EnhancedUtils.ensureArray(data);
-            }
-            
-            async createDepartment(departmentData) {
-                return await this.request('/api/departments', {
-                    method: 'POST',
-                    body: departmentData
-                });
-            }
-            
-            async updateDepartment(id, departmentData) {
-                return await this.request(`/api/departments/${id}`, {
-                    method: 'PUT',
-                    body: departmentData
-                });
-            }
-            
-            async getTrainingUnits() {
-                const data = await this.request('/api/training-units');
-                return EnhancedUtils.ensureArray(data);
-            }
-            
-            async createTrainingUnit(unitData) {
-                return await this.request('/api/training-units', {
-                    method: 'POST',
-                    body: unitData
-                });
-            }
-            
-            async updateTrainingUnit(id, unitData) {
-                return await this.request(`/api/training-units/${id}`, {
-                    method: 'PUT',
-                    body: unitData
-                });
-            }
-            
-            async getRotations() {
-                const data = await this.request('/api/rotations');
-                return EnhancedUtils.ensureArray(data);
-            }
-            
-            async createRotation(rotationData) {
-                return await this.request('/api/rotations', {
-                    method: 'POST',
-                    body: rotationData
-                });
-            }
-            
-            async updateRotation(id, rotationData) {
-                return await this.request(`/api/rotations/${id}`, {
-                    method: 'PUT',
-                    body: rotationData
-                });
-            }
-            
-            async deleteRotation(id) {
-                return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
-            }
-            
-            async getOnCallSchedule() {
-                const data = await this.request('/api/oncall');
-                return EnhancedUtils.ensureArray(data);
-            }
-            
-            async getOnCallToday() {
-                const data = await this.request('/api/oncall/today');
-                return EnhancedUtils.ensureArray(data);
-            }
-            
-            async createOnCall(scheduleData) {
-                return await this.request('/api/oncall', {
-                    method: 'POST',
-                    body: scheduleData
-                });
-            }
-            
-            async updateOnCall(id, scheduleData) {
-                return await this.request(`/api/oncall/${id}`, {
-                    method: 'PUT',
-                    body: scheduleData
-                });
-            }
-            
-            async deleteOnCall(id) {
-                return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
-            }
-            
-            async getAbsences() {
-                const data = await this.request('/api/absences');
-                return EnhancedUtils.ensureArray(data);
-            }
-            
-            async createAbsence(absenceData) {
-                return await this.request('/api/absences', {
-                    method: 'POST',
-                    body: absenceData
-                });
-            }
-            
-            async updateAbsence(id, absenceData) {
-                return await this.request(`/api/absences/${id}`, {
-                    method: 'PUT',
-                    body: absenceData
-                });
-            }
-            
-            async deleteAbsence(id) {
-                return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
-            }
-            
-            async getAnnouncements() {
-                const data = await this.request('/api/announcements');
-                return EnhancedUtils.ensureArray(data);
-            }
-            
-            async createAnnouncement(announcementData) {
-                return await this.request('/api/announcements', {
-                    method: 'POST',
-                    body: announcementData
-                });
-            }
-            
-            async getSettings() {
-                try {
-                    return await this.request('/api/settings');
-                } catch {
-                    return {
-                        hospital_name: 'NeumoCare Hospital',
-                        system_version: '6.0',
-                        maintenance_mode: false
-                    };
-                }
-            }
-            
-            async updateSettings(settingsData) {
-                return await this.request('/api/settings', {
-                    method: 'PUT',
-                    body: settingsData
-                });
-            }
+    
+    getHeaders() {
+        const headers = { 'Content-Type': 'application/json' };
+        // Get token directly from localStorage each time
+        const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+        
+        // Debug logging
+        console.log('🔑 getHeaders() - Token from localStorage:', token ? 'Found' : 'Missing');
+        
+        if (token && token.trim()) {
+            headers['Authorization'] = `Bearer ${token}`;
+            console.log('✅ Authorization header added');
         }
         
-        // Initialize API service
-        const API = new ApiService();
+        return headers;
+    }
+    
+    async request(endpoint, options = {}) {
+        const url = `${CONFIG.API_BASE_URL}${endpoint}`;
+        
+        try {
+            const config = {
+                ...options,
+                headers: { ...this.getHeaders(), ...options.headers },
+                credentials: 'include',
+                mode: 'cors'
+            };
+            
+            if (options.body && typeof options.body === 'object') {
+                config.body = JSON.stringify(options.body);
+            }
+            
+            console.log(`🌐 API Request: ${options.method || 'GET'} ${endpoint}`);
+            
+            const response = await fetch(url, config);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`❌ API Error ${endpoint}: ${response.status}`, errorText);
+                throw new Error(errorText || `HTTP ${response.status}`);
+            }
+            
+            const contentType = response.headers.get('content-type');
+            if (contentType?.includes('application/json')) {
+                return await response.json();
+            }
+            
+            return await response.text();
+            
+        } catch (error) {
+            console.error(`💥 API Request failed for ${endpoint}:`, error);
+            throw error;
+        }
+    }
+    
+    // ===== AUTHENTICATION =====
+    async login(email, password) {
+        const data = await this.request('/api/auth/login', {
+            method: 'POST',
+            body: { email, password }
+        });
+        
+        if (data.token) {
+            // FIXED: Direct assignment
+            this.token = data.token;
+            localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
+            localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
+            console.log('✅ Login successful, token saved to localStorage');
+        }
+        
+        return data;
+    }
+    
+    async logout() {
+        try {
+            await this.request('/api/auth/logout', { method: 'POST' });
+        } finally {
+            // FIXED: Direct assignment
+            this.token = null;
+            localStorage.removeItem(CONFIG.TOKEN_KEY);
+            localStorage.removeItem(CONFIG.USER_KEY);
+        }
+    }
+    
+    // ===== DATA ENDPOINTS =====
+    async getMedicalStaff() {
+        const data = await this.request('/api/medical-staff');
+        return EnhancedUtils.ensureArray(data);
+    }
+    
+    async createMedicalStaff(staffData) {
+        return await this.request('/api/medical-staff', {
+            method: 'POST',
+            body: staffData
+        });
+    }
+    
+    async updateMedicalStaff(id, staffData) {
+        return await this.request(`/api/medical-staff/${id}`, {
+            method: 'PUT',
+            body: staffData
+        });
+    }
+    
+    async deleteMedicalStaff(id) {
+        return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
+    }
+    
+    async getDepartments() {
+        const data = await this.request('/api/departments');
+        return EnhancedUtils.ensureArray(data);
+    }
+    
+    async createDepartment(departmentData) {
+        return await this.request('/api/departments', {
+            method: 'POST',
+            body: departmentData
+        });
+    }
+    
+    async updateDepartment(id, departmentData) {
+        return await this.request(`/api/departments/${id}`, {
+            method: 'PUT',
+            body: departmentData
+        });
+    }
+    
+    async getTrainingUnits() {
+        const data = await this.request('/api/training-units');
+        return EnhancedUtils.ensureArray(data);
+    }
+    
+    async createTrainingUnit(unitData) {
+        return await this.request('/api/training-units', {
+            method: 'POST',
+            body: unitData
+        });
+    }
+    
+    async updateTrainingUnit(id, unitData) {
+        return await this.request(`/api/training-units/${id}`, {
+            method: 'PUT',
+            body: unitData
+        });
+    }
+    
+    async getRotations() {
+        const data = await this.request('/api/rotations');
+        return EnhancedUtils.ensureArray(data);
+    }
+    
+    async createRotation(rotationData) {
+        return await this.request('/api/rotations', {
+            method: 'POST',
+            body: rotationData
+        });
+    }
+    
+    async updateRotation(id, rotationData) {
+        return await this.request(`/api/rotations/${id}`, {
+            method: 'PUT',
+            body: rotationData
+        });
+    }
+    
+    async deleteRotation(id) {
+        return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
+    }
+    
+    async getOnCallSchedule() {
+        const data = await this.request('/api/oncall');
+        return EnhancedUtils.ensureArray(data);
+    }
+    
+    async getOnCallToday() {
+        const data = await this.request('/api/oncall/today');
+        return EnhancedUtils.ensureArray(data);
+    }
+    
+    async createOnCall(scheduleData) {
+        return await this.request('/api/oncall', {
+            method: 'POST',
+            body: scheduleData
+        });
+    }
+    
+    async updateOnCall(id, scheduleData) {
+        return await this.request(`/api/oncall/${id}`, {
+            method: 'PUT',
+            body: scheduleData
+        });
+    }
+    
+    async deleteOnCall(id) {
+        return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
+    }
+    
+    async getAbsences() {
+        const data = await this.request('/api/absences');
+        return EnhancedUtils.ensureArray(data);
+    }
+    
+    async createAbsence(absenceData) {
+        return await this.request('/api/absences', {
+            method: 'POST',
+            body: absenceData
+        });
+    }
+    
+    async updateAbsence(id, absenceData) {
+        return await this.request(`/api/absences/${id}`, {
+            method: 'PUT',
+            body: absenceData
+        });
+    }
+    
+    async deleteAbsence(id) {
+        return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
+    }
+    
+    async getAnnouncements() {
+        const data = await this.request('/api/announcements');
+        return EnhancedUtils.ensureArray(data);
+    }
+    
+    async createAnnouncement(announcementData) {
+        return await this.request('/api/announcements', {
+            method: 'POST',
+            body: announcementData
+        });
+    }
+    
+    async getSettings() {
+        try {
+            return await this.request('/api/settings');
+        } catch {
+            return {
+                hospital_name: 'NeumoCare Hospital',
+                system_version: '6.0',
+                maintenance_mode: false
+            };
+        }
+    }
+    
+    async updateSettings(settingsData) {
+        return await this.request('/api/settings', {
+            method: 'PUT',
+            body: settingsData
+        });
+    }
+}
+
+// Initialize API service
+const API = new ApiService();
         
         // ============ CREATE VUE APP ============
         const app = createApp({
