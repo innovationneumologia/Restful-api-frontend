@@ -470,14 +470,28 @@ const API = new ApiService();
                 });
                 
                 const todaysOnCallData = ref([]);
-                const liveStats = reactive({
-                    occupancy: 65,
-                    occupancyTrend: 2.5,
-                    onDutyStaff: 24,
-                    staffTrend: 1,
-                    pendingRequests: 8,
-                    activeRotations: 12
-                });
+                const editLiveStats = ref(false);
+
+// Update the liveStats to include the missing properties
+const liveStats = reactive({
+    occupancy: 65,
+    occupancyTrend: 2.5,
+    onDutyStaff: 24,
+    staffTrend: 1,
+    pendingRequests: 8,
+    activeRotations: 12,
+    // Add the missing properties referenced in HTML
+    dailyUpdate: 'ER: 3 critical, ICU: 90%, Ward A: Full',
+    updatedAt: new Date().toISOString(),
+    metric1: {
+        label: 'ER Wait',
+        value: '15 min'
+    },
+    metric2: {
+        label: 'ICU Beds',
+        value: '2'
+    }
+});
                 // ============ ADD MISSING roleModal STATE ============
 const roleModal = reactive({
     show: false,
@@ -922,6 +936,91 @@ const formatPermissionName = (name) => {
                     const dept = departments.value.find(d => d.id === departmentId);
                     return dept ? dept.name : 'Unknown Department';
                 };
+                // Add these missing functions for staff details
+const getCurrentRotationUnit = (staffId) => {
+    const activeRotation = rotations.value.find(r => 
+        r.resident_id === staffId && r.rotation_status === 'active'
+    );
+    return activeRotation ? getTrainingUnitName(activeRotation.training_unit_id) : null;
+};
+
+const getRotationSupervisor = (staffId) => {
+    const activeRotation = rotations.value.find(r => 
+        r.resident_id === staffId && r.rotation_status === 'active'
+    );
+    return activeRotation ? getStaffName(activeRotation.supervising_attending_id) : null;
+};
+
+const getRotationDaysLeft = (staffId) => {
+    const activeRotation = rotations.value.find(r => 
+        r.resident_id === staffId && r.rotation_status === 'active'
+    );
+    if (!activeRotation) return null;
+    
+    const endDate = new Date(activeRotation.rotation_end_date);
+    const today = new Date();
+    const diffTime = endDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+};
+
+const getCurrentUnit = (staffId) => {
+    return getCurrentRotationUnit(staffId);
+};
+
+const getCurrentActivityStatus = (staffId) => {
+    // Check if staff is on-call today
+    const today = new Date().toISOString().split('T')[0];
+    const onCallToday = onCallSchedule.value.find(s => 
+        (s.primary_physician_id === staffId || s.backup_physician_id === staffId) &&
+        s.duty_date === today
+    );
+    
+    if (onCallToday) return 'oncall';
+    
+    // Check if staff is absent today
+    const absentToday = absences.value.find(a => 
+        a.staff_member_id === staffId &&
+        a.start_date <= today &&
+        a.end_date >= today &&
+        a.status === 'approved'
+    );
+    
+    if (absentToday) return 'absent';
+    
+    return 'active';
+};
+                // Add these helper functions
+const formatRelativeTime = (dateString) => {
+    if (!dateString) return 'Just now';
+    try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+        return `${Math.floor(diffMins / 1440)}d ago`;
+    } catch {
+        return 'Just now';
+    }
+};
+
+const saveLiveStats = async () => {
+    saving.value = true;
+    try {
+        // Here you would save to your backend
+        liveStats.updatedAt = new Date().toISOString();
+        showToast('Success', 'Live stats updated successfully', 'success');
+        editLiveStats.value = false;
+    } catch (error) {
+        showToast('Error', error.message, 'error');
+    } finally {
+        saving.value = false;
+    }
+};
                 
                 const getStaffName = (staffId) => {
                     if (!staffId) return 'Not Assigned';
@@ -956,6 +1055,7 @@ const formatPermissionName = (name) => {
                         })
                         .filter(Boolean);
                 };
+
                 
                 const getDepartmentUnits = (departmentId) => {
                     return trainingUnits.value.filter(unit => unit.department_id === departmentId);
@@ -2121,6 +2221,22 @@ const formatPermissionName = (name) => {
                         staff.employment_status === 'active'
                     );
                 });
+                const stats = computed(() => dashboardStats.value);
+
+const upcomingRotationsCount = computed(() => {
+    return dashboardStats.value.upcomingRotations || 0;
+});
+
+const pendingActionsCount = computed(() => {
+    return dashboardStats.value.pendingAbsences || 0;
+});
+
+const availableReplacementStaff = computed(() => {
+    return medicalStaff.value.filter(staff => 
+        staff.employment_status === 'active' && 
+        staff.staff_type === 'medical_resident'
+    );
+});
                 const activeTrainingUnits = computed(() => {
     return trainingUnits.value.filter(unit => unit.unit_status === 'active');
 });
@@ -2533,6 +2649,17 @@ const formatPermissionName = (name) => {
                     deleteOnCallSchedule,
                      getCommunicationIcon,
         getCommunicationButtonText,
+                    editLiveStats,
+    formatRelativeTime,
+    saveLiveStats,
+    upcomingRotationsCount,
+    pendingActionsCount,
+    availableReplacementStaff,
+    getCurrentRotationUnit,
+    getRotationSupervisor,
+    getRotationDaysLeft,
+    getCurrentUnit,
+    getCurrentActivityStatus,
                     
                     // Filter Function
                     applyStaffFilters,
@@ -2543,6 +2670,7 @@ const formatPermissionName = (name) => {
                     resetOncallFilters,
                     applyAbsenceFilters,
                     resetAbsenceFilters
+                    
                 };
             }
         });
