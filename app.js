@@ -138,14 +138,15 @@ document.addEventListener('DOMContentLoaded', function() {
 }
           
             
-            getHeaders() {
-                const headers = { 'Content-Type': 'application/json' };
-                const token = this.token.value;
-                if (token && token.trim()) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-                return headers;
-            }
+          getHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    // Get token directly from localStorage each time
+    const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+    if (token && token.trim()) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+}
             
             async request(endpoint, options = {}) {
                 const url = `${CONFIG.API_BASE_URL}${endpoint}`;
@@ -386,9 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const getCommunicationIcon = (tab) => {
         return tab === 'announcement' ? 'fas fa-bullhorn' : 'fas fa-sticky-note';
     };
-                // Temporary: Always start fresh
-localStorage.removeItem(CONFIG.TOKEN_KEY);
-localStorage.removeItem(CONFIG.USER_KEY);
+   
     
     // 2. getCommunicationButtonText function
     const getCommunicationButtonText = (tab) => {
