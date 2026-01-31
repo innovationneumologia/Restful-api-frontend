@@ -1538,20 +1538,21 @@ const loadTodaysOnCall = async () => {
                     trainingUnitModal.show = true;
                 };
                 
-                const showAddRotationModal = () => {
-                    rotationModal.mode = 'add';
-                    rotationModal.form = {
-                        rotation_id: `ROT-${Date.now().toString().slice(-6)}`,
-                        resident_id: '',
-                        training_unit_id: '',
-                        rotation_start_date: new Date().toISOString().split('T')[0],
-                        rotation_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        rotation_status: 'scheduled',
-                        rotation_category: 'clinical_rotation',
-                        supervising_attending_id: ''
-                    };
-                    rotationModal.show = true;
-                };
+               const showAddRotationModal = () => {
+    rotationModal.mode = 'add';
+    rotationModal.form = {
+        rotation_id: `ROT-${Date.now().toString().slice(-6)}`,
+        resident_id: '',
+        training_unit_id: '',
+        // CORRECT FIELD NAMES:
+        start_date: new Date().toISOString().split('T')[0],  // ✅ CORRECT
+        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],  // ✅ CORRECT
+        rotation_status: 'active',  // ✅ CORRECT - must be: 'active', 'upcoming', 'completed', or 'cancelled'
+        rotation_category: 'clinical_rotation',
+        supervising_attending_id: ''
+    };
+    rotationModal.show = true;
+};
                 
                 const showAddOnCallModal = () => {
                     onCallModal.mode = 'add';
