@@ -1238,15 +1238,84 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // 8.7 Load Today's On-call
-                const loadTodaysOnCall = async () => {
-                    try {
-                        const data = await API.getOnCallToday();
-                        todaysOnCall.value = data;
-                    } catch (error) {
-                        console.error('Failed to load today\'s on-call:', error);
-                    }
-                };
+                // 8.7 Load Today's On-call - FIXED VERSION
+const loadTodaysOnCall = async () => {
+  try {
+    loadingSchedule.value = true;
+    const data = await API.getOnCallToday();
+    
+    console.log('Raw on-call data:', data); // Debug log
+    
+    // Transform backend data to match frontend expectations
+    todaysOnCall.value = data.map(item => {
+      // 1. Format time (remove seconds from "08:00:00" → "08:00")
+      const startTime = item.start_time ? item.start_time.substring(0, 5) : 'N/A';
+      const endTime = item.end_time ? item.end_time.substring(0, 5) : 'N/A';
+      
+      // 2. Get physician name from nested object
+      const physicianName = item.primary_physician?.full_name || 'Unknown Physician';
+      const physicianEmail = item.primary_physician?.professional_email || '';
+      
+      // 3. Format shift type ("primary_call" → "Primary")
+      let shiftTypeDisplay = 'Unknown';
+      let shiftTypeClass = 'badge-secondary';
+      
+      if (item.shift_type === 'primary_call' || item.shift_type === 'primary') {
+        shiftTypeDisplay = 'Primary';
+        shiftTypeClass = 'badge-primary';
+      } else if (item.shift_type === 'backup_call' || item.shift_type === 'backup' || item.shift_type === 'secondary') {
+        shiftTypeDisplay = 'Backup';
+        shiftTypeClass = 'badge-secondary';
+      }
+      
+      // 4. Get coverage area from coverage_notes field
+      const coverageArea = item.coverage_notes || 'General Coverage';
+      
+      // 5. Get backup physician name
+      const backupPhysician = item.backup_physician?.full_name || null;
+      
+      // 6. Get contact info (phone or email)
+      const contactInfo = item.primary_physician?.mobile_phone || 
+                         item.primary_physician?.professional_email || 
+                         'No contact info';
+      
+      // 7. Get staff type by matching with medicalStaff data
+      let staffType = 'Physician';
+      const matchingStaff = medicalStaff.value.find(staff => 
+        staff.id === item.primary_physician_id ||
+        staff.professional_email === physicianEmail
+      );
+      
+      if (matchingStaff) {
+        staffType = formatStaffType(matchingStaff.staff_type);
+      }
+      
+      return {
+        id: item.id,
+        startTime,
+        endTime,
+        physicianName,
+        staffType,
+        shiftType: shiftTypeDisplay,
+        shiftTypeClass,
+        coverageArea,
+        backupPhysician,
+        contactInfo,
+        // Keep raw data for debugging
+        raw: item
+      };
+    });
+    
+    console.log('Transformed on-call data:', todaysOnCall.value); // Debug log
+    
+  } catch (error) {
+    console.error('Failed to load today\'s on-call:', error);
+    showToast('Error', 'Failed to load today\'s on-call schedule', 'error');
+    todaysOnCall.value = [];
+  } finally {
+    loadingSchedule.value = false;
+  }
+};
                 
                 // 8.8 Load Announcements
                 const loadAnnouncements = async () => {
@@ -1805,9 +1874,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // ============ 15. ACTION FUNCTIONS ============
                 
-                const contactPhysician = (shift) => {
-                    showToast('Contact', `Would contact ${getPhysicianName(shift.primary_physician_id)}...`, 'info');
-                };
+const contactPhysician = (shift) => {
+  if (shift.contactInfo && shift.contactInfo !== 'No contact info') {
+    showToast('Contact Physician', 
+      `Would contact ${shift.physicianName} via ${shift.contactInfo.includes('@') ? 'email' : 'phone'}`, 
+      'info');
+  } else {
+    showToast('No Contact Info', 
+      `No contact information available for ${shift.physicianName}`, 
+      'warning');
+  }
+};
                 
                 const viewAnnouncement = (announcement) => {
                     showToast(announcement.title, EnhancedUtils.truncateText(announcement.content, 100), 'info');
