@@ -2432,6 +2432,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     liveStats,
                     editLiveStats,
                      getSearchPlaceholder,
+    getPhysicianName,
+    calculateAbsenceDuration,
+    getResidentName,
 
                     
                     // UI
