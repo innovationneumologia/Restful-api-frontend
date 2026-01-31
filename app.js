@@ -742,7 +742,38 @@ document.addEventListener('DOMContentLoaded', function() {
                         communications: ['read']
                     }
                 };
-                
+                const formatDateForBackend = (dateString) => {
+    if (!dateString) return '';
+    
+    console.log('📅 Formatting date:', dateString);
+    
+    // Already in YYYY-MM-DD format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        return dateString;
+    }
+    
+    // Try to parse DD/MM/YYYY format
+    if (dateString.includes('/')) {
+        const parts = dateString.split('/');
+        if (parts.length === 3) {
+            const [day, month, year] = parts;
+            const formatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            console.log('✅ Converted to:', formatted);
+            return formatted;
+        }
+    }
+    
+    // Try to parse as Date object
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+        const formatted = date.toISOString().split('T')[0];
+        console.log('📆 Parsed as Date:', formatted);
+        return formatted;
+    }
+    
+    console.log('⚠️ Could not parse date, returning as-is:', dateString);
+    return dateString;
+};
                 // ============ 7. UTILITY FUNCTIONS ============
                 
                 // 7.1 Toast System
@@ -941,31 +972,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const getResidentName = (residentId) => {
                     return getStaffName(residentId);
                 };
-                // Add this to your utility functions (around line 1140)
-const formatDateForBackend = (dateString) => {
-    if (!dateString) return '';
-    
-    // Already in YYYY-MM-DD format
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-        return dateString;
-    }
-    
-    // Try to parse DD/MM/YYYY format
-    const parts = dateString.split('/');
-    if (parts.length === 3) {
-        const [day, month, year] = parts;
-        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-    
-    // Try to parse as Date object
-    const date = new Date(dateString);
-    if (!isNaN(date.getTime())) {
-        return date.toISOString().split('T')[0];
-    }
-    
-    // Return as-is (let backend handle validation)
-    return dateString;
-};
+
                 
                 const getDepartmentUnits = (departmentId) => {
                     return trainingUnits.value.filter(unit => unit.department_id === departmentId);
@@ -1767,33 +1774,89 @@ const loadTodaysOnCall = async () => {
                     }
                 };
                 
-                const saveRotation = async () => {
+const saveRotation = async () => {
+    // ========== VALIDATION ==========
+    if (!rotationModal.form.resident_id) {
+        showToast('Error', 'Please select a resident', 'error');
+        return;
+    }
+    
+    if (!rotationModal.form.training_unit_id) {
+        showToast('Error', 'Please select a training unit', 'error');
+        return;
+    }
+    
+    if (!rotationModal.form.start_date) {
+        showToast('Error', 'Please enter a start date', 'error');
+        return;
+    }
+    
+    if (!rotationModal.form.end_date) {
+        showToast('Error', 'Please enter an end date', 'error');
+        return;
+    }
+    
+    // Check end date is after start date
+    const start = new Date(formatDateForBackend(rotationModal.form.start_date));
+    const end = new Date(formatDateForBackend(rotationModal.form.end_date));
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        showToast('Error', 'Invalid date format. Please use YYYY-MM-DD', 'error');
+        return;
+    }
+    
+    if (end <= start) {
+        showToast('Error', 'End date must be after start date', 'error');
+        return;
+    }
+    
     saving.value = true;
+    
     try {
-        // ADD DATE FORMAT CONVERSION HERE
-        const formattedData = {
-            ...rotationModal.form,
-            start_date: formatDateForBackend(rotationModal.form.start_date),
-            end_date: formatDateForBackend(rotationModal.form.end_date),
-            rotation_category: rotationModal.form.rotation_category.toLowerCase()
+        // ========== DATA TRANSFORMATION ==========
+        // Convert dates from DD/MM/YYYY to YYYY-MM-DD
+        const startDate = formatDateForBackend(rotationModal.form.start_date);
+        const endDate = formatDateForBackend(rotationModal.form.end_date);
+        
+        // Convert category to lowercase
+        const rotationCategory = rotationModal.form.rotation_category.toLowerCase();
+        
+        // Convert status to lowercase
+        const rotationStatus = rotationModal.form.rotation_status.toLowerCase();
+        
+        // Build the final data object
+        const rotationData = {
+            rotation_id: rotationModal.form.rotation_id,
+            resident_id: rotationModal.form.resident_id,
+            training_unit_id: rotationModal.form.training_unit_id,
+            supervising_attending_id: rotationModal.form.supervising_attending_id || null,
+            start_date: startDate,
+            end_date: endDate,
+            rotation_category: rotationCategory,
+            rotation_status: rotationStatus
         };
         
+        console.log('📤 Sending rotation data:', rotationData);
+        
+        // ========== API CALL ==========
         if (rotationModal.mode === 'add') {
-            const result = await API.createRotation(formattedData); // Use formattedData
+            const result = await API.createRotation(rotationData);
             rotations.value.unshift(result);
             showToast('Success', 'Rotation scheduled successfully', 'success');
         } else {
-            const result = await API.updateRotation(rotationModal.form.id, formattedData);
+            const result = await API.updateRotation(rotationModal.form.id, rotationData);
             const index = rotations.value.findIndex(r => r.id === result.id);
             if (index !== -1) rotations.value[index] = result;
             showToast('Success', 'Rotation updated successfully', 'success');
         }
+        
+        // ========== CLEANUP ==========
         rotationModal.show = false;
         await loadRotations();
         updateDashboardStats();
         
     } catch (error) {
-        showToast('Error', error.message, 'error');
+        console.error('❌ Rotation creation error:', error);
+        showToast('Error', error.message || 'Failed to save rotation', 'error');
     } finally {
         saving.value = false;
     }
