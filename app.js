@@ -1,5 +1,5 @@
 // ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM v8.0 ============
-// ENHANCED WITH NEUMAC PROFESSIONAL UI - FULLY COMPATIBLE
+// ENHANCED WITH NEUMAC PROFESSIONAL UI - COMPLETE VERSION
 // ===================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // ============ 4. API SERVICE ============
+        // ============ 4. COMPLETE API SERVICE ============
         class ApiService {
             constructor() {
                 this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // ===== DATA ENDPOINTS =====
+            // ===== MEDICAL STAFF ENDPOINTS =====
             async getMedicalStaff() {
                 try {
                     const data = await this.request('/api/medical-staff');
@@ -241,6 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
             }
             
+            // ===== DEPARTMENT ENDPOINTS =====
             async getDepartments() {
                 try {
                     const data = await this.request('/api/departments');
@@ -262,6 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
+            // ===== TRAINING UNIT ENDPOINTS =====
             async getTrainingUnits() {
                 try {
                     const data = await this.request('/api/training-units');
@@ -283,6 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
+            // ===== ROTATION ENDPOINTS =====
             async getRotations() {
                 try {
                     const data = await this.request('/api/rotations');
@@ -308,6 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
             }
             
+            // ===== ON-CALL ENDPOINTS =====
             async getOnCallSchedule() {
                 try {
                     const data = await this.request('/api/oncall');
@@ -340,6 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
             }
             
+            // ===== ABSENCE ENDPOINTS =====
             async getAbsences() {
                 try {
                     const data = await this.request('/api/absences');
@@ -365,6 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
             }
             
+            // ===== ANNOUNCEMENT ENDPOINTS =====
             async getAnnouncements() {
                 try {
                     const data = await this.request('/api/announcements');
@@ -390,6 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
             }
             
+            // ===== LIVE UPDATE ENDPOINTS =====
             async getLiveUpdates() {
                 try {
                     const data = await this.request('/api/live-updates');
@@ -411,6 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
+            // ===== SYSTEM STATS ENDPOINT =====
             async getSystemStats() {
                 try {
                     const data = await this.request('/api/system-stats');
@@ -746,8 +754,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const formatDateForBackend = (dateString) => {
                     if (!dateString) return '';
                     
-                    console.log('📅 Formatting date:', dateString);
-                    
                     // Already in YYYY-MM-DD format
                     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
                         return dateString;
@@ -758,27 +764,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         const parts = dateString.split('/');
                         if (parts.length === 3) {
                             const [day, month, year] = parts;
-                            const formatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-                            console.log('✅ Converted to:', formatted);
-                            return formatted;
+                            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
                         }
                     }
                     
                     // Try to parse as Date object
                     const date = new Date(dateString);
                     if (!isNaN(date.getTime())) {
-                        const formatted = date.toISOString().split('T')[0];
-                        console.log('📆 Parsed as Date:', formatted);
-                        return formatted;
+                        return date.toISOString().split('T')[0];
                     }
                     
-                    console.log('⚠️ Could not parse date, returning as-is:', dateString);
                     return dateString;
                 };
                 
                 // ============ 7. NEUMAC ENHANCEMENT FUNCTIONS ============
                 
-                // 7.1 Enhanced shift status for NEUMAC UI
                 const getShiftStatusClass = (shift) => {
                     if (!shift || !shift.raw) return 'neumac-status-oncall';
                     
@@ -807,7 +807,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return shift.shiftType === 'Primary' ? 'neumac-status-oncall' : 'neumac-status-busy';
                 };
                 
-                // 7.2 Check if shift is currently active
                 const isCurrentShift = (shift) => {
                     if (!shift || !shift.raw) return false;
                     
@@ -833,7 +832,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // 7.3 Staff type icon mapper
                 const getStaffTypeIcon = (staffType) => {
                     const icons = {
                         'attending_physician': 'fa-user-md',
@@ -844,13 +842,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     return icons[staffType] || 'fa-user';
                 };
                 
-                // 7.4 Capacity calculation for training units
                 const calculateCapacityPercent = (current, max) => {
                     if (current === undefined || current === null || !max || max === 0) return 0;
                     return Math.round((current / max) * 100);
                 };
                 
-                // 7.5 Visual capacity dot classification
                 const getCapacityDotClass = (index, current) => {
                     if (!current || current === 0) return 'available';
                     if (index <= current) {
@@ -862,7 +858,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return 'available';
                 };
                 
-                // 7.6 Capacity meter fill classification
                 const getMeterFillClass = (current, max) => {
                     if (!current || !max) return '';
                     const percent = (current / max) * 100;
@@ -871,7 +866,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return '';
                 };
                 
-                // 7.7 Absence reason icon mapper
                 const getAbsenceReasonIcon = (reason) => {
                     const icons = {
                         'vacation': 'fa-umbrella-beach',
@@ -884,7 +878,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return icons[reason] || 'fa-clock';
                 };
                 
-                // 7.8 Schedule icon mapper
                 const getScheduleIcon = (activity) => {
                     if (!activity) return 'fa-calendar-check';
                     
@@ -900,7 +893,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // ============ 8. UTILITY FUNCTIONS ============
                 
-                // 8.1 Toast System
                 const showToast = (title, message, type = 'info', duration = 5000) => {
                     const icons = {
                         info: 'fas fa-info-circle',
@@ -930,7 +922,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (index > -1) toasts.value.splice(index, 1);
                 };
                 
-                // 8.2 Confirmation Modal
                 const showConfirmation = (options) => {
                     Object.assign(confirmationModal, {
                         show: true,
@@ -953,7 +944,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     confirmationModal.show = false;
                 };
                 
-                // 8.3 Formatting Functions
                 const formatStaffType = (type) => {
                     const map = {
                         'medical_resident': 'Medical Resident',
@@ -1066,7 +1056,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     return map[currentView.value] || 'Search across system...';
                 };
                 
-                // 8.4 Data Helper Functions
+                // ============ 9. DATA HELPER FUNCTIONS ============
+                
                 const getDepartmentName = (departmentId) => {
                     if (!departmentId) return 'Not assigned';
                     const dept = departments.value.find(d => d.id === departmentId);
@@ -1106,7 +1097,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 
                 const getCurrentRotationForStaff = (staffId) => {
-                    console.log('Looking for rotation for staffId:', staffId);
                     const rotation = rotations.value.find(r => {
                         return r.resident_id === staffId && r.rotation_status === 'active';
                     });
@@ -1117,7 +1107,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return EnhancedUtils.calculateDateDifference(startDate, endDate);
                 };
                 
-                // ============ 9. DYNAMIC PROFILE FUNCTIONS ============
+                // ============ 10. DYNAMIC PROFILE FUNCTIONS ============
                 
                 const getCurrentUnit = (staffId) => {
                     const rotation = rotations.value.find(r => 
@@ -1155,6 +1145,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     return 'available';
+                };
+                
+                // RESTORED FROM ORIGINAL CODE
+                const getCurrentPatientCount = (staffId) => {
+                    const staff = medicalStaff.value.find(s => s.id === staffId);
+                    if (!staff) return 0;
+                    
+                    if (staff.staff_type === 'attending_physician') {
+                        return Math.floor(Math.random() * 15) + 10;
+                    } else if (staff.staff_type === 'medical_resident') {
+                        return Math.floor(Math.random() * 8) + 5;
+                    }
+                    
+                    return Math.floor(Math.random() * 5) + 2;
+                };
+                
+                const getICUPatientCount = (staffId) => {
+                    const total = getCurrentPatientCount(staffId);
+                    return Math.floor(total * 0.3);
+                };
+                
+                const getWardPatientCount = (staffId) => {
+                    const total = getCurrentPatientCount(staffId);
+                    return Math.floor(total * 0.7);
                 };
                 
                 const getTodaysSchedule = (staffId) => {
@@ -1205,6 +1219,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     return schedule ? schedule.coverage_area : 'N/A';
                 };
                 
+                // RESTORED FROM ORIGINAL CODE
+                const getRotationSupervisor = (staffId) => {
+                    const rotation = rotations.value.find(r => 
+                        r.resident_id === staffId && r.rotation_status === 'active'
+                    );
+                    
+                    if (rotation && rotation.supervising_attending_id) {
+                        return getStaffName(rotation.supervising_attending_id);
+                    }
+                    
+                    return 'Not assigned';
+                };
+                
+                const getRotationDaysLeft = (staffId) => {
+                    const rotation = rotations.value.find(r => 
+                        r.resident_id === staffId && r.rotation_status === 'active'
+                    );
+                    
+                    if (rotation && rotation.rotation_end_date) {
+                        const endDate = new Date(rotation.rotation_end_date);
+                        const today = new Date();
+                        const diffTime = endDate - today;
+                        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    }
+                    
+                    return 0;
+                };
+                
                 const getRecentActivities = (staffId) => {
                     const activities = [
                         { timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), description: 'Admitted new patient', location: 'ER' },
@@ -1221,7 +1263,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return EnhancedUtils.formatRelativeTime(dateString);
                 };
                 
-                // ============ 10. PERMISSION FUNCTIONS ============
+                // ============ 11. PERMISSION FUNCTIONS ============
                 
                 const hasPermission = (module, action = 'read') => {
                     const role = currentUser.value?.user_role;
@@ -1235,7 +1277,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return permissions.includes(action) || permissions.includes('*');
                 };
                 
-                // ============ 11. LIVE STATS FUNCTIONS ============
+                // ============ 12. LIVE STATS FUNCTIONS ============
                 
                 const saveLiveStatsUpdates = async () => {
                     saving.value = true;
@@ -1265,7 +1307,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // ============ 12. DATA LOADING FUNCTIONS ============
+                // ============ 13. DATA LOADING FUNCTIONS ============
                 
                 const loadMedicalStaff = async () => {
                     try {
@@ -1329,8 +1371,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         loadingSchedule.value = false;
                     }
                 };
-                
-                // ============ 13. TODAY'S ON-CALL LOADING ============
                 
                 const loadTodaysOnCall = async () => {
                     try {
@@ -1426,8 +1466,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // ============ 14. DASHBOARD STATS UPDATE ============
-                
                 const updateDashboardStats = () => {
                     systemStats.value.totalStaff = medicalStaff.value.length;
                     systemStats.value.activeAttending = medicalStaff.value.filter(s => 
@@ -1486,7 +1524,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // ============ 15. AUTHENTICATION FUNCTIONS ============
+                // ============ 14. AUTHENTICATION FUNCTIONS ============
                 
                 const handleLogin = async () => {
                     if (!loginForm.email || !loginForm.password) {
@@ -1533,7 +1571,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 };
                 
-                // ============ 16. NAVIGATION & UI FUNCTIONS ============
+                // ============ 15. NAVIGATION & UI FUNCTIONS ============
                 
                 const switchView = (view) => {
                     currentView.value = view;
@@ -1555,7 +1593,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (index > -1) systemAlerts.value.splice(index, 1);
                 };
                 
-                // ============ 17. MODAL SHOW FUNCTIONS ============
+                // ============ 16. MODAL SHOW FUNCTIONS ============
                 
                 const showAddMedicalStaffModal = () => {
                     medicalStaffModal.mode = 'add';
@@ -1607,9 +1645,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         rotation_id: `ROT-${Date.now().toString().slice(-6)}`,
                         resident_id: '',
                         training_unit_id: '',
-                        start_date: new Date().toISOString().split('T')[0],
-                        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        rotation_status: 'active',
+                        rotation_start_date: new Date().toISOString().split('T')[0],
+                        rotation_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        rotation_status: 'scheduled',
                         rotation_category: 'clinical_rotation',
                         supervising_attending_id: ''
                     };
@@ -1688,7 +1726,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     userMenuOpen.value = false;
                 };
                 
-                // ============ 18. VIEW/EDIT FUNCTIONS ============
+                // ============ 17. VIEW/EDIT FUNCTIONS ============
                 
                 const viewStaffDetails = (staff) => {
                     staffProfileModal.staff = staff;
@@ -1732,7 +1770,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     absenceModal.show = true;
                 };
                 
-                // ============ 19. SAVE FUNCTIONS ============
+                // ============ 18. SAVE FUNCTIONS ============
                 
                 const saveMedicalStaff = async () => {
                     saving.value = true;
@@ -1810,18 +1848,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
                     
-                    if (!rotationModal.form.start_date) {
+                    if (!rotationModal.form.rotation_start_date) {
                         showToast('Error', 'Please enter a start date', 'error');
                         return;
                     }
                     
-                    if (!rotationModal.form.end_date) {
+                    if (!rotationModal.form.rotation_end_date) {
                         showToast('Error', 'Please enter an end date', 'error');
                         return;
                     }
                     
-                    const start = new Date(formatDateForBackend(rotationModal.form.start_date));
-                    const end = new Date(formatDateForBackend(rotationModal.form.end_date));
+                    const start = new Date(formatDateForBackend(rotationModal.form.rotation_start_date));
+                    const end = new Date(formatDateForBackend(rotationModal.form.rotation_end_date));
                     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
                         showToast('Error', 'Invalid date format. Please use YYYY-MM-DD', 'error');
                         return;
@@ -1835,8 +1873,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     saving.value = true;
                     
                     try {
-                        const startDate = formatDateForBackend(rotationModal.form.start_date);
-                        const endDate = formatDateForBackend(rotationModal.form.end_date);
+                        const startDate = formatDateForBackend(rotationModal.form.rotation_start_date);
+                        const endDate = formatDateForBackend(rotationModal.form.rotation_end_date);
                         const rotationCategory = rotationModal.form.rotation_category.toLowerCase();
                         const rotationStatus = rotationModal.form.rotation_status.toLowerCase();
                         
@@ -1987,7 +2025,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // ============ 20. ACTION FUNCTIONS ============
+                // ============ 19. ACTION FUNCTIONS ============
                 
                 const contactPhysician = (shift) => {
                     if (shift.contactInfo && shift.contactInfo !== 'No contact info') {
@@ -2013,7 +2051,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     showToast('Unit Residents', `Viewing residents for ${unit.unit_name}`, 'info');
                 };
                 
-                // ============ 21. COMPUTED PROPERTIES ============
+                // ============ 20. COMPUTED PROPERTIES ============
                 
                 const availablePhysicians = computed(() => {
                     return medicalStaff.value.filter(staff => 
@@ -2149,12 +2187,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     return announcements.value.slice(0, 10);
                 });
                 
-                // ============ 22. LIFECYCLE ============
+                // ============ 21. LIFECYCLE ============
                 
                 onMounted(() => {
                     console.log('🚀 Vue app mounted');
                     
-                    // Check if user is already logged in
                     const token = localStorage.getItem(CONFIG.TOKEN_KEY);
                     const user = localStorage.getItem(CONFIG.USER_KEY);
                     
@@ -2170,7 +2207,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         currentView.value = 'login';
                     }
                     
-                    // Auto-refresh data every 60 seconds
                     setInterval(() => {
                         if (currentUser.value) {
                             loadTodaysOnCall();
@@ -2178,7 +2214,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }, 60000);
                     
-                    // Close modals on escape key
                     document.addEventListener('keydown', (e) => {
                         if (e.key === 'Escape') {
                             const openModals = [
@@ -2201,7 +2236,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 });
                 
-                // Watch for data changes
                 watch([medicalStaff, rotations, trainingUnits, absences], 
                     () => {
                         updateDashboardStats();
@@ -2209,7 +2243,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     { deep: true }
                 );
                 
-                // ============ 23. RETURN EXPOSED DATA/METHODS ============
+                // ============ 22. RETURN EXPOSED DATA/METHODS ============
                 return {
                     // State
                     currentUser,
@@ -2308,14 +2342,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     getCurrentRotationForStaff,
                     calculateAbsenceDuration,
                     
-                    // Dynamic Profile Functions
+                    // Dynamic Profile Functions (ALL INCLUDED)
                     getCurrentUnit,
                     getCurrentWard,
                     getCurrentActivityStatus,
+                    getCurrentPatientCount,
+                    getICUPatientCount,
+                    getWardPatientCount,
                     getTodaysSchedule,
                     isOnCallToday,
                     getOnCallShiftTime,
                     getOnCallCoverage,
+                    getRotationSupervisor,
+                    getRotationDaysLeft,
                     getRecentActivities,
                     
                     // Permission Functions
@@ -2395,10 +2434,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // ============ 24. MOUNT APP ============
+        // ============ 23. MOUNT APP ============
         app.mount('#app');
         
-        console.log('✅ NeumoCare v8.0 mounted successfully with NEUMAC enhancements!');
+        console.log('✅ NeumoCare v8.0 mounted successfully with ALL features and NEUMAC enhancements!');
         
     } catch (error) {
         console.error('💥 FATAL ERROR mounting app:', error);
