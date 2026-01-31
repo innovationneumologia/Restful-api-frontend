@@ -941,6 +941,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 const getResidentName = (residentId) => {
                     return getStaffName(residentId);
                 };
+                // Add this to your utility functions (around line 1140)
+const formatDateForBackend = (dateString) => {
+    if (!dateString) return '';
+    
+    // Already in YYYY-MM-DD format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        return dateString;
+    }
+    
+    // Try to parse DD/MM/YYYY format
+    const parts = dateString.split('/');
+    if (parts.length === 3) {
+        const [day, month, year] = parts;
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    
+    // Try to parse as Date object
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+    }
+    
+    // Return as-is (let backend handle validation)
+    return dateString;
+};
                 
                 const getDepartmentUnits = (departmentId) => {
                     return trainingUnits.value.filter(unit => unit.department_id === departmentId);
@@ -1743,26 +1768,37 @@ const loadTodaysOnCall = async () => {
                 };
                 
                 const saveRotation = async () => {
-                    saving.value = true;
-                    try {
-                        if (rotationModal.mode === 'add') {
-                            const result = await API.createRotation(rotationModal.form);
-                            rotations.value.unshift(result);
-                            showToast('Success', 'Rotation scheduled successfully', 'success');
-                        } else {
-                            const result = await API.updateRotation(rotationModal.form.id, rotationModal.form);
-                            const index = rotations.value.findIndex(r => r.id === result.id);
-                            if (index !== -1) rotations.value[index] = result;
-                            showToast('Success', 'Rotation updated successfully', 'success');
-                        }
-                        rotationModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
+    saving.value = true;
+    try {
+        // ADD DATE FORMAT CONVERSION HERE
+        const formattedData = {
+            ...rotationModal.form,
+            start_date: formatDateForBackend(rotationModal.form.start_date),
+            end_date: formatDateForBackend(rotationModal.form.end_date),
+            rotation_category: rotationModal.form.rotation_category.toLowerCase()
+        };
+        
+        if (rotationModal.mode === 'add') {
+            const result = await API.createRotation(formattedData); // Use formattedData
+            rotations.value.unshift(result);
+            showToast('Success', 'Rotation scheduled successfully', 'success');
+        } else {
+            const result = await API.updateRotation(rotationModal.form.id, formattedData);
+            const index = rotations.value.findIndex(r => r.id === result.id);
+            if (index !== -1) rotations.value[index] = result;
+            showToast('Success', 'Rotation updated successfully', 'success');
+        }
+        rotationModal.show = false;
+        await loadRotations();
+        updateDashboardStats();
+        
+    } catch (error) {
+        showToast('Error', error.message, 'error');
+    } finally {
+        saving.value = false;
+    }
+};
+
                 
                 const saveOnCallSchedule = async () => {
                     saving.value = true;
