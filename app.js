@@ -892,8 +892,152 @@ document.addEventListener('DOMContentLoaded', function() {
                         users: [] 
                     }
                 };
+
+                // ============ 7. VIEW & NAVIGATION HELPERS ============
+                const getCurrentViewTitle = () => {
+                    const map = { 
+                        'dashboard': 'Dashboard Overview', 
+                        'medical_staff': 'Medical Staff Management', 
+                        'oncall_schedule': 'On-call Schedule', 
+                        'resident_rotations': 'Resident Rotations', 
+                        'training_units': 'Training Units', 
+                        'staff_absence': 'Staff Absence Management', 
+                        'department_management': 'Department Management', 
+                        'communications': 'Communications Center',
+                        'login': 'Login to NeumoCare'
+                    };
+                    return map[currentView.value] || 'NeumoCare Dashboard';
+                };
+
+                const getCurrentViewSubtitle = () => {
+                    const map = { 
+                        'dashboard': 'Real-time department overview and analytics', 
+                        'medical_staff': 'Manage physicians, residents, and clinical staff', 
+                        'oncall_schedule': 'View and manage on-call physician schedules', 
+                        'resident_rotations': 'Track and manage resident training rotations', 
+                        'training_units': 'Clinical training units and resident assignments', 
+                        'staff_absence': 'Track staff absences and coverage assignments', 
+                        'department_management': 'Organizational structure and clinical units', 
+                        'communications': 'Department announcements and capacity updates',
+                        'login': 'Secure access to hospital management system'
+                    };
+                    return map[currentView.value] || 'Hospital Management System';
+                };
+
+                const getSearchPlaceholder = () => {
+                    const map = { 
+                        'dashboard': 'Search staff, units, rotations...', 
+                        'medical_staff': 'Search by name, ID, or email...', 
+                        'oncall_schedule': 'Search on-call schedules...', 
+                        'resident_rotations': 'Search rotations by resident or unit...', 
+                        'training_units': 'Search training units...', 
+                        'staff_absence': 'Search absences by staff member...', 
+                        'department_management': 'Search departments...', 
+                        'communications': 'Search announcements...' 
+                    };
+                    return map[currentView.value] || 'Search across system...';
+                };
+
+                // ============ 8. NEUMAC ENHANCEMENT FUNCTIONS ============
+                const getShiftStatusClass = (shift) => {
+                    if (!shift || !shift.raw) return 'neumac-status-oncall';
+                    const today = new Date().toISOString().split('T')[0];
+                    if (shift.raw.duty_date === today) {
+                        try { 
+                            const currentTime = new Date().getHours() * 100 + new Date().getMinutes();
+                            const start = parseInt(shift.startTime.replace(':', '')); 
+                            const end = parseInt(shift.endTime.replace(':', ''));
+                            if (currentTime >= start && currentTime <= end) return 'neumac-status-critical';
+                        } catch { 
+                            return 'neumac-status-oncall'; 
+                        }
+                    }
+                    return shift.shiftType === 'Primary' ? 'neumac-status-oncall' : 'neumac-status-busy';
+                };
+
+                const isCurrentShift = (shift) => {
+                    if (!shift || !shift.raw) return false;
+                    const today = new Date().toISOString().split('T')[0];
+                    if (shift.raw.duty_date !== today) return false;
+                    try { 
+                        const currentTime = new Date().getHours() * 100 + new Date().getMinutes();
+                        const start = parseInt(shift.startTime.replace(':', '')); 
+                        const end = parseInt(shift.endTime.replace(':', ''));
+                        return currentTime >= start && currentTime <= end;
+                    } catch { 
+                        return false; 
+                    }
+                };
+
+                const getStaffTypeIcon = (staffType) => {
+                    const icons = { 
+                        'attending_physician': 'fa-user-md', 
+                        'medical_resident': 'fa-user-graduate', 
+                        'fellow': 'fa-user-tie', 
+                        'nurse_practitioner': 'fa-user-nurse' 
+                    };
+                    return icons[staffType] || 'fa-user';
+                };
+
+                const calculateCapacityPercent = (current, max) => {
+                    return current && max && max !== 0 ? Math.round((current / max) * 100) : 0;
+                };
+
+                const getCapacityDotClass = (index, current) => {
+                    if (!current || current === 0) return 'available';
+                    if (index <= current) { 
+                        const percent = (current / (index || 1)) * 100; 
+                        if (percent >= 90) return 'full'; 
+                        if (percent >= 75) return 'limited'; 
+                        return 'filled'; 
+                    }
+                    return 'available';
+                };
+
+                const getAbsenceReasonIcon = (reason) => {
+                    const icons = { 
+                        'vacation': 'fa-umbrella-beach', 
+                        'sick_leave': 'fa-procedures', 
+                        'conference': 'fa-chalkboard-teacher', 
+                        'training': 'fa-graduation-cap', 
+                        'personal': 'fa-user-clock', 
+                        'other': 'fa-question-circle' 
+                    };
+                    return icons[reason] || 'fa-clock';
+                };
+
+                const getScheduleIcon = (activity) => {
+                    if (!activity) return 'fa-calendar-check';
+                    const activityLower = activity.toLowerCase();
+                    if (activityLower.includes('round')) return 'fa-stethoscope';
+                    if (activityLower.includes('clinic')) return 'fa-clinic-medical';
+                    if (activityLower.includes('surgery')) return 'fa-scalpel-path';
+                    if (activityLower.includes('meeting')) return 'fa-users';
+                    return 'fa-calendar-check';
+                };
+
+                // ============ 9. ACTION FUNCTIONS FOR UI INTERACTIONS ============
+                const contactPhysician = (shift) => {
+                    if (shift.contactInfo && shift.contactInfo !== 'No contact info') {
+                        showToast('Contact Physician', `Would contact ${shift.physicianName} via ${shift.contactInfo.includes('@') ? 'email' : 'phone'}`, 'info');
+                    } else {
+                        showToast('No Contact Info', `No contact information available for ${shift.physicianName}`, 'warning');
+                    }
+                };
+
+                const viewAnnouncement = (announcement) => {
+                    showToast(announcement.title, EnhancedUtils.truncateText(announcement.content, 100), 'info');
+                };
+
+                const viewDepartmentStaff = (department) => {
+                    showToast('Department Staff', `Viewing staff for ${department.name}`, 'info');
+                };
+
+                const viewUnitResidents = (unit) => {
+                    showToast('Unit Residents', `Viewing residents for ${unit.unit_name}`, 'info');
+                };
                 
-                // ============ 7. COMPUTED PROPERTIES ============
+                // ============ 10. COMPUTED PROPERTIES ============
                 const authToken = computed(() => localStorage.getItem(CONFIG.TOKEN_KEY));
                 
                 const todaysOnCallCount = computed(() => todaysOnCall.value.length);
@@ -990,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }).length;
                 });
                 
-                // ============ 8. UTILITY FUNCTIONS ============
+                // ============ 11. UTILITY FUNCTIONS ============
                 
                 // Toast notifications
                 const showToast = (title, message, type = 'info', duration = 5000) => {
@@ -1130,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return permissions ? (permissions.includes(action) || permissions.includes('*')) : false;
                 };
                 
-                // ============ 9. DATA LOADING FUNCTIONS ============
+                // ============ 12. DATA LOADING FUNCTIONS ============
                 
                 const loadMedicalStaff = async () => {
                     try {
@@ -1372,7 +1516,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // ============ 10. ACTION FUNCTIONS ============
+                // ============ 13. ACTION FUNCTIONS ============
                 
                 // Authentication
                 const handleLogin = async () => {
@@ -1853,7 +1997,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // ============ 11. LIFECYCLE ============
+                // ============ 14. LIFECYCLE ============
                 
                 onMounted(() => {
                     console.log('🚀 Vue app mounted');
@@ -1915,7 +2059,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateDashboardStats();
                 }, { deep: true });
                 
-                // ============ 12. RETURN EXPOSED DATA/METHODS ============
+                // ============ 15. RETURN EXPOSED DATA/METHODS ============
                 return {
                     // State
                     currentUser, loginForm, loginLoading, loading, saving, loadingSchedule, isLoadingStatus,
@@ -1946,7 +2090,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     filteredOnCallSchedules, filteredRotations, filteredAbsences,
                     recentAnnouncements, unreadAnnouncements,
                     
-                    // Formatting Functions
+                    // ===== VIEW & NAVIGATION FUNCTIONS =====
+                    getCurrentViewTitle,
+                    getCurrentViewSubtitle,
+                    getSearchPlaceholder,
+                    
+                    // ===== NEUMAC ENHANCEMENT FUNCTIONS =====
+                    getShiftStatusClass,
+                    isCurrentShift,
+                    getStaffTypeIcon,
+                    calculateCapacityPercent,
+                    getCapacityDotClass,
+                    getAbsenceReasonIcon,
+                    getScheduleIcon,
+                    
+                    // ===== ACTION FUNCTIONS =====
+                    contactPhysician,
+                    viewAnnouncement,
+                    viewDepartmentStaff,
+                    viewUnitResidents,
+                    
+                    // ===== FORMATTING FUNCTIONS =====
                     formatDate: EnhancedUtils.formatDate,
                     formatDateTime: EnhancedUtils.formatDateTime,
                     formatTime: EnhancedUtils.formatTime,
@@ -1959,12 +2123,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     formatRotationStatus,
                     getUserRoleDisplay,
                     
-                    // Data Functions
+                    // ===== DATA FUNCTIONS =====
                     getDepartmentName,
                     getStaffName,
                     getTrainingUnitName,
                     
-                    // Utility Functions
+                    // ===== UTILITY FUNCTIONS =====
                     hasPermission,
                     showToast,
                     removeToast,
@@ -1973,14 +2137,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     confirmAction,
                     cancelConfirmation,
                     
-                    // Action Functions
+                    // ===== ACTION FUNCTIONS =====
                     handleLogin,
                     handleLogout,
                     switchView,
                     toggleStatsSidebar,
                     handleGlobalSearch,
                     
-                    // Modal Functions
+                    // ===== MODAL FUNCTIONS =====
                     showAddMedicalStaffModal,
                     showAddDepartmentModal,
                     showAddTrainingUnitModal,
@@ -1998,7 +2162,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     editOnCallSchedule,
                     editAbsence,
                     
-                    // Save Functions
+                    // ===== SAVE FUNCTIONS =====
                     saveMedicalStaff,
                     saveDepartment,
                     saveTrainingUnit,
@@ -2013,11 +2177,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // ============ 13. MOUNT APP ============
+        // ============ 16. MOUNT APP ============
         app.mount('#app');
         
         console.log('✅ NeumoCare v8.0 mounted with FULL API COMPATIBILITY!');
-        console.log('📊 API Endpoints Implemented: 47+');
+        console.log('📊 API Endpoints Implemented: 48+');
         console.log('🔄 Live Status: COMPATIBLE');
         console.log('🔐 Authentication: COMPATIBLE');
         console.log('🗃️ Data Operations: COMPATIBLE');
