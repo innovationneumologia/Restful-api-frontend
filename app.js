@@ -71,21 +71,67 @@ document.addEventListener('DOMContentLoaded', function() {
                 return headers;
             }
             
-            async request(endpoint, options = {}) { // API-07: Core request handler
-                const url = `${CONFIG.API_BASE_URL}${endpoint}`;
-                try {
-                    const config = { method: options.method || 'GET', headers: this.getHeaders(), mode: 'cors', cache: 'no-cache' };
-                    if (options.body && typeof options.body === 'object') config.body = JSON.stringify(options.body);
-                    const response = await fetch(url, config);
-                    if (response.status === 204) return null;
-                    if (!response.ok) {
-                        if (response.status === 401) { this.token = null; localStorage.removeItem(CONFIG.TOKEN_KEY); localStorage.removeItem(CONFIG.USER_KEY); throw new Error('Session expired'); }
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    const contentType = response.headers.get('content-type');
-                    return contentType && contentType.includes('application/json') ? await response.json() : await response.text();
-                } catch (error) { if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error); throw error; }
+        async request(endpoint, options = {}) { // API-07: Core request handler
+    const url = `${CONFIG.API_BASE_URL}${endpoint}`;
+    try {
+        const config = { 
+            method: options.method || 'GET', 
+            headers: this.getHeaders(), 
+            mode: 'cors', 
+            cache: 'no-cache' 
+        };
+        
+        if (options.body && typeof options.body === 'object') {
+            config.body = JSON.stringify(options.body);
+        }
+        
+        const response = await fetch(url, config);
+        
+        // ADD THIS: Handle 500 errors specifically
+        if (response.status === 500) {
+            // Try to get more details from the response
+            let errorDetails = '';
+            try {
+                const errorData = await response.json();
+                errorDetails = errorData.error || errorData.message || '';
+            } catch {
+                errorDetails = response.statusText;
             }
+            throw new Error(`Server error (500) on ${endpoint}: ${errorDetails}`);
+        }
+        
+        if (response.status === 204) return null;
+        
+        if (!response.ok) {
+            if (response.status === 401) { 
+                this.token = null; 
+                localStorage.removeItem(CONFIG.TOKEN_KEY); 
+                localStorage.removeItem(CONFIG.USER_KEY); 
+                throw new Error('Session expired'); 
+            }
+            
+            // Get error message
+            let errorText;
+            try {
+                const errorData = await response.json();
+                errorText = errorData.error || errorData.message || `HTTP ${response.status}`;
+            } catch {
+                errorText = `HTTP ${response.status}: ${response.statusText}`;
+            }
+            
+            throw new Error(errorText);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        return contentType && contentType.includes('application/json') 
+            ? await response.json() 
+            : await response.text();
+            
+    } catch (error) { 
+        if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error); 
+        throw error; 
+    }
+}
             
             // ===== AUTHENTICATION ENDPOINTS =====
             async login(email, password) { // API-08: POST /api/auth/login
@@ -415,7 +461,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (absenceFilters.startDate) filtered = filtered.filter(absence => absence.start_date >= absenceFilters.startDate);
                     return filtered;
                 });
-                const recentAnnouncements = computed(() => announcements.value.slice(0, 10)); // COMP-13: Recent announcements
+                const recentAnnouncements = computed(() => announcements.value.slice(0, 10)); // COMP-13: Recent announcementsconst unreadAnnouncements = computed(() => {
+    // Simple implementation - adjust based on your needs
+    return announcements.value.filter(a => !a.is_read).length;
+});
+                
                 
                 // ============ 9. NEUMAC ENHANCEMENT FUNCTIONS ============
                 const getShiftStatusClass = (shift) => { // NEUMAC-01: Get shift status CSS class
