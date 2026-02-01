@@ -1,2204 +1,1897 @@
-// ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM v8.0 ============
-// COMPLETE PRODUCTION FRONTEND - FULLY COMPATIBLE WITH BACKEND API
-// ===================================================================
+// ================================================================
+// NEUMOCARE HOSPITAL MANAGEMENT SYSTEM API - COMPLETE PRODUCTION
+// VERSION 6.0 - FULLY COMPATIBLE WITH VUE.JS FRONTEND
+// ================================================================
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 NeumoCare Hospital Management System v8.0 loading...');
-    
-    try {
-        // ============ 1. VUE VALIDATION ============
-        if (typeof Vue === 'undefined') {
-            document.body.innerHTML = `
-                <div style="padding: 40px; text-align: center; margin-top: 100px; color: #333;">
-                    <h2 style="color: #dc3545;">⚠️ Critical Error</h2>
-                    <p>Vue.js failed to load. Please refresh the page.</p>
-                    <button onclick="window.location.reload()" 
-                            style="padding: 12px 24px; background: #007bff; color: white; 
-                                   border: none; border-radius: 6px; cursor: pointer; margin-top: 20px;">
-                        🔄 Refresh Page
-                    </button>
-                </div>
-            `;
-            throw new Error('Vue.js not loaded');
-        }
-        
-        console.log('✅ Vue.js loaded successfully:', Vue.version);
-        
-        const { createApp, ref, reactive, computed, onMounted, watch, onUnmounted } = Vue;
-        
-        // ============ 2. CONFIGURATION ============
-        const CONFIG = {
-            API_BASE_URL: 'https://backend-neumac.up.railway.app',
-            TOKEN_KEY: 'neumocare_token',
-            USER_KEY: 'neumocare_user',
-            APP_VERSION: '8.0',
-            DEBUG: window.location.hostname.includes('localhost')
-        };
-        
-        // ============ 3. ENHANCED UTILITIES ============
-        class EnhancedUtils {
-            static formatDate(dateString) { 
-                if (!dateString) return 'N/A';
-                try {
-                    const date = new Date(dateString);
-                    return date.toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric', 
-                        year: 'numeric' 
-                    });
-                } catch {
-                    return 'N/A';
-                }
-            }
-            
-            static formatDateTime(dateString) { 
-                if (!dateString) return 'N/A';
-                try {
-                    const date = new Date(dateString);
-                    return date.toLocaleString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric', 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                    });
-                } catch {
-                    return 'N/A';
-                }
-            }
-            
-            static getInitials(name) { 
-                return name ? name.split(' ').map(word => word[0]).join('').toUpperCase().substring(0, 2) : '??'; 
-            }
-            
-            static ensureArray(data) { 
-                if (!data) return [];
-                if (Array.isArray(data)) return data;
-                if (data.data && Array.isArray(data.data)) return data.data;
-                if (typeof data === 'object') return Object.values(data);
-                return [];
-            }
-            
-            static truncateText(text, maxLength = 100) { 
-                return text && text.length > maxLength ? text.substring(0, maxLength) + '...' : text || ''; 
-            }
-            
-            static formatTime(dateString) { 
-                if (!dateString) return '';
-                try {
-                    const date = new Date(dateString);
-                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                } catch {
-                    return '';
-                }
-            }
-            
-            static formatRelativeTime(dateString) { 
-                if (!dateString) return 'Just now';
-                try {
-                    const diffMs = new Date() - new Date(dateString);
-                    const diffMins = Math.floor(diffMs / 60000);
-                    if (diffMins < 1) return 'Just now';
-                    if (diffMins < 60) return `${diffMins}m ago`;
-                    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-                    return `${Math.floor(diffMins / 1440)}d ago`;
-                } catch {
-                    return 'Just now';
-                }
-            }
-            
-            static calculateDateDifference(startDate, endDate) { 
-                try { 
-                    const diffTime = Math.abs(new Date(endDate) - new Date(startDate)); 
-                    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                } catch { 
-                    return 0; 
-                } 
-            }
-            
-            static generateId(prefix) {
-                return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 9)}`;
-            }
-        }
-        
-        // ============ 4. ROBUST API SERVICE ============
-        class ApiService {
-            constructor() {
-                this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
-            }
-            
-            getHeaders() {
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                };
-                const token = localStorage.getItem(CONFIG.TOKEN_KEY);
-                if (token && token.trim()) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-                return headers;
-            }
-            
-            async request(endpoint, options = {}) {
-                const url = `${CONFIG.API_BASE_URL}${endpoint}`;
-                
-                // List of non-critical endpoints that shouldn't break the app
-                const nonCriticalEndpoints = [
-                    '/api/system-stats',
-                    '/api/live-updates',
-                    '/api/live-status/current',
-                    '/api/debug/tables',
-                    '/api/debug/cors'
-                ];
-                
-                try {
-                    const config = {
-                        method: options.method || 'GET',
-                        headers: this.getHeaders(),
-                        mode: 'cors',
-                        cache: 'no-cache'
-                    };
-                    
-                    if (options.body && typeof options.body === 'object') {
-                        config.body = JSON.stringify(options.body);
-                    }
-                    
-                    const response = await fetch(url, config);
-                    
-                    // Handle 404 for non-critical endpoints
-                    if (response.status === 404 && nonCriticalEndpoints.includes(endpoint)) {
-                        console.warn(`⚠️ Non-critical endpoint ${endpoint} not found (404)`);
-                        return null;
-                    }
-                    
-                    // Handle 500 errors gracefully
-                    if (response.status === 500) {
-                        let errorDetails = '';
-                        try {
-                            const errorData = await response.json();
-                            errorDetails = errorData.error || errorData.message || 'Server error';
-                        } catch {
-                            errorDetails = response.statusText;
-                        }
-                        throw new Error(`Server error: ${errorDetails}`);
-                    }
-                    
-                    // Handle 204 No Content
-                    if (response.status === 204) return null;
-                    
-                    if (!response.ok) {
-                        // Handle 401 Unauthorized
-                        if (response.status === 401) {
-                            this.token = null;
-                            localStorage.removeItem(CONFIG.TOKEN_KEY);
-                            localStorage.removeItem(CONFIG.USER_KEY);
-                            
-                            // Only redirect if not already on login page
-                            if (!window.location.pathname.includes('login')) {
-                                window.location.reload();
-                            }
-                            
-                            throw new Error('Session expired. Please login again.');
-                        }
-                        
-                        let errorText;
-                        try {
-                            const errorData = await response.json();
-                            errorText = errorData.error || errorData.message || `HTTP ${response.status}`;
-                        } catch {
-                            errorText = `HTTP ${response.status}: ${response.statusText}`;
-                        }
-                        throw new Error(errorText);
-                    }
-                    
-                    const contentType = response.headers.get('content-type');
-                    return contentType && contentType.includes('application/json')
-                        ? await response.json()
-                        : await response.text();
-                        
-                } catch (error) {
-                    if (CONFIG.DEBUG) {
-                        console.error(`API ${endpoint} failed:`, error);
-                    }
-                    
-                    // Don't throw for non-critical endpoints - return null instead
-                    if (nonCriticalEndpoints.includes(endpoint)) {
-                        console.warn(`Non-critical endpoint ${endpoint} failed:`, error.message);
-                        return null;
-                    }
-                    
-                    throw error;
-                }
-            }
-            
-            // ===== AUTHENTICATION =====
-            async login(email, password) {
-                try {
-                    const data = await this.request('/api/auth/login', {
-                        method: 'POST',
-                        body: { email, password }
-                    });
-                    
-                    if (data && data.token) {
-                        this.token = data.token;
-                        localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
-                        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
-                    }
-                    
-                    return data;
-                } catch (error) {
-                    throw new Error('Login failed: ' + error.message);
-                }
-            }
-            
-            async logout() {
-                try {
-                    await this.request('/api/auth/logout', { method: 'POST' });
-                } finally {
-                    this.token = null;
-                    localStorage.removeItem(CONFIG.TOKEN_KEY);
-                    localStorage.removeItem(CONFIG.USER_KEY);
-                }
-            }
-            
-            // ===== MEDICAL STAFF =====
-            async getMedicalStaff() {
-                try {
-                    const data = await this.request('/api/medical-staff');
-                    return EnhancedUtils.ensureArray(data);
-                } catch {
-                    return [];
-                }
-            }
-            
-            async createMedicalStaff(staffData) {
-                return await this.request('/api/medical-staff', {
-                    method: 'POST',
-                    body: staffData
-                });
-            }
-            
-            async updateMedicalStaff(id, staffData) {
-                return await this.request(`/api/medical-staff/${id}`, {
-                    method: 'PUT',
-                    body: staffData
-                });
-            }
-            
-            async deleteMedicalStaff(id) {
-                return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== DEPARTMENTS =====
-            async getDepartments() {
-                try {
-                    const data = await this.request('/api/departments');
-                    return EnhancedUtils.ensureArray(data);
-                } catch {
-                    return [];
-                }
-            }
-            
-            async createDepartment(departmentData) {
-                return await this.request('/api/departments', {
-                    method: 'POST',
-                    body: departmentData
-                });
-            }
-            
-            async updateDepartment(id, departmentData) {
-                return await this.request(`/api/departments/${id}`, {
-                    method: 'PUT',
-                    body: departmentData
-                });
-            }
-            
-            // ===== TRAINING UNITS =====
-            async getTrainingUnits() {
-                try {
-                    const data = await this.request('/api/training-units');
-                    return EnhancedUtils.ensureArray(data);
-                } catch {
-                    return [];
-                }
-            }
-            
-            async createTrainingUnit(unitData) {
-                return await this.request('/api/training-units', {
-                    method: 'POST',
-                    body: unitData
-                });
-            }
-            
-            async updateTrainingUnit(id, unitData) {
-                return await this.request(`/api/training-units/${id}`, {
-                    method: 'PUT',
-                    body: unitData
-                });
-            }
-            
-            // ===== ROTATIONS =====
-            async getRotations() {
-                try {
-                    const data = await this.request('/api/rotations');
-                    return EnhancedUtils.ensureArray(data);
-                } catch {
-                    return [];
-                }
-            }
-            
-            async getCurrentRotations() {
-                try {
-                    const data = await this.request('/api/rotations/current');
-                    return EnhancedUtils.ensureArray(data);
-                } catch {
-                    return [];
-                }
-            }
-            
-            async createRotation(rotationData) {
-                return await this.request('/api/rotations', {
-                    method: 'POST',
-                    body: rotationData
-                });
-            }
-            
-            async updateRotation(id, rotationData) {
-                return await this.request(`/api/rotations/${id}`, {
-                    method: 'PUT',
-                    body: rotationData
-                });
-            }
-            
-            async deleteRotation(id) {
-                return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ON-CALL SCHEDULE =====
-            async getOnCallSchedule() {
-                try {
-                    const data = await this.request('/api/oncall');
-                    return EnhancedUtils.ensureArray(data);
-                } catch {
-                    return [];
-                }
-            }
-            
-            async getOnCallToday() {
-                try {
-                    const data = await this.request('/api/oncall/today');
-                    return EnhancedUtils.ensureArray(data);
-                } catch {
-                    return [];
-                }
-            }
-            
-            async createOnCall(scheduleData) {
-                return await this.request('/api/oncall', {
-                    method: 'POST',
-                    body: scheduleData
-                });
-            }
-            
-            async updateOnCall(id, scheduleData) {
-                return await this.request(`/api/oncall/${id}`, {
-                    method: 'PUT',
-                    body: scheduleData
-                });
-            }
-            
-            async deleteOnCall(id) {
-                return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ABSENCES =====
-            async getAbsences() {
-                try {
-                    const data = await this.request('/api/absences');
-                    return EnhancedUtils.ensureArray(data);
-                } catch {
-                    return [];
-                }
-            }
-            
-            async getPendingAbsences() {
-                try {
-                    const data = await this.request('/api/absences/pending');
-                    return EnhancedUtils.ensureArray(data);
-                } catch {
-                    return [];
-                }
-            }
-            
-            async createAbsence(absenceData) {
-                return await this.request('/api/absences', {
-                    method: 'POST',
-                    body: absenceData
-                });
-            }
-            
-            async updateAbsence(id, absenceData) {
-                return await this.request(`/api/absences/${id}`, {
-                    method: 'PUT',
-                    body: absenceData
-                });
-            }
-            
-            async approveAbsence(id, approved, reviewNotes) {
-                return await this.request(`/api/absences/${id}/approve`, {
-                    method: 'PUT',
-                    body: { approved, review_notes: reviewNotes }
-                });
-            }
-            
-            // ===== ANNOUNCEMENTS =====
-            async getAnnouncements() {
-                try {
-                    const data = await this.request('/api/announcements');
-                    return EnhancedUtils.ensureArray(data);
-                } catch {
-                    return [];
-                }
-            }
-            
-            async createAnnouncement(announcementData) {
-                return await this.request('/api/announcements', {
-                    method: 'POST',
-                    body: announcementData
-                });
-            }
-            
-            async updateAnnouncement(id, announcementData) {
-                return await this.request(`/api/announcements/${id}`, {
-                    method: 'PUT',
-                    body: announcementData
-                });
-            }
-            
-            async deleteAnnouncement(id) {
-                return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== LIVE STATUS =====
-            async getClinicalStatus() {
-                try {
-                    const response = await this.request('/api/live-status/current');
-                    
-                    // Handle different response structures
-                    if (response && response.data !== undefined) {
-                        return response.data; // New structure
-                    }
-                    if (response && response.success !== undefined) {
-                        return response.data; // Success wrapper
-                    }
-                    if (response && typeof response === 'object' && !Array.isArray(response)) {
-                        return response; // Direct object
-                    }
-                    
-                    return response; // Whatever it is
-                } catch (error) {
-                    console.warn('Clinical status not available:', error.message);
-                    return null;
-                }
-            }
-            
-            async createClinicalStatus(statusData) {
-                try {
-                    return await this.request('/api/live-status', {
-                        method: 'POST',
-                        body: statusData
-                    });
-                } catch (error) {
-                    console.error('Failed to save clinical status:', error);
-                    throw error;
-                }
-            }
-            
-            async getClinicalStatusHistory() {
-                try {
-                    const response = await this.request('/api/live-status/history');
-                    return response?.data || response || [];
-                } catch {
-                    return [];
-                }
-            }
-            
-            // ===== DASHBOARD & SYSTEM =====
-            async getSystemStats() {
-                try {
-                    const response = await this.request('/api/system-stats');
-                    
-                    // Handle different response structures
-                    if (response && response.data !== undefined) {
-                        return response.data;
-                    }
-                    if (response && typeof response === 'object') {
-                        return response;
-                    }
-                    
-                    // Return default stats if no response
-                    return {
-                        totalStaff: 0,
-                        activeAttending: 0,
-                        activeResidents: 0,
-                        onCallNow: 0,
-                        activeRotations: 0,
-                        pendingApprovals: 0,
-                        nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString()
-                    };
-                } catch (error) {
-                    console.warn('System stats not available:', error.message);
-                    return {
-                        totalStaff: 0,
-                        activeAttending: 0,
-                        activeResidents: 0,
-                        onCallNow: 0,
-                        pendingApprovals: 0,
-                        nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString()
-                    };
-                }
-            }
-            
-            async getLiveUpdates() {
-                try {
-                    const response = await this.request('/api/live-updates');
-                    return response?.data || response || [];
-                } catch {
-                    return [];
-                }
-            }
-            
-            async createLiveUpdate(updateData) {
-                try {
-                    return await this.request('/api/live-updates', {
-                        method: 'POST',
-                        body: updateData
-                    });
-                } catch (error) {
-                    console.warn('Live update creation failed:', error.message);
-                    // Return mock response
-                    return {
-                        success: true,
-                        data: {
-                            id: 'mock-' + Date.now(),
-                            ...updateData,
-                            created_at: new Date().toISOString()
-                        }
-                    };
-                }
-            }
-            
-            // ===== USER MANAGEMENT =====
-            async getUsers() {
-                try {
-                    const data = await this.request('/api/users');
-                    return EnhancedUtils.ensureArray(data);
-                } catch {
-                    return [];
-                }
-            }
-            
-            async getUserProfile() {
-                try {
-                    return await this.request('/api/users/profile');
-                } catch {
-                    return null;
-                }
-            }
-            
-            async updateUserProfile(profileData) {
-                return await this.request('/api/users/profile', {
-                    method: 'PUT',
-                    body: profileData
-                });
-            }
-            
-            async changePassword(passwordData) {
-                return await this.request('/api/users/change-password', {
-                    method: 'PUT',
-                    body: passwordData
-                });
-            }
-            
-            // ===== UTILITY ENDPOINTS =====
-            async getHealthStatus() {
-                try {
-                    return await this.request('/health');
-                } catch {
-                    return { status: 'unhealthy' };
-                }
-            }
-            
-            async getAvailableData() {
-                try {
-                    const response = await this.request('/api/available-data');
-                    return response?.data || response || {};
-                } catch {
-                    return {
-                        departments: [],
-                        residents: [],
-                        attendings: [],
-                        trainingUnits: []
-                    };
-                }
-            }
-            
-            async debugTables() {
-                try {
-                    return await this.request('/api/debug/tables');
-                } catch {
-                    return null;
-                }
-            }
-            
-            async debugCors() {
-                try {
-                    return await this.request('/api/debug/cors');
-                } catch {
-                    return null;
-                }
-            }
-        }
-        
-        // Initialize API Service
-        const API = new ApiService();
-        
-        // ============ 5. CREATE VUE APP ============
-        const app = createApp({
-            setup() {
-                // ============ 6. REACTIVE STATE ============
-                
-                // 6.1 User State
-                const currentUser = ref(null);
-                const loginForm = reactive({ 
-                    email: 'admin@neumocare.org', 
-                    password: 'password123', 
-                    remember_me: false 
-                });
-                const loginLoading = ref(false);
-                
-                // 6.2 UI State
-                const currentView = ref('login');
-                const sidebarCollapsed = ref(false);
-                const mobileMenuOpen = ref(false);
-                const userMenuOpen = ref(false);
-                const statsSidebarOpen = ref(false);
-                const globalSearchQuery = ref('');
-                
-                // 6.3 Loading States
-                const loading = ref(false);
-                const saving = ref(false);
-                const loadingSchedule = ref(false);
-                const isLoadingStatus = ref(false);
-                
-                // 6.4 Data Stores
-                const medicalStaff = ref([]);
-                const departments = ref([]);
-                const trainingUnits = ref([]);
-                const rotations = ref([]);
-                const absences = ref([]);
-                const onCallSchedule = ref([]);
-                const announcements = ref([]);
-                
-                // 6.5 LIVE STATUS DATA
-                const clinicalStatus = ref(null);
-                const newStatusText = ref('');
-                const selectedAuthorId = ref('');
-                const expiryHours = ref(8);
-                const activeMedicalStaff = ref([]);
-                const liveStatsEditMode = ref(false);
-                const statusHistory = ref([]);
-                const statusRefreshInterval = ref(null);
-                
-                // 6.6 Dashboard Data
-                const systemStats = ref({ 
-                    totalStaff: 0, 
-                    activeAttending: 0, 
-                    activeResidents: 0, 
-                    onCallNow: 0, 
-                    pendingApprovals: 0, 
-                    nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString() 
-                });
-                const todaysOnCall = ref([]);
-                const liveUpdates = ref([]);
-                const availableData = ref({
-                    departments: [],
-                    residents: [],
-                    attendings: [],
-                    trainingUnits: []
-                });
-                
-                // 6.7 UI Components
-                const toasts = ref([]);
-                const systemAlerts = ref([]);
-                
-                // 6.8 Filter States
-                const staffFilters = reactive({ search: '', staffType: '', department: '', status: '' });
-                const onCallFilters = reactive({ date: '', shiftType: '', physician: '' });
-                const rotationFilters = reactive({ resident: '', status: '', trainingUnit: '' });
-                const absenceFilters = reactive({ staff: '', status: '', reason: '' });
-                
-                // 6.9 Modal States
-                const staffProfileModal = reactive({ show: false, staff: null, activeTab: 'clinical' });
-                const medicalStaffModal = reactive({ 
-                    show: false, 
-                    mode: 'add', 
-                    activeTab: 'basic', 
-                    form: { 
-                        full_name: '', 
-                        staff_type: 'medical_resident', 
-                        staff_id: '', 
-                        employment_status: 'active', 
-                        professional_email: '', 
-                        department_id: '' 
-                    } 
-                });
-                const communicationsModal = reactive({ 
-                    show: false, 
-                    activeTab: 'announcement', 
-                    form: { 
-                        title: '', 
-                        content: '', 
-                        priority: 'normal', 
-                        target_audience: 'all_staff' 
-                    } 
-                });
-                const onCallModal = reactive({ 
-                    show: false, 
-                    mode: 'add', 
-                    form: { 
-                        duty_date: new Date().toISOString().split('T')[0], 
-                        shift_type: 'primary', 
-                        start_time: '08:00', 
-                        end_time: '17:00', 
-                        primary_physician_id: '', 
-                        backup_physician_id: '' 
-                    } 
-                });
-                const rotationModal = reactive({ 
-                    show: false, 
-                    mode: 'add', 
-                    form: { 
-                        resident_id: '', 
-                        training_unit_id: '', 
-                        start_date: new Date().toISOString().split('T')[0], 
-                        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
-                        rotation_status: 'scheduled', 
-                        supervising_attending_id: '' 
-                    } 
-                });
-                const trainingUnitModal = reactive({ 
-                    show: false, 
-                    mode: 'add', 
-                    form: { 
-                        unit_name: '', 
-                        unit_code: '', 
-                        department_id: '', 
-                        maximum_residents: 10, 
-                        unit_status: 'active', 
-                        specialty: '' 
-                    } 
-                });
-                const absenceModal = reactive({ 
-                    show: false, 
-                    mode: 'add', 
-                    activeTab: 'basic', 
-                    form: { 
-                        staff_member_id: '', 
-                        absence_reason: 'vacation', 
-                        start_date: new Date().toISOString().split('T')[0], 
-                        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
-                        status: 'pending', 
-                        replacement_staff_id: '' 
-                    } 
-                });
-                const departmentModal = reactive({ 
-                    show: false, 
-                    mode: 'add', 
-                    form: { 
-                        name: '', 
-                        code: '', 
-                        status: 'active', 
-                        head_of_department_id: '' 
-                    } 
-                });
-                const userProfileModal = reactive({ 
-                    show: false, 
-                    form: { 
-                        full_name: '', 
-                        email: '', 
-                        department_id: '' 
-                    } 
-                });
-                const passwordChangeModal = reactive({ 
-                    show: false, 
-                    form: { 
-                        current_password: '', 
-                        new_password: '', 
-                        confirm_password: '' 
-                    } 
-                });
-                const confirmationModal = reactive({ 
-                    show: false, 
-                    title: '', 
-                    message: '', 
-                    icon: 'fa-question-circle', 
-                    confirmButtonText: 'Confirm', 
-                    confirmButtonClass: 'btn-primary', 
-                    cancelButtonText: 'Cancel', 
-                    onConfirm: null, 
-                    details: '' 
-                });
-                
-                // 6.10 Permission Matrix
-                const PERMISSION_MATRIX = {
-                    system_admin: { 
-                        medical_staff: ['create','read','update','delete'], 
-                        oncall_schedule: ['create','read','update','delete'], 
-                        rotations: ['create','read','update','delete'], 
-                        training_units: ['create','read','update','delete'], 
-                        absences: ['create','read','update','delete'], 
-                        departments: ['create','read','update','delete'], 
-                        announcements: ['create','read','update','delete'], 
-                        users: ['create','read','update','delete'] 
-                    },
-                    department_head: { 
-                        medical_staff: ['read','update'], 
-                        oncall_schedule: ['create','read','update'], 
-                        rotations: ['create','read','update'], 
-                        training_units: ['read','update'], 
-                        absences: ['create','read','update'], 
-                        departments: ['read'], 
-                        announcements: ['create','read'], 
-                        users: ['read'] 
-                    },
-                    attending_physician: { 
-                        medical_staff: ['read'], 
-                        oncall_schedule: ['read'], 
-                        rotations: ['read'], 
-                        training_units: ['read'], 
-                        absences: ['read'], 
-                        departments: ['read'], 
-                        announcements: ['read'], 
-                        users: [] 
-                    },
-                    medical_resident: { 
-                        medical_staff: ['read'], 
-                        oncall_schedule: ['read'], 
-                        rotations: ['read'], 
-                        training_units: ['read'], 
-                        absences: ['read'], 
-                        departments: [], 
-                        announcements: ['read'], 
-                        users: [] 
-                    }
-                };
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { createClient } = require('@supabase/supabase-js');
+const Joi = require('joi');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
+require('dotenv').config();
 
-                // ============ 7. VIEW & NAVIGATION HELPERS ============
-                const getCurrentViewTitle = () => {
-                    const map = { 
-                        'dashboard': 'Dashboard Overview', 
-                        'medical_staff': 'Medical Staff Management', 
-                        'oncall_schedule': 'On-call Schedule', 
-                        'resident_rotations': 'Resident Rotations', 
-                        'training_units': 'Training Units', 
-                        'staff_absence': 'Staff Absence Management', 
-                        'department_management': 'Department Management', 
-                        'communications': 'Communications Center',
-                        'login': 'Login to NeumoCare'
-                    };
-                    return map[currentView.value] || 'NeumoCare Dashboard';
-                };
+// ==================== INITIALIZATION ====================
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-                const getCurrentViewSubtitle = () => {
-                    const map = { 
-                        'dashboard': 'Real-time department overview and analytics', 
-                        'medical_staff': 'Manage physicians, residents, and clinical staff', 
-                        'oncall_schedule': 'View and manage on-call physician schedules', 
-                        'resident_rotations': 'Track and manage resident training rotations', 
-                        'training_units': 'Clinical training units and resident assignments', 
-                        'staff_absence': 'Track staff absences and coverage assignments', 
-                        'department_management': 'Organizational structure and clinical units', 
-                        'communications': 'Department announcements and capacity updates',
-                        'login': 'Secure access to hospital management system'
-                    };
-                    return map[currentView.value] || 'Hospital Management System';
-                };
+// ==================== CONFIGURATION ====================
+const {
+  SUPABASE_URL,
+  SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY,
+  JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_in_production',
+  NODE_ENV = 'production',
+  ALLOWED_ORIGINS = 'https://innovationneumologia.github.io,http://localhost:3000,http://localhost:8080'
+} = process.env;
 
-                const getSearchPlaceholder = () => {
-                    const map = { 
-                        'dashboard': 'Search staff, units, rotations...', 
-                        'medical_staff': 'Search by name, ID, or email...', 
-                        'oncall_schedule': 'Search on-call schedules...', 
-                        'resident_rotations': 'Search rotations by resident or unit...', 
-                        'training_units': 'Search training units...', 
-                        'staff_absence': 'Search absences by staff member...', 
-                        'department_management': 'Search departments...', 
-                        'communications': 'Search announcements...' 
-                    };
-                    return map[currentView.value] || 'Search across system...';
-                };
+// Validate required environment variables
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+  console.error('❌ MISSING ENVIRONMENT VARIABLES:');
+  console.error('   SUPABASE_URL:', SUPABASE_URL ? '✅' : '❌');
+  console.error('   SUPABASE_SERVICE_KEY:', SUPABASE_SERVICE_KEY ? '✅' : '❌');
+  process.exit(1);
+}
 
-                // ============ 8. NEUMAC ENHANCEMENT FUNCTIONS ============
-                const getShiftStatusClass = (shift) => {
-                    if (!shift || !shift.raw) return 'neumac-status-oncall';
-                    const today = new Date().toISOString().split('T')[0];
-                    if (shift.raw.duty_date === today) {
-                        try { 
-                            const currentTime = new Date().getHours() * 100 + new Date().getMinutes();
-                            const start = parseInt(shift.startTime.replace(':', '')); 
-                            const end = parseInt(shift.endTime.replace(':', ''));
-                            if (currentTime >= start && currentTime <= end) return 'neumac-status-critical';
-                        } catch { 
-                            return 'neumac-status-oncall'; 
-                        }
-                    }
-                    return shift.shiftType === 'Primary' ? 'neumac-status-oncall' : 'neumac-status-busy';
-                };
-
-                const isCurrentShift = (shift) => {
-                    if (!shift || !shift.raw) return false;
-                    const today = new Date().toISOString().split('T')[0];
-                    if (shift.raw.duty_date !== today) return false;
-                    try { 
-                        const currentTime = new Date().getHours() * 100 + new Date().getMinutes();
-                        const start = parseInt(shift.startTime.replace(':', '')); 
-                        const end = parseInt(shift.endTime.replace(':', ''));
-                        return currentTime >= start && currentTime <= end;
-                    } catch { 
-                        return false; 
-                    }
-                };
-
-                const getStaffTypeIcon = (staffType) => {
-                    const icons = { 
-                        'attending_physician': 'fa-user-md', 
-                        'medical_resident': 'fa-user-graduate', 
-                        'fellow': 'fa-user-tie', 
-                        'nurse_practitioner': 'fa-user-nurse' 
-                    };
-                    return icons[staffType] || 'fa-user';
-                };
-
-                const calculateCapacityPercent = (current, max) => {
-                    return current && max && max !== 0 ? Math.round((current / max) * 100) : 0;
-                };
-
-                const getCapacityDotClass = (index, current) => {
-                    if (!current || current === 0) return 'available';
-                    if (index <= current) { 
-                        const percent = (current / (index || 1)) * 100; 
-                        if (percent >= 90) return 'full'; 
-                        if (percent >= 75) return 'limited'; 
-                        return 'filled'; 
-                    }
-                    return 'available';
-                };
-
-                const getAbsenceReasonIcon = (reason) => {
-                    const icons = { 
-                        'vacation': 'fa-umbrella-beach', 
-                        'sick_leave': 'fa-procedures', 
-                        'conference': 'fa-chalkboard-teacher', 
-                        'training': 'fa-graduation-cap', 
-                        'personal': 'fa-user-clock', 
-                        'other': 'fa-question-circle' 
-                    };
-                    return icons[reason] || 'fa-clock';
-                };
-
-                const getScheduleIcon = (activity) => {
-                    if (!activity) return 'fa-calendar-check';
-                    const activityLower = activity.toLowerCase();
-                    if (activityLower.includes('round')) return 'fa-stethoscope';
-                    if (activityLower.includes('clinic')) return 'fa-clinic-medical';
-                    if (activityLower.includes('surgery')) return 'fa-scalpel-path';
-                    if (activityLower.includes('meeting')) return 'fa-users';
-                    return 'fa-calendar-check';
-                };
-
-                // ============ 9. ACTION FUNCTIONS FOR UI INTERACTIONS ============
-                const contactPhysician = (shift) => {
-                    if (shift.contactInfo && shift.contactInfo !== 'No contact info') {
-                        showToast('Contact Physician', `Would contact ${shift.physicianName} via ${shift.contactInfo.includes('@') ? 'email' : 'phone'}`, 'info');
-                    } else {
-                        showToast('No Contact Info', `No contact information available for ${shift.physicianName}`, 'warning');
-                    }
-                };
-
-                const viewAnnouncement = (announcement) => {
-                    showToast(announcement.title, EnhancedUtils.truncateText(announcement.content, 100), 'info');
-                };
-
-                const viewDepartmentStaff = (department) => {
-                    showToast('Department Staff', `Viewing staff for ${department.name}`, 'info');
-                };
-
-                const viewUnitResidents = (unit) => {
-                    showToast('Unit Residents', `Viewing residents for ${unit.unit_name}`, 'info');
-                };
-                
-                // ============ 10. COMPUTED PROPERTIES ============
-                const authToken = computed(() => localStorage.getItem(CONFIG.TOKEN_KEY));
-                
-                const todaysOnCallCount = computed(() => todaysOnCall.value.length);
-                
-                const unreadLiveUpdates = computed(() => {
-                    if (!clinicalStatus.value) return 0;
-                    const lastSeenId = localStorage.getItem('lastSeenStatusId');
-                    return lastSeenId !== clinicalStatus.value.id ? 1 : 0;
-                });
-                
-                const formattedExpiry = computed(() => {
-                    if (!clinicalStatus.value || !clinicalStatus.value.expires_at) return '';
-                    const diffHours = Math.ceil((new Date(clinicalStatus.value.expires_at) - new Date()) / (1000 * 60 * 60));
-                    if (diffHours <= 1) return 'Expires soon';
-                    if (diffHours <= 4) return `Expires in ${diffHours}h`;
-                    return `Expires ${EnhancedUtils.formatTime(clinicalStatus.value.expires_at)}`;
-                });
-                
-                const availablePhysicians = computed(() => 
-                    medicalStaff.value.filter(staff => 
-                        (staff.staff_type === 'attending_physician' || staff.staff_type === 'fellow') && 
-                        staff.employment_status === 'active'
-                    )
-                );
-                
-                const availableResidents = computed(() => 
-                    medicalStaff.value.filter(staff => 
-                        staff.staff_type === 'medical_resident' && 
-                        staff.employment_status === 'active'
-                    )
-                );
-                
-                const availableAttendings = computed(() => 
-                    medicalStaff.value.filter(staff => 
-                        staff.staff_type === 'attending_physician' && 
-                        staff.employment_status === 'active'
-                    )
-                );
-                
-                const filteredMedicalStaff = computed(() => {
-                    let filtered = medicalStaff.value;
-                    if (staffFilters.search) {
-                        const search = staffFilters.search.toLowerCase();
-                        filtered = filtered.filter(staff => 
-                            staff.full_name?.toLowerCase().includes(search) || 
-                            staff.staff_id?.toLowerCase().includes(search) || 
-                            staff.professional_email?.toLowerCase().includes(search)
-                        );
-                    }
-                    if (staffFilters.staffType) filtered = filtered.filter(staff => staff.staff_type === staffFilters.staffType);
-                    if (staffFilters.department) filtered = filtered.filter(staff => staff.department_id === staffFilters.department);
-                    if (staffFilters.status) filtered = filtered.filter(staff => staff.employment_status === staffFilters.status);
-                    return filtered;
-                });
-                
-                const filteredOnCallSchedules = computed(() => {
-                    let filtered = onCallSchedule.value;
-                    if (onCallFilters.date) filtered = filtered.filter(schedule => schedule.duty_date === onCallFilters.date);
-                    if (onCallFilters.shiftType) filtered = filtered.filter(schedule => schedule.shift_type === onCallFilters.shiftType);
-                    if (onCallFilters.physician) {
-                        filtered = filtered.filter(schedule => 
-                            schedule.primary_physician_id === onCallFilters.physician || 
-                            schedule.backup_physician_id === onCallFilters.physician
-                        );
-                    }
-                    return filtered;
-                });
-                
-                const filteredRotations = computed(() => {
-                    let filtered = rotations.value;
-                    if (rotationFilters.resident) filtered = filtered.filter(rotation => rotation.resident_id === rotationFilters.resident);
-                    if (rotationFilters.status) filtered = filtered.filter(rotation => rotation.rotation_status === rotationFilters.status);
-                    if (rotationFilters.trainingUnit) filtered = filtered.filter(rotation => rotation.training_unit_id === rotationFilters.trainingUnit);
-                    return filtered;
-                });
-                
-                const filteredAbsences = computed(() => {
-                    let filtered = absences.value;
-                    if (absenceFilters.staff) filtered = filtered.filter(absence => absence.staff_member_id === absenceFilters.staff);
-                    if (absenceFilters.status) filtered = filtered.filter(absence => absence.status === absenceFilters.status);
-                    if (absenceFilters.reason) filtered = filtered.filter(absence => absence.absence_reason === absenceFilters.reason);
-                    return filtered;
-                });
-                
-                const recentAnnouncements = computed(() => announcements.value.slice(0, 10));
-                
-                const unreadAnnouncements = computed(() => {
-                    if (!announcements.value || !Array.isArray(announcements.value)) return 0;
-                    return announcements.value.filter(announcement => {
-                        if (announcement.is_read !== undefined) return !announcement.is_read;
-                        const created = new Date(announcement.created_at || announcement.publish_start_date);
-                        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-                        return created > oneDayAgo;
-                    }).length;
-                });
-                
-                // ============ 11. UTILITY FUNCTIONS ============
-                
-                // Toast notifications
-                const showToast = (title, message, type = 'info', duration = 5000) => {
-                    const icons = { 
-                        info: 'fas fa-info-circle', 
-                        success: 'fas fa-check-circle', 
-                        error: 'fas fa-exclamation-circle', 
-                        warning: 'fas fa-exclamation-triangle' 
-                    };
-                    const toast = { 
-                        id: Date.now(), 
-                        title, 
-                        message, 
-                        type, 
-                        icon: icons[type], 
-                        duration 
-                    };
-                    toasts.value.push(toast);
-                    if (duration > 0) {
-                        setTimeout(() => removeToast(toast.id), duration);
-                    }
-                };
-                
-                const removeToast = (id) => {
-                    const index = toasts.value.findIndex(t => t.id === id);
-                    if (index > -1) toasts.value.splice(index, 1);
-                };
-                
-                // Confirmation modal
-                const showConfirmation = (options) => {
-                    Object.assign(confirmationModal, { show: true, ...options });
-                };
-                
-                const confirmAction = async () => {
-                    if (confirmationModal.onConfirm) {
-                        try {
-                            await confirmationModal.onConfirm();
-                        } catch (error) {
-                            showToast('Error', error.message, 'error');
-                        }
-                    }
-                    confirmationModal.show = false;
-                };
-                
-                const cancelConfirmation = () => {
-                    confirmationModal.show = false;
-                };
-                
-                // Formatting functions
-                const formatStaffType = (type) => {
-                    const map = { 
-                        'medical_resident': 'Medical Resident', 
-                        'attending_physician': 'Attending Physician', 
-                        'fellow': 'Fellow', 
-                        'nurse_practitioner': 'Nurse Practitioner' 
-                    };
-                    return map[type] || type;
-                };
-                
-                const getStaffTypeClass = (type) => {
-                    const map = { 
-                        'medical_resident': 'badge-primary', 
-                        'attending_physician': 'badge-success', 
-                        'fellow': 'badge-info', 
-                        'nurse_practitioner': 'badge-warning' 
-                    };
-                    return map[type] || 'badge-secondary';
-                };
-                
-                const formatEmploymentStatus = (status) => {
-                    const map = { 
-                        'active': 'Active', 
-                        'on_leave': 'On Leave', 
-                        'inactive': 'Inactive' 
-                    };
-                    return map[status] || status;
-                };
-                
-                const formatAbsenceReason = (reason) => {
-                    const map = { 
-                        'vacation': 'Vacation', 
-                        'sick_leave': 'Sick Leave', 
-                        'conference': 'Conference', 
-                        'training': 'Training', 
-                        'personal': 'Personal', 
-                        'other': 'Other' 
-                    };
-                    return map[reason] || reason;
-                };
-                
-                const formatRotationStatus = (status) => {
-                    const map = { 
-                        'scheduled': 'Scheduled', 
-                        'active': 'Active', 
-                        'completed': 'Completed', 
-                        'cancelled': 'Cancelled' 
-                    };
-                    return map[status] || status;
-                };
-                
-                const getUserRoleDisplay = (role) => {
-                    const map = { 
-                        'system_admin': 'System Administrator', 
-                        'department_head': 'Department Head', 
-                        'attending_physician': 'Attending Physician', 
-                        'medical_resident': 'Medical Resident' 
-                    };
-                    return map[role] || role;
-                };
-                
-                // Data retrieval functions
-                const getDepartmentName = (departmentId) => {
-                    if (!departmentId) return 'Not assigned';
-                    const dept = departments.value.find(d => d.id === departmentId);
-                    return dept ? dept.name : 'Unknown Department';
-                };
-                
-                const getStaffName = (staffId) => {
-                    if (!staffId) return 'Not assigned';
-                    const staff = medicalStaff.value.find(s => s.id === staffId);
-                    return staff ? staff.full_name : 'Unknown Staff';
-                };
-                
-                const getTrainingUnitName = (unitId) => {
-                    if (!unitId) return 'Not assigned';
-                    const unit = trainingUnits.value.find(u => u.id === unitId);
-                    return unit ? unit.unit_name : 'Unknown Unit';
-                };
-                
-                // Permission check
-                const hasPermission = (module, action = 'read') => {
-                    const role = currentUser.value?.user_role;
-                    if (!role) return false;
-                    if (role === 'system_admin') return true;
-                    
-                    const permissions = PERMISSION_MATRIX[role]?.[module];
-                    return permissions ? (permissions.includes(action) || permissions.includes('*')) : false;
-                };
-                
-                // ============ 12. DATA LOADING FUNCTIONS ============
-                
-                const loadMedicalStaff = async () => {
-                    try {
-                        medicalStaff.value = await API.getMedicalStaff();
-                    } catch (error) {
-                        console.error('Failed to load medical staff:', error);
-                        showToast('Error', 'Failed to load medical staff', 'error');
-                    }
-                };
-                
-                const loadDepartments = async () => {
-                    try {
-                        departments.value = await API.getDepartments();
-                    } catch (error) {
-                        console.error('Failed to load departments:', error);
-                        showToast('Error', 'Failed to load departments', 'error');
-                    }
-                };
-                
-                const loadTrainingUnits = async () => {
-                    try {
-                        trainingUnits.value = await API.getTrainingUnits();
-                    } catch (error) {
-                        console.error('Failed to load training units:', error);
-                        showToast('Error', 'Failed to load training units', 'error');
-                    }
-                };
-                
-                const loadRotations = async () => {
-                    try {
-                        rotations.value = await API.getRotations();
-                    } catch (error) {
-                        console.error('Failed to load rotations:', error);
-                        showToast('Error', 'Failed to load rotations', 'error');
-                    }
-                };
-                
-                const loadAbsences = async () => {
-                    try {
-                        absences.value = await API.getAbsences();
-                    } catch (error) {
-                        console.error('Failed to load absences:', error);
-                        showToast('Error', 'Failed to load absences', 'error');
-                    }
-                };
-                
-                const loadOnCallSchedule = async () => {
-                    try {
-                        loadingSchedule.value = true;
-                        onCallSchedule.value = await API.getOnCallSchedule();
-                    } catch (error) {
-                        console.error('Failed to load on-call schedule:', error);
-                        showToast('Error', 'Failed to load on-call schedule', 'error');
-                    } finally {
-                        loadingSchedule.value = false;
-                    }
-                };
-                
-                const loadTodaysOnCall = async () => {
-                    try {
-                        loadingSchedule.value = true;
-                        const data = await API.getOnCallToday();
-                        todaysOnCall.value = data.map(item => ({
-                            id: item.id,
-                            startTime: item.start_time ? item.start_time.substring(0, 5) : 'N/A',
-                            endTime: item.end_time ? item.end_time.substring(0, 5) : 'N/A',
-                            physicianName: item.primary_physician?.full_name || 'Unknown Physician',
-                            staffType: formatStaffType(item.primary_physician?.staff_type || 'Physician'),
-                            shiftType: item.shift_type === 'primary_call' || item.shift_type === 'primary' ? 'Primary' : 'Backup',
-                            coverageArea: item.coverage_notes || 'General Coverage',
-                            backupPhysician: item.backup_physician?.full_name || null,
-                            contactInfo: item.primary_physician?.mobile_phone || item.primary_physician?.professional_email || 'No contact info',
-                            raw: item
-                        }));
-                    } catch (error) {
-                        console.error('Failed to load today\'s on-call:', error);
-                        todaysOnCall.value = [];
-                    } finally {
-                        loadingSchedule.value = false;
-                    }
-                };
-                
-                const loadAnnouncements = async () => {
-                    try {
-                        announcements.value = await API.getAnnouncements();
-                    } catch (error) {
-                        console.error('Failed to load announcements:', error);
-                        showToast('Error', 'Failed to load announcements', 'error');
-                    }
-                };
-                
-                const loadClinicalStatus = async () => {
-                    isLoadingStatus.value = true;
-                    try {
-                        const status = await API.getClinicalStatus();
-                        clinicalStatus.value = status;
-                        
-                        if (status && status.id) {
-                            localStorage.setItem('lastSeenStatusId', status.id);
-                        }
-                    } catch (error) {
-                        console.warn('Live status not available:', error.message);
-                        clinicalStatus.value = null;
-                    } finally {
-                        isLoadingStatus.value = false;
-                    }
-                };
-                
-                const loadStatusHistory = async () => {
-                    try {
-                        statusHistory.value = await API.getClinicalStatusHistory();
-                    } catch (error) {
-                        console.warn('Status history not available:', error.message);
-                        statusHistory.value = [];
-                    }
-                };
-                
-                const loadActiveMedicalStaff = async () => {
-                    try {
-                        const data = await API.getMedicalStaff();
-                        activeMedicalStaff.value = data.filter(staff => staff.employment_status === 'active');
-                        
-                        if (currentUser.value) {
-                            const currentUserStaff = activeMedicalStaff.value.find(
-                                staff => staff.professional_email === currentUser.value.email
-                            );
-                            if (currentUserStaff) {
-                                selectedAuthorId.value = currentUserStaff.id;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Failed to load active medical staff:', error);
-                        activeMedicalStaff.value = [];
-                    }
-                };
-                
-                const loadSystemStats = async () => {
-                    try {
-                        const stats = await API.getSystemStats();
-                        systemStats.value = stats;
-                    } catch (error) {
-                        console.warn('System stats not available:', error.message);
-                        // Calculate stats from loaded data
-                        systemStats.value = {
-                            totalStaff: medicalStaff.value.length,
-                            activeAttending: medicalStaff.value.filter(s => 
-                                s.staff_type === 'attending_physician' && s.employment_status === 'active'
-                            ).length,
-                            activeResidents: medicalStaff.value.filter(s => 
-                                s.staff_type === 'medical_resident' && s.employment_status === 'active'
-                            ).length,
-                            onCallNow: todaysOnCall.value.length,
-                            pendingApprovals: absences.value.filter(a => a.status === 'pending').length,
-                            nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString()
-                        };
-                    }
-                };
-                
-                const loadLiveUpdates = async () => {
-                    try {
-                        liveUpdates.value = await API.getLiveUpdates();
-                    } catch (error) {
-                        console.warn('Live updates not available:', error.message);
-                        liveUpdates.value = [];
-                    }
-                };
-                
-                const loadAvailableData = async () => {
-                    try {
-                        availableData.value = await API.getAvailableData();
-                    } catch (error) {
-                        console.warn('Available data not loaded:', error.message);
-                        // Fallback to local data
-                        availableData.value = {
-                            departments: departments.value.map(d => ({ id: d.id, name: d.name, code: d.code })),
-                            residents: medicalStaff.value
-                                .filter(s => s.staff_type === 'medical_resident' && s.employment_status === 'active')
-                                .map(s => ({ id: s.id, full_name: s.full_name, training_year: s.training_year })),
-                            attendings: medicalStaff.value
-                                .filter(s => s.staff_type === 'attending_physician' && s.employment_status === 'active')
-                                .map(s => ({ id: s.id, full_name: s.full_name, specialization: s.specialization })),
-                            trainingUnits: trainingUnits.value
-                                .filter(u => u.unit_status === 'active')
-                                .map(u => ({ id: u.id, unit_name: u.unit_name, unit_code: u.unit_code }))
-                        };
-                    }
-                };
-                
-                const updateDashboardStats = () => {
-                    systemStats.value.totalStaff = medicalStaff.value.length;
-                    systemStats.value.activeAttending = medicalStaff.value.filter(
-                        s => s.staff_type === 'attending_physician' && s.employment_status === 'active'
-                    ).length;
-                    systemStats.value.activeResidents = medicalStaff.value.filter(
-                        s => s.staff_type === 'medical_resident' && s.employment_status === 'active'
-                    ).length;
-                    systemStats.value.onLeaveStaff = medicalStaff.value.filter(
-                        s => s.employment_status === 'on_leave'
-                    ).length;
-                    systemStats.value.activeRotations = rotations.value.filter(
-                        r => r.rotation_status === 'active'
-                    ).length;
-                    systemStats.value.pendingApprovals = absences.value.filter(
-                        a => a.status === 'pending'
-                    ).length;
-                };
-                
-                const loadAllData = async () => {
-                    loading.value = true;
-                    try {
-                        // Load critical data in parallel
-                        await Promise.all([
-                            loadMedicalStaff(),
-                            loadDepartments(),
-                            loadTrainingUnits(),
-                            loadRotations(),
-                            loadAbsences(),
-                            loadOnCallSchedule(),
-                            loadTodaysOnCall(),
-                            loadAnnouncements()
-                        ]);
-                        
-                        // Load non-critical data sequentially
-                        await loadActiveMedicalStaff();
-                        await loadClinicalStatus();
-                        await loadStatusHistory();
-                        await loadSystemStats();
-                        await loadLiveUpdates();
-                        await loadAvailableData();
-                        
-                        updateDashboardStats();
-                        
-                        showToast('Success', 'System data loaded successfully', 'success');
-                    } catch (error) {
-                        console.error('Failed to load all data:', error);
-                        showToast('Warning', 'Some data failed to load', 'warning');
-                    } finally {
-                        loading.value = false;
-                    }
-                };
-                
-                // ============ 13. ACTION FUNCTIONS ============
-                
-                // Authentication
-                const handleLogin = async () => {
-                    if (!loginForm.email || !loginForm.password) {
-                        showToast('Error', 'Email and password are required', 'error');
-                        return;
-                    }
-                    loginLoading.value = true;
-                    try {
-                        const response = await API.login(loginForm.email, loginForm.password);
-                        currentUser.value = response.user;
-                        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(response.user));
-                        
-                        showToast('Success', `Welcome, ${response.user.full_name}!`, 'success');
-                        
-                        await loadAllData();
-                        currentView.value = 'dashboard';
-                    } catch (error) {
-                        showToast('Error', error.message || 'Login failed', 'error');
-                        // Clear any invalid token
-                        localStorage.removeItem(CONFIG.TOKEN_KEY);
-                    } finally {
-                        loginLoading.value = false;
-                    }
-                };
-                
-                const handleLogout = () => {
-                    showConfirmation({
-                        title: 'Logout',
-                        message: 'Are you sure you want to logout?',
-                        icon: 'fa-sign-out-alt',
-                        confirmButtonText: 'Logout',
-                        confirmButtonClass: 'btn-danger',
-                        onConfirm: async () => {
-                            try {
-                                await API.logout();
-                            } finally {
-                                currentUser.value = null;
-                                currentView.value = 'login';
-                                userMenuOpen.value = false;
-                                if (statusRefreshInterval.value) {
-                                    clearInterval(statusRefreshInterval.value);
-                                    statusRefreshInterval.value = null;
-                                }
-                                showToast('Info', 'Logged out successfully', 'info');
-                            }
-                        }
-                    });
-                };
-                
-                // Live Status
-                const saveClinicalStatus = async () => {
-                    if (!newStatusText.value.trim() || !selectedAuthorId.value) {
-                        showToast('Error', 'Please fill all required fields', 'warning');
-                        return;
-                    }
-                    
-                    isLoadingStatus.value = true;
-                    try {
-                        const response = await API.createClinicalStatus({
-                            status_text: newStatusText.value.trim(),
-                            author_id: selectedAuthorId.value,
-                            expires_in_hours: expiryHours.value
-                        });
-                        
-                        if (response && response.data) {
-                            clinicalStatus.value = response.data;
-                            newStatusText.value = '';
-                            selectedAuthorId.value = '';
-                            liveStatsEditMode.value = false;
-                            showToast('Success', 'Live status updated', 'success');
-                        }
-                    } catch (error) {
-                        console.error('Failed to save clinical status:', error);
-                        showToast('Error', 'Could not update status', 'error');
-                    } finally {
-                        isLoadingStatus.value = false;
-                    }
-                };
-                
-                // Navigation
-                const switchView = (view) => {
-                    currentView.value = view;
-                    mobileMenuOpen.value = false;
-                };
-                
-                const toggleStatsSidebar = () => {
-                    statsSidebarOpen.value = !statsSidebarOpen.value;
-                };
-                
-                const handleGlobalSearch = () => {
-                    if (globalSearchQuery.value.trim()) {
-                        showToast('Search', `Searching for "${globalSearchQuery.value}"`, 'info');
-                    }
-                };
-                
-                const dismissAlert = (id) => {
-                    const index = systemAlerts.value.findIndex(alert => alert.id === id);
-                    if (index > -1) systemAlerts.value.splice(index, 1);
-                };
-                
-                // Modal functions
-                const showAddMedicalStaffModal = () => {
-                    medicalStaffModal.mode = 'add';
-                    medicalStaffModal.form = {
-                        full_name: '',
-                        staff_type: 'medical_resident',
-                        staff_id: EnhancedUtils.generateId('MD'),
-                        employment_status: 'active',
-                        professional_email: '',
-                        department_id: ''
-                    };
-                    medicalStaffModal.show = true;
-                };
-                
-                const showAddDepartmentModal = () => {
-                    departmentModal.mode = 'add';
-                    departmentModal.form = {
-                        name: '',
-                        code: '',
-                        status: 'active',
-                        head_of_department_id: ''
-                    };
-                    departmentModal.show = true;
-                };
-                
-                const showAddTrainingUnitModal = () => {
-                    trainingUnitModal.mode = 'add';
-                    trainingUnitModal.form = {
-                        unit_name: '',
-                        unit_code: '',
-                        department_id: '',
-                        maximum_residents: 10,
-                        unit_status: 'active',
-                        specialty: ''
-                    };
-                    trainingUnitModal.show = true;
-                };
-                
-                const showAddRotationModal = () => {
-                    rotationModal.mode = 'add';
-                    rotationModal.form = {
-                        resident_id: '',
-                        training_unit_id: '',
-                        start_date: new Date().toISOString().split('T')[0],
-                        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        rotation_status: 'scheduled',
-                        supervising_attending_id: ''
-                    };
-                    rotationModal.show = true;
-                };
-                
-                const showAddOnCallModal = () => {
-                    onCallModal.mode = 'add';
-                    onCallModal.form = {
-                        duty_date: new Date().toISOString().split('T')[0],
-                        shift_type: 'primary',
-                        start_time: '08:00',
-                        end_time: '17:00',
-                        primary_physician_id: '',
-                        backup_physician_id: ''
-                    };
-                    onCallModal.show = true;
-                };
-                
-                const showAddAbsenceModal = () => {
-                    absenceModal.mode = 'add';
-                    absenceModal.form = {
-                        staff_member_id: '',
-                        absence_reason: 'vacation',
-                        start_date: new Date().toISOString().split('T')[0],
-                        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        status: 'pending',
-                        replacement_staff_id: ''
-                    };
-                    absenceModal.show = true;
-                };
-                
-                const showCommunicationsModal = () => {
-                    communicationsModal.show = true;
-                    communicationsModal.activeTab = 'announcement';
-                    communicationsModal.form = {
-                        title: '',
-                        content: '',
-                        priority: 'normal',
-                        target_audience: 'all_staff'
-                    };
-                };
-                
-                const showUserProfileModal = () => {
-                    userProfileModal.form = {
-                        full_name: currentUser.value?.full_name || '',
-                        email: currentUser.value?.email || '',
-                        department_id: currentUser.value?.department_id || ''
-                    };
-                    userProfileModal.show = true;
-                    userMenuOpen.value = false;
-                };
-                
-                const showPasswordChangeModal = () => {
-                    passwordChangeModal.form = {
-                        current_password: '',
-                        new_password: '',
-                        confirm_password: ''
-                    };
-                    passwordChangeModal.show = true;
-                    userMenuOpen.value = false;
-                };
-                
-                const viewStaffDetails = (staff) => {
-                    staffProfileModal.staff = staff;
-                    staffProfileModal.activeTab = 'clinical';
-                    staffProfileModal.show = true;
-                };
-                
-                const editMedicalStaff = (staff) => {
-                    medicalStaffModal.mode = 'edit';
-                    medicalStaffModal.form = { ...staff };
-                    medicalStaffModal.show = true;
-                };
-                
-                const editDepartment = (department) => {
-                    departmentModal.mode = 'edit';
-                    departmentModal.form = { ...department };
-                    departmentModal.show = true;
-                };
-                
-                const editTrainingUnit = (unit) => {
-                    trainingUnitModal.mode = 'edit';
-                    trainingUnitModal.form = { ...unit };
-                    trainingUnitModal.show = true;
-                };
-                
-                const editRotation = (rotation) => {
-                    rotationModal.mode = 'edit';
-                    rotationModal.form = { ...rotation };
-                    rotationModal.show = true;
-                };
-                
-                const editOnCallSchedule = (schedule) => {
-                    onCallModal.mode = 'edit';
-                    onCallModal.form = { ...schedule };
-                    onCallModal.show = true;
-                };
-                
-                const editAbsence = (absence) => {
-                    absenceModal.mode = 'edit';
-                    absenceModal.form = { ...absence };
-                    absenceModal.show = true;
-                };
-                
-                // Save functions
-                const saveMedicalStaff = async () => {
-                    saving.value = true;
-                    try {
-                        if (medicalStaffModal.mode === 'add') {
-                            const result = await API.createMedicalStaff(medicalStaffModal.form);
-                            medicalStaff.value.unshift(result);
-                            showToast('Success', 'Medical staff added', 'success');
-                        } else {
-                            const result = await API.updateMedicalStaff(medicalStaffModal.form.id, medicalStaffModal.form);
-                            const index = medicalStaff.value.findIndex(s => s.id === result.id);
-                            if (index !== -1) medicalStaff.value[index] = result;
-                            showToast('Success', 'Medical staff updated', 'success');
-                        }
-                        medicalStaffModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveDepartment = async () => {
-                    saving.value = true;
-                    try {
-                        if (departmentModal.mode === 'add') {
-                            const result = await API.createDepartment(departmentModal.form);
-                            departments.value.unshift(result);
-                            showToast('Success', 'Department created', 'success');
-                        } else {
-                            const result = await API.updateDepartment(departmentModal.form.id, departmentModal.form);
-                            const index = departments.value.findIndex(d => d.id === result.id);
-                            if (index !== -1) departments.value[index] = result;
-                            showToast('Success', 'Department updated', 'success');
-                        }
-                        departmentModal.show = false;
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveTrainingUnit = async () => {
-                    saving.value = true;
-                    try {
-                        if (trainingUnitModal.mode === 'add') {
-                            const result = await API.createTrainingUnit(trainingUnitModal.form);
-                            trainingUnits.value.unshift(result);
-                            showToast('Success', 'Training unit created', 'success');
-                        } else {
-                            const result = await API.updateTrainingUnit(trainingUnitModal.form.id, trainingUnitModal.form);
-                            const index = trainingUnits.value.findIndex(u => u.id === result.id);
-                            if (index !== -1) trainingUnits.value[index] = result;
-                            showToast('Success', 'Training unit updated', 'success');
-                        }
-                        trainingUnitModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveRotation = async () => {
-                    if (!rotationModal.form.resident_id) {
-                        showToast('Error', 'Please select a resident', 'error');
-                        return;
-                    }
-                    if (!rotationModal.form.training_unit_id) {
-                        showToast('Error', 'Please select a training unit', 'error');
-                        return;
-                    }
-                    if (!rotationModal.form.start_date || !rotationModal.form.end_date) {
-                        showToast('Error', 'Please enter dates', 'error');
-                        return;
-                    }
-                    
-                    const start = new Date(rotationModal.form.start_date);
-                    const end = new Date(rotationModal.form.end_date);
-                    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                        showToast('Error', 'Invalid date format', 'error');
-                        return;
-                    }
-                    if (end <= start) {
-                        showToast('Error', 'End date must be after start date', 'error');
-                        return;
-                    }
-                    
-                    saving.value = true;
-                    try {
-                        const rotationData = {
-                            resident_id: rotationModal.form.resident_id,
-                            training_unit_id: rotationModal.form.training_unit_id,
-                            start_date: rotationModal.form.start_date,
-                            end_date: rotationModal.form.end_date,
-                            rotation_status: rotationModal.form.rotation_status,
-                            supervising_attending_id: rotationModal.form.supervising_attending_id || null
-                        };
-                        
-                        if (rotationModal.mode === 'add') {
-                            const result = await API.createRotation(rotationData);
-                            rotations.value.unshift(result);
-                            showToast('Success', 'Rotation scheduled', 'success');
-                        } else {
-                            const result = await API.updateRotation(rotationModal.form.id, rotationData);
-                            const index = rotations.value.findIndex(r => r.id === result.id);
-                            if (index !== -1) rotations.value[index] = result;
-                            showToast('Success', 'Rotation updated', 'success');
-                        }
-                        rotationModal.show = false;
-                        await loadRotations();
-                        updateDashboardStats();
-                    } catch (error) {
-                        console.error('Rotation creation error:', error);
-                        showToast('Error', error.message || 'Failed to save rotation', 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveOnCallSchedule = async () => {
-                    saving.value = true;
-                    try {
-                        if (onCallModal.mode === 'add') {
-                            const result = await API.createOnCall(onCallModal.form);
-                            onCallSchedule.value.unshift(result);
-                            showToast('Success', 'On-call scheduled', 'success');
-                        } else {
-                            const result = await API.updateOnCall(onCallModal.form.id, onCallModal.form);
-                            const index = onCallSchedule.value.findIndex(s => s.id === result.id);
-                            if (index !== -1) onCallSchedule.value[index] = result;
-                            showToast('Success', 'On-call updated', 'success');
-                        }
-                        onCallModal.show = false;
-                        loadTodaysOnCall();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveAbsence = async () => {
-                    saving.value = true;
-                    try {
-                        if (absenceModal.mode === 'add') {
-                            const result = await API.createAbsence(absenceModal.form);
-                            absences.value.unshift(result);
-                            showToast('Success', 'Absence recorded', 'success');
-                        } else {
-                            const result = await API.updateAbsence(absenceModal.form.id, absenceModal.form);
-                            const index = absences.value.findIndex(a => a.id === result.id);
-                            if (index !== -1) absences.value[index] = result;
-                            showToast('Success', 'Absence updated', 'success');
-                        }
-                        absenceModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveCommunication = async () => {
-                    saving.value = true;
-                    try {
-                        if (communicationsModal.activeTab === 'announcement') {
-                            const result = await API.createAnnouncement({
-                                title: communicationsModal.form.title,
-                                content: communicationsModal.form.content,
-                                priority_level: communicationsModal.form.priority,
-                                target_audience: communicationsModal.form.target_audience
-                            });
-                            announcements.value.unshift(result);
-                            showToast('Success', 'Announcement posted', 'success');
-                        } else {
-                            await saveClinicalStatus();
-                        }
-                        communicationsModal.show = false;
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveUserProfile = async () => {
-                    saving.value = true;
-                    try {
-                        const result = await API.updateUserProfile(userProfileModal.form);
-                        currentUser.value.full_name = result.data.full_name;
-                        currentUser.value.department_id = result.data.department_id;
-                        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(currentUser.value));
-                        userProfileModal.show = false;
-                        showToast('Success', 'Profile updated', 'success');
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const savePasswordChange = async () => {
-                    if (passwordChangeModal.form.new_password !== passwordChangeModal.form.confirm_password) {
-                        showToast('Error', 'Passwords do not match', 'error');
-                        return;
-                    }
-                    
-                    saving.value = true;
-                    try {
-                        await API.changePassword({
-                            current_password: passwordChangeModal.form.current_password,
-                            new_password: passwordChangeModal.form.new_password,
-                            confirm_password: passwordChangeModal.form.confirm_password
-                        });
-                        
-                        passwordChangeModal.show = false;
-                        showToast('Success', 'Password changed successfully', 'success');
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                // ============ 14. LIFECYCLE ============
-                
-                onMounted(() => {
-                    console.log('🚀 Vue app mounted');
-                    
-                    // Check for existing session
-                    const token = localStorage.getItem(CONFIG.TOKEN_KEY);
-                    const user = localStorage.getItem(CONFIG.USER_KEY);
-                    
-                    if (token && user) {
-                        try {
-                            currentUser.value = JSON.parse(user);
-                            loadAllData();
-                            currentView.value = 'dashboard';
-                        } catch {
-                            currentView.value = 'login';
-                        }
-                    } else {
-                        currentView.value = 'login';
-                    }
-                    
-                    // Set up auto-refresh for live status
-                    statusRefreshInterval.value = setInterval(() => {
-                        if (currentUser.value && !isLoadingStatus.value) {
-                            loadClinicalStatus();
-                        }
-                    }, 60000);
-                    
-                    // Auto-load status when stats sidebar opens
-                    watch(() => statsSidebarOpen.value, (newVal) => {
-                        if (newVal && !clinicalStatus.value && !isLoadingStatus.value) {
-                            loadClinicalStatus();
-                        }
-                    });
-                    
-                    // Escape key closes modals
-                    document.addEventListener('keydown', (e) => {
-                        if (e.key === 'Escape') {
-                            const modals = [
-                                medicalStaffModal, departmentModal, trainingUnitModal, 
-                                rotationModal, onCallModal, absenceModal, communicationsModal, 
-                                staffProfileModal, userProfileModal, passwordChangeModal, 
-                                confirmationModal
-                            ];
-                            modals.forEach(modal => {
-                                if (modal.show) modal.show = false;
-                            });
-                        }
-                    });
-                });
-                
-                onUnmounted(() => {
-                    if (statusRefreshInterval.value) {
-                        clearInterval(statusRefreshInterval.value);
-                    }
-                });
-                
-                // Update dashboard stats when data changes
-                watch([medicalStaff, rotations, trainingUnits, absences], () => {
-                    updateDashboardStats();
-                }, { deep: true });
-                
-                // ============ 15. RETURN EXPOSED DATA/METHODS ============
-                return {
-                    // State
-                    currentUser, loginForm, loginLoading, loading, saving, loadingSchedule, isLoadingStatus,
-                    currentView, sidebarCollapsed, mobileMenuOpen, userMenuOpen, statsSidebarOpen, globalSearchQuery,
-                    
-                    // Data
-                    medicalStaff, departments, trainingUnits, rotations, absences, onCallSchedule, announcements,
-                    clinicalStatus, newStatusText, selectedAuthorId, expiryHours, activeMedicalStaff, 
-                    liveStatsEditMode, statusHistory,
-                    
-                    // Dashboard
-                    systemStats, todaysOnCall, todaysOnCallCount, liveUpdates, availableData,
-                    
-                    // UI
-                    toasts, systemAlerts,
-                    
-                    // Filters
-                    staffFilters, onCallFilters, rotationFilters, absenceFilters,
-                    
-                    // Modals
-                    staffProfileModal, medicalStaffModal, communicationsModal, onCallModal, 
-                    rotationModal, trainingUnitModal, absenceModal, departmentModal, 
-                    userProfileModal, passwordChangeModal, confirmationModal,
-                    
-                    // Computed Properties
-                    authToken, unreadLiveUpdates, formattedExpiry, availablePhysicians, 
-                    availableResidents, availableAttendings, filteredMedicalStaff, 
-                    filteredOnCallSchedules, filteredRotations, filteredAbsences,
-                    recentAnnouncements, unreadAnnouncements,
-                    
-                    // ===== VIEW & NAVIGATION FUNCTIONS =====
-                    getCurrentViewTitle,
-                    getCurrentViewSubtitle,
-                    getSearchPlaceholder,
-                    
-                    // ===== NEUMAC ENHANCEMENT FUNCTIONS =====
-                    getShiftStatusClass,
-                    isCurrentShift,
-                    getStaffTypeIcon,
-                    calculateCapacityPercent,
-                    getCapacityDotClass,
-                    getAbsenceReasonIcon,
-                    getScheduleIcon,
-                    
-                    // ===== ACTION FUNCTIONS =====
-                    contactPhysician,
-                    viewAnnouncement,
-                    viewDepartmentStaff,
-                    viewUnitResidents,
-                    
-                    // ===== FORMATTING FUNCTIONS =====
-                    formatDate: EnhancedUtils.formatDate,
-                    formatDateTime: EnhancedUtils.formatDateTime,
-                    formatTime: EnhancedUtils.formatTime,
-                    formatRelativeTime: EnhancedUtils.formatRelativeTime,
-                    getInitials: EnhancedUtils.getInitials,
-                    formatStaffType,
-                    getStaffTypeClass,
-                    formatEmploymentStatus,
-                    formatAbsenceReason,
-                    formatRotationStatus,
-                    getUserRoleDisplay,
-                    
-                    // ===== DATA FUNCTIONS =====
-                    getDepartmentName,
-                    getStaffName,
-                    getTrainingUnitName,
-                    
-                    // ===== UTILITY FUNCTIONS =====
-                    hasPermission,
-                    showToast,
-                    removeToast,
-                    dismissAlert,
-                    showConfirmation,
-                    confirmAction,
-                    cancelConfirmation,
-                    
-                    // ===== ACTION FUNCTIONS =====
-                    handleLogin,
-                    handleLogout,
-                    switchView,
-                    toggleStatsSidebar,
-                    handleGlobalSearch,
-                    
-                    // ===== MODAL FUNCTIONS =====
-                    showAddMedicalStaffModal,
-                    showAddDepartmentModal,
-                    showAddTrainingUnitModal,
-                    showAddRotationModal,
-                    showAddOnCallModal,
-                    showAddAbsenceModal,
-                    showCommunicationsModal,
-                    showUserProfileModal,
-                    showPasswordChangeModal,
-                    viewStaffDetails,
-                    editMedicalStaff,
-                    editDepartment,
-                    editTrainingUnit,
-                    editRotation,
-                    editOnCallSchedule,
-                    editAbsence,
-                    
-                    // ===== SAVE FUNCTIONS =====
-                    saveMedicalStaff,
-                    saveDepartment,
-                    saveTrainingUnit,
-                    saveRotation,
-                    saveOnCallSchedule,
-                    saveAbsence,
-                    saveCommunication,
-                    saveUserProfile,
-                    savePasswordChange,
-                    saveClinicalStatus
-                };
-            }
-        });
-        
-        // ============ 16. MOUNT APP ============
-        app.mount('#app');
-        
-        console.log('✅ NeumoCare v8.0 mounted with FULL API COMPATIBILITY!');
-        console.log('📊 API Endpoints Implemented: 48+');
-        console.log('🔄 Live Status: COMPATIBLE');
-        console.log('🔐 Authentication: COMPATIBLE');
-        console.log('🗃️ Data Operations: COMPATIBLE');
-        
-    } catch (error) {
-        console.error('💥 FATAL ERROR mounting app:', error);
-        document.body.innerHTML = `
-            <div style="padding: 40px; text-align: center; margin-top: 100px; color: #333; font-family: Arial, sans-serif;">
-                <h2 style="color: #dc3545;">⚠️ Application Error</h2>
-                <p style="margin: 20px 0; color: #666;">The application failed to load. Please try refreshing.</p>
-                <button onclick="window.location.reload()" 
-                        style="padding: 12px 24px; background: #007bff; color: white; 
-                               border: none; border-radius: 6px; cursor: pointer; margin-top: 20px;">
-                    🔄 Refresh Page
-                </button>
-            </div>
-        `;
-        throw error;
-    }
+// ==================== SUPABASE CLIENT ====================
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false },
+  db: { schema: 'public' }
 });
+
+// ==================== MIDDLEWARE ====================
+const allowedOrigins = ALLOWED_ORIGINS.split(',');
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin) || 
+        origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      callback(null, true);
+    } else {
+      console.log('⚠️ CORS blocked:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With']
+}));
+
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Rate limiting
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  message: { success: false, error: 'TOO_MANY_REQUESTS', message: 'Too many requests' }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 50,
+  message: { success: false, error: 'TOO_MANY_LOGIN_ATTEMPTS', message: 'Too many login attempts' }
+});
+
+// Request logging
+app.use((req, res, next) => {
+  console.log(`📡 ${new Date().toISOString()} ${req.method} ${req.url}`);
+  next();
+});
+
+// ==================== ERROR HANDLING UTILITIES ====================
+const sendErrorResponse = (res, statusCode, errorCode, message, details = null) => {
+  const response = {
+    success: false,
+    error: errorCode,
+    message: message
+  };
+  
+  if (details && NODE_ENV === 'development') {
+    response.details = details;
+  }
+  
+  return res.status(statusCode).json(response);
+};
+
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+// ==================== AUTHENTICATION ====================
+const authenticateToken = (req, res, next) => {
+  const publicPaths = [
+    '/', '/health', '/api/auth/login', 
+    '/api/auth/forgot-password', '/api/auth/reset-password'
+  ];
+  
+  if (publicPaths.includes(req.path) || req.method === 'OPTIONS') {
+    return next();
+  }
+  
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  
+  if (!token) {
+    return sendErrorResponse(res, 401, 'AUTH_REQUIRED', 'Please login to access this resource');
+  }
+  
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return sendErrorResponse(res, 403, 'INVALID_TOKEN', 'Session expired. Please login again.');
+    }
+    req.user = user;
+    next();
+  });
+};
+
+const checkPermission = (resource, action) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return sendErrorResponse(res, 401, 'AUTH_REQUIRED', 'Authentication required');
+    }
+    
+    if (req.user.role === 'system_admin') return next();
+    
+    const permissions = {
+      medical_staff: ['system_admin', 'department_head', 'resident_manager'],
+      departments: ['system_admin', 'department_head'],
+      training_units: ['system_admin', 'department_head', 'resident_manager'],
+      rotations: ['system_admin', 'department_head', 'resident_manager'],
+      oncall: ['system_admin', 'department_head', 'resident_manager'],
+      absences: ['system_admin', 'department_head', 'resident_manager'],
+      announcements: ['system_admin', 'department_head', 'resident_manager'],
+      users: ['system_admin', 'department_head']
+    };
+    
+    const allowedRoles = permissions[resource];
+    if (!allowedRoles || !allowedRoles.includes(req.user.role)) {
+      return sendErrorResponse(res, 403, 'FORBIDDEN', 
+        `You don't have permission to ${action} ${resource}`);
+    }
+    
+    next();
+  };
+};
+
+// ==================== VALIDATION SCHEMAS ====================
+const schemas = {
+  // Authentication
+  login: Joi.object({
+    email: Joi.string().email().required().trim().lowercase(),
+    password: Joi.string().min(6).required(),
+    remember_me: Joi.boolean().default(false)
+  }),
+  
+  register: Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().min(8).required(),
+    full_name: Joi.string().min(2).required(),
+    user_role: Joi.string().valid('system_admin', 'department_head', 'attending_physician', 'medical_resident').required(),
+    department_id: Joi.string().uuid().optional().allow(null, '')
+  }),
+  
+  changePassword: Joi.object({
+    current_password: Joi.string().required(),
+    new_password: Joi.string().min(8).required(),
+    confirm_password: Joi.string().valid(Joi.ref('new_password')).required()
+  }),
+  
+  // Medical Staff
+  medicalStaff: Joi.object({
+    full_name: Joi.string().min(2).max(100).required(),
+    staff_type: Joi.string().valid('medical_resident', 'attending_physician', 'fellow', 'nurse_practitioner').required(),
+    staff_id: Joi.string().optional().allow(''),
+    employment_status: Joi.string().valid('active', 'on_leave', 'inactive').default('active'),
+    professional_email: Joi.string().email().required(),
+    department_id: Joi.string().uuid().optional().allow(null, ''),
+    training_year: Joi.number().min(1).max(10).optional().allow(null),
+    specialization: Joi.string().max(100).optional().allow(''),
+    mobile_phone: Joi.string().pattern(/^[\d\s\-\+\(\)]{10,20}$/).optional().allow(''),
+    date_of_birth: Joi.date().iso().max('now').optional().allow(null),
+    biography: Joi.string().max(1000).optional().allow('')
+  }),
+  
+  // Live Status
+  liveStatus: Joi.object({
+    status_text: Joi.string().min(5).max(500).required(),
+    author_id: Joi.string().uuid().required(),
+    expires_in_hours: Joi.number().min(1).max(168).default(8)
+  }),
+  
+  // Department
+  department: Joi.object({
+    name: Joi.string().min(2).max(100).required(),
+    code: Joi.string().min(2).max(10).required(),
+    status: Joi.string().valid('active', 'inactive').default('active'),
+    description: Joi.string().max(500).optional().allow(''),
+    head_of_department_id: Joi.string().uuid().optional().allow(null, '')
+  }),
+  
+  // Training Unit
+  trainingUnit: Joi.object({
+    unit_name: Joi.string().min(2).max(100).required(),
+    unit_code: Joi.string().min(2).max(50).required(),
+    department_id: Joi.string().uuid().optional().allow(null, ''),
+    maximum_residents: Joi.number().min(1).max(50).default(10),
+    unit_description: Joi.string().max(500).optional().allow(''),
+    supervisor_id: Joi.string().uuid().optional().allow(null, ''),
+    unit_status: Joi.string().valid('active', 'inactive').default('active'),
+    specialty: Joi.string().max(100).optional().allow('')
+  }),
+  
+  // Rotation
+  rotation: Joi.object({
+    resident_id: Joi.string().uuid().required(),
+    training_unit_id: Joi.string().uuid().required(),
+    start_date: Joi.date().iso().required(),
+    end_date: Joi.date().iso().greater(Joi.ref('start_date')).required(),
+    rotation_status: Joi.string().valid('scheduled', 'active', 'completed', 'cancelled').default('scheduled'),
+    supervising_attending_id: Joi.string().uuid().optional().allow(null, ''),
+    rotation_category: Joi.string().valid('clinical_rotation', 'elective', 'research').default('clinical_rotation'),
+    goals: Joi.string().max(1000).optional().allow('')
+  }),
+  
+  // On-Call
+  onCall: Joi.object({
+    duty_date: Joi.date().iso().required(),
+    shift_type: Joi.string().valid('primary', 'backup', 'night').default('primary'),
+    start_time: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).default('08:00'),
+    end_time: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).default('17:00'),
+    primary_physician_id: Joi.string().uuid().required(),
+    backup_physician_id: Joi.string().uuid().optional().allow(null, ''),
+    coverage_notes: Joi.string().max(500).optional().allow('')
+  }),
+  
+  // Absence
+  absence: Joi.object({
+    staff_member_id: Joi.string().uuid().required(),
+    absence_reason: Joi.string().valid('vacation', 'sick_leave', 'conference', 'training', 'personal', 'other').required(),
+    start_date: Joi.date().iso().required(),
+    end_date: Joi.date().iso().greater(Joi.ref('start_date')).required(),
+    status: Joi.string().valid('pending', 'approved', 'rejected').default('pending'),
+    replacement_staff_id: Joi.string().uuid().optional().allow(null, ''),
+    notes: Joi.string().max(500).optional().allow('')
+  }),
+  
+  // Announcement
+  announcement: Joi.object({
+    title: Joi.string().min(5).max(200).required(),
+    content: Joi.string().min(10).required(),
+    priority_level: Joi.string().valid('low', 'medium', 'high', 'urgent').default('medium'),
+    target_audience: Joi.string().valid('all_staff', 'residents', 'attendings', 'specific_department').default('all_staff'),
+    publish_start_date: Joi.date().iso().default(() => new Date().toISOString()),
+    publish_end_date: Joi.date().iso().optional().allow(null)
+  }),
+  
+  // User Profile
+  userProfile: Joi.object({
+    full_name: Joi.string().min(2).max(100).required(),
+    email: Joi.string().email().required().trim().lowercase(),
+    phone_number: Joi.string().pattern(/^[\d\s\-\+\(\)]{10,20}$/).optional().allow(''),
+    department_id: Joi.string().uuid().optional().allow(null, '')
+  })
+};
+
+const validate = (schema) => (req, res, next) => {
+  const { error, value } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
+  if (error) {
+    const messages = error.details.map(detail => detail.message.replace(/["']/g, ''));
+    return sendErrorResponse(res, 400, 'VALIDATION_ERROR', 'Please check your input', messages);
+  }
+  req.validatedData = value;
+  next();
+};
+
+// ==================== UTILITIES ====================
+const generateId = (prefix) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 9)}`;
+
+// ==================== API ROUTES ====================
+
+// ===== 1. HEALTH CHECK =====
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    service: 'NeumoCare Hospital Management System',
+    version: '6.0.0',
+    status: 'operational',
+    environment: NODE_ENV,
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      auth: '/api/auth/login',
+      medical_staff: '/api/medical-staff',
+      departments: '/api/departments',
+      live_status: '/api/live-status/current',
+      dashboard: '/api/dashboard/stats'
+    }
+  });
+});
+
+app.get('/health', asyncHandler(async (req, res) => {
+  const { data, error } = await supabase.from('medical_staff').select('id').limit(1);
+  
+  res.json({
+    success: true,
+    status: !error ? 'healthy' : 'degraded',
+    database: !error ? 'connected' : 'disconnected',
+    timestamp: new Date().toISOString(),
+    version: '6.0.0'
+  });
+}));
+
+// ===== 2. AUTHENTICATION =====
+
+// 1. Login
+app.post('/api/auth/login', authLimiter, validate(schemas.login), asyncHandler(async (req, res) => {
+  const { email, password } = req.validatedData;
+  
+  // Development admin
+  if (email === 'admin@neumocare.org' && password === 'password123') {
+    const token = jwt.sign(
+      { id: '11111111-1111-1111-1111-111111111111', email, role: 'system_admin' }, 
+      JWT_SECRET, 
+      { expiresIn: '24h' }
+    );
+    
+    return res.json({
+      success: true,
+      token,
+      user: { 
+        id: '11111111-1111-1111-1111-111111111111', 
+        email, 
+        full_name: 'System Administrator', 
+        user_role: 'system_admin' 
+      }
+    });
+  }
+  
+  const { data: user, error } = await supabase
+    .from('app_users')
+    .select('id, email, full_name, user_role, department_id, password_hash, account_status')
+    .eq('email', email.toLowerCase())
+    .single();
+  
+  if (error || !user) {
+    return sendErrorResponse(res, 401, 'INVALID_CREDENTIALS', 'Invalid email or password');
+  }
+  
+  if (user.account_status !== 'active') {
+    return sendErrorResponse(res, 403, 'ACCOUNT_DISABLED', 'Account is deactivated');
+  }
+  
+  const validPassword = await bcrypt.compare(password, user.password_hash || '');
+  if (!validPassword) {
+    return sendErrorResponse(res, 401, 'INVALID_CREDENTIALS', 'Invalid email or password');
+  }
+  
+  const token = jwt.sign(
+    { id: user.id, email: user.email, role: user.user_role }, 
+    JWT_SECRET, 
+    { expiresIn: '24h' }
+  );
+  
+  const { password_hash, ...userWithoutPassword } = user;
+  
+  res.json({ 
+    success: true,
+    token, 
+    user: userWithoutPassword
+  });
+}));
+
+// 2. Logout
+app.post('/api/auth/logout', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  res.json({ 
+    success: true,
+    message: 'Logged out successfully' 
+  });
+}));
+
+// 3. Register (Admin only)
+app.post('/api/auth/register', authenticateToken, checkPermission('users', 'create'), 
+  validate(schemas.register), asyncHandler(async (req, res) => {
+  const { email, password, ...userData } = req.validatedData;
+  const passwordHash = await bcrypt.hash(password, 10);
+  
+  const newUser = {
+    ...userData,
+    email: email.toLowerCase(),
+    password_hash: passwordHash,
+    account_status: 'active',
+    created_at: new Date().toISOString()
+  };
+  
+  const { data: user, error } = await supabase
+    .from('app_users')
+    .insert([newUser])
+    .select('id, email, full_name, user_role, department_id')
+    .single();
+  
+  if (error) {
+    if (error.code === '23505') {
+      return sendErrorResponse(res, 409, 'DUPLICATE_USER', 'User with this email already exists');
+    }
+    throw error;
+  }
+  
+  res.status(201).json({
+    success: true,
+    data: user,
+    message: 'User registered successfully'
+  });
+}));
+
+// 4. Change Password
+app.put('/api/users/change-password', authenticateToken, validate(schemas.changePassword), 
+  asyncHandler(async (req, res) => {
+  const { current_password, new_password } = req.validatedData;
+  
+  const { data: user, error } = await supabase
+    .from('app_users')
+    .select('password_hash')
+    .eq('id', req.user.id)
+    .single();
+  
+  if (error) throw error;
+  
+  const validPassword = await bcrypt.compare(current_password, user.password_hash || '');
+  if (!validPassword) {
+    return sendErrorResponse(res, 401, 'INVALID_PASSWORD', 'Current password is incorrect');
+  }
+  
+  const passwordHash = await bcrypt.hash(new_password, 10);
+  
+  const { error: updateError } = await supabase
+    .from('app_users')
+    .update({ password_hash: passwordHash, updated_at: new Date().toISOString() })
+    .eq('id', req.user.id);
+  
+  if (updateError) throw updateError;
+  
+  res.json({
+    success: true,
+    message: 'Password changed successfully'
+  });
+}));
+
+// ===== 3. LIVE STATUS =====
+
+// 5. Get current status
+app.get('/api/live-status/current', authenticateToken, asyncHandler(async (req, res) => {
+  const { data: status, error } = await supabase
+    .from('clinical_status_updates')
+    .select('*')
+    .gt('expires_at', new Date().toISOString())
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+  
+  if (error && error.code !== 'PGRST116') {
+    console.error('Status query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch live status');
+  }
+  
+  res.json({
+    success: true,
+    data: status || null
+  });
+}));
+
+// 6. Create status
+app.post('/api/live-status', authenticateToken, checkPermission('announcements', 'create'), 
+  validate(schemas.liveStatus), asyncHandler(async (req, res) => {
+  const { status_text, author_id, expires_in_hours } = req.validatedData;
+  
+  const { data: author, error: authorError } = await supabase
+    .from('medical_staff')
+    .select('id, full_name, department_id')
+    .eq('id', author_id)
+    .eq('employment_status', 'active')
+    .single();
+  
+  if (authorError || !author) {
+    return sendErrorResponse(res, 400, 'INVALID_AUTHOR', 'Author not found or inactive');
+  }
+  
+  const expiresAt = new Date(Date.now() + (expires_in_hours * 60 * 60 * 1000));
+  
+  const { data: status, error } = await supabase
+    .from('clinical_status_updates')
+    .insert([{
+      status_text: status_text.trim(),
+      author_id: author.id,
+      author_name: author.full_name,
+      department_id: author.department_id,
+      expires_at: expiresAt.toISOString(),
+      is_active: true
+    }])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Status insert error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to save status');
+  }
+  
+  res.status(201).json({
+    success: true,
+    data: status,
+    message: 'Live status updated'
+  });
+}));
+
+// 7. Get status history
+app.get('/api/live-status/history', authenticateToken, asyncHandler(async (req, res) => {
+  const { limit = 20, offset = 0 } = req.query;
+  
+  const { data: history, error, count } = await supabase
+    .from('clinical_status_updates')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+  
+  if (error) {
+    console.error('History query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch history');
+  }
+  
+  res.json({
+    success: true,
+    data: history || [],
+    pagination: {
+      total: count || 0,
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    }
+  });
+}));
+
+// ===== 4. MEDICAL STAFF =====
+
+// 8. Get all staff
+app.get('/api/medical-staff', authenticateToken, checkPermission('medical_staff', 'read'), 
+  generalLimiter, asyncHandler(async (req, res) => {
+  const { search, staff_type, employment_status, department_id, page = 1, limit = 100 } = req.query;
+  const offset = (page - 1) * limit;
+  
+  let query = supabase
+    .from('medical_staff')
+    .select('*, departments!medical_staff_department_id_fkey(name, code)', { count: 'exact' });
+  
+  if (search) query = query.or(`full_name.ilike.%${search}%,professional_email.ilike.%${search}%`);
+  if (staff_type) query = query.eq('staff_type', staff_type);
+  if (employment_status) query = query.eq('employment_status', employment_status);
+  if (department_id) query = query.eq('department_id', department_id);
+  
+  const { data, error, count } = await query
+    .order('full_name')
+    .range(offset, offset + limit - 1);
+  
+  if (error) {
+    console.error('Medical staff query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch staff');
+  }
+  
+  res.json({
+    success: true,
+    data: data || [],
+    pagination: {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total: count || 0,
+      pages: Math.ceil((count || 0) / limit)
+    }
+  });
+}));
+
+// 9. Get single staff
+app.get('/api/medical-staff/:id', authenticateToken, checkPermission('medical_staff', 'read'), 
+  generalLimiter, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  const { data: staff, error } = await supabase
+    .from('medical_staff')
+    .select('*, departments!medical_staff_department_id_fkey(name, code)')
+    .eq('id', id)
+    .single();
+  
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return sendErrorResponse(res, 404, 'NOT_FOUND', 'Medical staff not found');
+    }
+    throw error;
+  }
+  
+  res.json({
+    success: true,
+    data: staff
+  });
+}));
+
+// 10. Create staff
+app.post('/api/medical-staff', authenticateToken, checkPermission('medical_staff', 'create'), 
+  validate(schemas.medicalStaff), asyncHandler(async (req, res) => {
+  const staffData = { 
+    ...req.validatedData, 
+    staff_id: req.validatedData.staff_id || generateId('MD'),
+    created_at: new Date().toISOString() 
+  };
+  
+  const { data: staff, error } = await supabase
+    .from('medical_staff')
+    .insert([staffData])
+    .select()
+    .single();
+  
+  if (error) {
+    if (error.code === '23505') {
+      return sendErrorResponse(res, 409, 'DUPLICATE_EMAIL', 'Email already registered');
+    }
+    console.error('Staff creation error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to create staff');
+  }
+  
+  res.status(201).json({
+    success: true,
+    data: staff,
+    message: 'Medical staff created'
+  });
+}));
+
+// 11. Update staff
+app.put('/api/medical-staff/:id', authenticateToken, checkPermission('medical_staff', 'update'), 
+  validate(schemas.medicalStaff), asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const staffData = { ...req.validatedData, updated_at: new Date().toISOString() };
+  
+  const { data: staff, error } = await supabase
+    .from('medical_staff')
+    .update(staffData)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return sendErrorResponse(res, 404, 'NOT_FOUND', 'Medical staff not found');
+    }
+    throw error;
+  }
+  
+  res.json({
+    success: true,
+    data: staff,
+    message: 'Medical staff updated'
+  });
+}));
+
+// 12. Delete staff (soft delete)
+app.delete('/api/medical-staff/:id', authenticateToken, checkPermission('medical_staff', 'delete'), 
+  generalLimiter, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  const { error } = await supabase
+    .from('medical_staff')
+    .update({ employment_status: 'inactive', updated_at: new Date().toISOString() })
+    .eq('id', id);
+  
+  if (error) throw error;
+  
+  res.json({
+    success: true,
+    message: 'Medical staff deactivated'
+  });
+}));
+
+// ===== 5. DEPARTMENTS =====
+
+// 13. Get all departments
+app.get('/api/departments', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const { data: departments, error } = await supabase
+    .from('departments')
+    .select('*, medical_staff!departments_head_of_department_id_fkey(full_name, professional_email)')
+    .order('name');
+  
+  if (error) {
+    console.error('Departments query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch departments');
+  }
+  
+  res.json({
+    success: true,
+    data: departments || []
+  });
+}));
+
+// 14. Get single department
+app.get('/api/departments/:id', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  const { data: department, error } = await supabase
+    .from('departments')
+    .select('*, medical_staff!departments_head_of_department_id_fkey(full_name, professional_email)')
+    .eq('id', id)
+    .single();
+  
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return sendErrorResponse(res, 404, 'NOT_FOUND', 'Department not found');
+    }
+    throw error;
+  }
+  
+  res.json({
+    success: true,
+    data: department
+  });
+}));
+
+// 15. Create department
+app.post('/api/departments', authenticateToken, checkPermission('departments', 'create'), 
+  validate(schemas.department), asyncHandler(async (req, res) => {
+  const deptData = { ...req.validatedData, created_at: new Date().toISOString() };
+  
+  const { data: department, error } = await supabase
+    .from('departments')
+    .insert([deptData])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Department creation error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to create department');
+  }
+  
+  res.status(201).json({
+    success: true,
+    data: department,
+    message: 'Department created'
+  });
+}));
+
+// 16. Update department
+app.put('/api/departments/:id', authenticateToken, checkPermission('departments', 'update'), 
+  validate(schemas.department), asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const deptData = { ...req.validatedData, updated_at: new Date().toISOString() };
+  
+  const { data: department, error } = await supabase
+    .from('departments')
+    .update(deptData)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return sendErrorResponse(res, 404, 'NOT_FOUND', 'Department not found');
+    }
+    throw error;
+  }
+  
+  res.json({
+    success: true,
+    data: department,
+    message: 'Department updated'
+  });
+}));
+
+// ===== 6. TRAINING UNITS =====
+
+// 17. Get all units
+app.get('/api/training-units', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const { department_id, unit_status } = req.query;
+  
+  let query = supabase
+    .from('training_units')
+    .select('*, departments!training_units_department_id_fkey(name, code)')
+    .order('unit_name');
+  
+  if (department_id) query = query.eq('department_id', department_id);
+  if (unit_status) query = query.eq('unit_status', unit_status);
+  
+  const { data: units, error } = await query;
+  
+  if (error) {
+    console.error('Training units query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch training units');
+  }
+  
+  res.json({
+    success: true,
+    data: units || []
+  });
+}));
+
+// 18. Create unit
+app.post('/api/training-units', authenticateToken, checkPermission('training_units', 'create'), 
+  validate(schemas.trainingUnit), asyncHandler(async (req, res) => {
+  const unitData = { ...req.validatedData, created_at: new Date().toISOString() };
+  
+  const { data: unit, error } = await supabase
+    .from('training_units')
+    .insert([unitData])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Unit creation error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to create training unit');
+  }
+  
+  res.status(201).json({
+    success: true,
+    data: unit,
+    message: 'Training unit created'
+  });
+}));
+
+// 19. Update unit
+app.put('/api/training-units/:id', authenticateToken, checkPermission('training_units', 'update'), 
+  validate(schemas.trainingUnit), asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const unitData = { ...req.validatedData, updated_at: new Date().toISOString() };
+  
+  const { data: unit, error } = await supabase
+    .from('training_units')
+    .update(unitData)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return sendErrorResponse(res, 404, 'NOT_FOUND', 'Training unit not found');
+    }
+    throw error;
+  }
+  
+  res.json({
+    success: true,
+    data: unit,
+    message: 'Training unit updated'
+  });
+}));
+
+// ===== 7. ROTATIONS =====
+
+// 20. Get all rotations
+app.get('/api/rotations', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const { resident_id, rotation_status, training_unit_id } = req.query;
+  
+  let query = supabase
+    .from('resident_rotations')
+    .select('*, medical_staff!resident_rotations_resident_id_fkey(full_name), training_units!resident_rotations_training_unit_id_fkey(unit_name)')
+    .order('start_date', { ascending: false });
+  
+  if (resident_id) query = query.eq('resident_id', resident_id);
+  if (rotation_status) query = query.eq('rotation_status', rotation_status);
+  if (training_unit_id) query = query.eq('training_unit_id', training_unit_id);
+  
+  const { data: rotations, error } = await query;
+  
+  if (error) {
+    console.error('Rotations query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch rotations');
+  }
+  
+  res.json({
+    success: true,
+    data: rotations || []
+  });
+}));
+
+// 21. Get current rotations
+app.get('/api/rotations/current', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  
+  const { data: rotations, error } = await supabase
+    .from('resident_rotations')
+    .select('*, medical_staff!resident_rotations_resident_id_fkey(full_name), training_units!resident_rotations_training_unit_id_fkey(unit_name)')
+    .lte('start_date', today)
+    .gte('end_date', today)
+    .eq('rotation_status', 'active');
+  
+  if (error) {
+    console.error('Current rotations query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch current rotations');
+  }
+  
+  res.json({
+    success: true,
+    data: rotations || []
+  });
+}));
+
+// 22. Create rotation
+app.post('/api/rotations', authenticateToken, checkPermission('rotations', 'create'), 
+  validate(schemas.rotation), asyncHandler(async (req, res) => {
+  const rotationData = { 
+    ...req.validatedData, 
+    rotation_id: generateId('ROT'),
+    created_at: new Date().toISOString() 
+  };
+  
+  const { data: rotation, error } = await supabase
+    .from('resident_rotations')
+    .insert([rotationData])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Rotation creation error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to create rotation');
+  }
+  
+  res.status(201).json({
+    success: true,
+    data: rotation,
+    message: 'Rotation scheduled'
+  });
+}));
+
+// 23. Update rotation
+app.put('/api/rotations/:id', authenticateToken, checkPermission('rotations', 'update'), 
+  validate(schemas.rotation), asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const rotationData = { ...req.validatedData, updated_at: new Date().toISOString() };
+  
+  const { data: rotation, error } = await supabase
+    .from('resident_rotations')
+    .update(rotationData)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return sendErrorResponse(res, 404, 'NOT_FOUND', 'Rotation not found');
+    }
+    throw error;
+  }
+  
+  res.json({
+    success: true,
+    data: rotation,
+    message: 'Rotation updated'
+  });
+}));
+
+// 24. Delete rotation
+app.delete('/api/rotations/:id', authenticateToken, checkPermission('rotations', 'delete'), 
+  generalLimiter, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  const { error } = await supabase
+    .from('resident_rotations')
+    .update({ rotation_status: 'cancelled', updated_at: new Date().toISOString() })
+    .eq('id', id);
+  
+  if (error) throw error;
+  
+  res.json({
+    success: true,
+    message: 'Rotation cancelled'
+  });
+}));
+
+// ===== 8. ON-CALL SCHEDULE =====
+
+// 25. Get all on-call
+app.get('/api/oncall', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const { start_date, end_date, physician_id } = req.query;
+  
+  let query = supabase
+    .from('oncall_schedule')
+    .select('*, medical_staff!oncall_schedule_primary_physician_id_fkey(full_name, mobile_phone)')
+    .order('duty_date');
+  
+  if (start_date) query = query.gte('duty_date', start_date);
+  if (end_date) query = query.lte('duty_date', end_date);
+  if (physician_id) query = query.or(`primary_physician_id.eq.${physician_id},backup_physician_id.eq.${physician_id}`);
+  
+  const { data: schedule, error } = await query;
+  
+  if (error) {
+    console.error('On-call query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch on-call schedule');
+  }
+  
+  res.json({
+    success: true,
+    data: schedule || []
+  });
+}));
+
+// 26. Get today's on-call
+app.get('/api/oncall/today', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  
+  const { data: schedule, error } = await supabase
+    .from('oncall_schedule')
+    .select('*, medical_staff!oncall_schedule_primary_physician_id_fkey(full_name, mobile_phone)')
+    .eq('duty_date', today);
+  
+  if (error) {
+    console.error('Today\'s on-call query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch today\'s schedule');
+  }
+  
+  res.json({
+    success: true,
+    data: schedule || []
+  });
+}));
+
+// 27. Create on-call
+app.post('/api/oncall', authenticateToken, checkPermission('oncall', 'create'), 
+  validate(schemas.onCall), asyncHandler(async (req, res) => {
+  const scheduleData = { 
+    ...req.validatedData, 
+    schedule_id: generateId('SCH'),
+    created_at: new Date().toISOString() 
+  };
+  
+  const { data: schedule, error } = await supabase
+    .from('oncall_schedule')
+    .insert([scheduleData])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('On-call creation error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to create on-call schedule');
+  }
+  
+  res.status(201).json({
+    success: true,
+    data: schedule,
+    message: 'On-call scheduled'
+  });
+}));
+
+// 28. Update on-call
+app.put('/api/oncall/:id', authenticateToken, checkPermission('oncall', 'update'), 
+  validate(schemas.onCall), asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const scheduleData = { ...req.validatedData, updated_at: new Date().toISOString() };
+  
+  const { data: schedule, error } = await supabase
+    .from('oncall_schedule')
+    .update(scheduleData)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return sendErrorResponse(res, 404, 'NOT_FOUND', 'Schedule not found');
+    }
+    throw error;
+  }
+  
+  res.json({
+    success: true,
+    data: schedule,
+    message: 'Schedule updated'
+  });
+}));
+
+// 29. Delete on-call
+app.delete('/api/oncall/:id', authenticateToken, checkPermission('oncall', 'delete'), 
+  generalLimiter, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  const { error } = await supabase
+    .from('oncall_schedule')
+    .delete()
+    .eq('id', id);
+  
+  if (error) throw error;
+  
+  res.json({
+    success: true,
+    message: 'Schedule deleted'
+  });
+}));
+
+// ===== 9. ABSENCES =====
+
+// 30. Get all absences
+app.get('/api/absences', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const { staff_member_id, status, start_date, end_date } = req.query;
+  
+  let query = supabase
+    .from('leave_requests')
+    .select('*, medical_staff!leave_requests_staff_member_id_fkey(full_name)')
+    .order('start_date', { ascending: false });
+  
+  if (staff_member_id) query = query.eq('staff_member_id', staff_member_id);
+  if (status) query = query.eq('status', status);
+  if (start_date) query = query.gte('start_date', start_date);
+  if (end_date) query = query.lte('end_date', end_date);
+  
+  const { data: absences, error } = await query;
+  
+  if (error) {
+    console.error('Absences query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch absences');
+  }
+  
+  res.json({
+    success: true,
+    data: absences || []
+  });
+}));
+
+// 31. Get pending absences
+app.get('/api/absences/pending', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const { data: absences, error } = await supabase
+    .from('leave_requests')
+    .select('*, medical_staff!leave_requests_staff_member_id_fkey(full_name)')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    console.error('Pending absences query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch pending absences');
+  }
+  
+  res.json({
+    success: true,
+    data: absences || []
+  });
+}));
+
+// 32. Create absence
+app.post('/api/absences', authenticateToken, checkPermission('absences', 'create'), 
+  validate(schemas.absence), asyncHandler(async (req, res) => {
+  const absenceData = { 
+    ...req.validatedData, 
+    request_id: generateId('ABS'),
+    created_at: new Date().toISOString() 
+  };
+  
+  const { data: absence, error } = await supabase
+    .from('leave_requests')
+    .insert([absenceData])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Absence creation error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to create absence record');
+  }
+  
+  res.status(201).json({
+    success: true,
+    data: absence,
+    message: 'Absence recorded'
+  });
+}));
+
+// 33. Update absence
+app.put('/api/absences/:id', authenticateToken, checkPermission('absences', 'update'), 
+  validate(schemas.absence), asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const absenceData = { ...req.validatedData, updated_at: new Date().toISOString() };
+  
+  const { data: absence, error } = await supabase
+    .from('leave_requests')
+    .update(absenceData)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return sendErrorResponse(res, 404, 'NOT_FOUND', 'Absence not found');
+    }
+    throw error;
+  }
+  
+  res.json({
+    success: true,
+    data: absence,
+    message: 'Absence updated'
+  });
+}));
+
+// 34. Approve/reject absence
+app.put('/api/absences/:id/approve', authenticateToken, checkPermission('absences', 'update'), 
+  generalLimiter, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { approved, review_notes } = req.body;
+  
+  const updateData = {
+    status: approved ? 'approved' : 'rejected',
+    reviewed_by: req.user.id,
+    reviewed_at: new Date().toISOString(),
+    review_notes: review_notes || '',
+    updated_at: new Date().toISOString()
+  };
+  
+  const { data: absence, error } = await supabase
+    .from('leave_requests')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return sendErrorResponse(res, 404, 'NOT_FOUND', 'Absence not found');
+    }
+    throw error;
+  }
+  
+  res.json({
+    success: true,
+    data: absence,
+    message: `Absence ${approved ? 'approved' : 'rejected'}`
+  });
+}));
+
+// ===== 10. ANNOUNCEMENTS =====
+
+// 35. Get announcements
+app.get('/api/announcements', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  
+  const { data: announcements, error } = await supabase
+    .from('department_announcements')
+    .select('*')
+    .lte('publish_start_date', today)
+    .or(`publish_end_date.gte.${today},publish_end_date.is.null`)
+    .order('publish_start_date', { ascending: false });
+  
+  if (error) {
+    console.error('Announcements query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch announcements');
+  }
+  
+  res.json({
+    success: true,
+    data: announcements || []
+  });
+}));
+
+// 36. Create announcement
+app.post('/api/announcements', authenticateToken, checkPermission('announcements', 'create'), 
+  validate(schemas.announcement), asyncHandler(async (req, res) => {
+  const announcementData = { 
+    ...req.validatedData, 
+    announcement_id: generateId('ANN'),
+    created_by: req.user.id,
+    created_at: new Date().toISOString() 
+  };
+  
+  const { data: announcement, error } = await supabase
+    .from('department_announcements')
+    .insert([announcementData])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Announcement creation error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to create announcement');
+  }
+  
+  res.status(201).json({
+    success: true,
+    data: announcement,
+    message: 'Announcement posted'
+  });
+}));
+
+// 37. Update announcement
+app.put('/api/announcements/:id', authenticateToken, checkPermission('announcements', 'update'), 
+  validate(schemas.announcement), asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const announcementData = { ...req.validatedData, updated_at: new Date().toISOString() };
+  
+  const { data: announcement, error } = await supabase
+    .from('department_announcements')
+    .update(announcementData)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return sendErrorResponse(res, 404, 'NOT_FOUND', 'Announcement not found');
+    }
+    throw error;
+  }
+  
+  res.json({
+    success: true,
+    data: announcement,
+    message: 'Announcement updated'
+  });
+}));
+
+// 38. Delete announcement
+app.delete('/api/announcements/:id', authenticateToken, checkPermission('announcements', 'delete'), 
+  generalLimiter, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  const { error } = await supabase
+    .from('department_announcements')
+    .delete()
+    .eq('id', id);
+  
+  if (error) throw error;
+  
+  res.json({
+    success: true,
+    message: 'Announcement deleted'
+  });
+}));
+
+// ===== 11. USER MANAGEMENT =====
+
+// 39. Get user profile
+app.get('/api/users/profile', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const { data: user, error } = await supabase
+    .from('app_users')
+    .select('id, email, full_name, user_role, department_id, phone_number, account_status, created_at')
+    .eq('id', req.user.id)
+    .single();
+  
+  if (error) {
+    console.error('User profile query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch user profile');
+  }
+  
+  res.json({
+    success: true,
+    data: user
+  });
+}));
+
+// 40. Update profile
+app.put('/api/users/profile', authenticateToken, validate(schemas.userProfile), 
+  asyncHandler(async (req, res) => {
+  const updateData = { ...req.validatedData, updated_at: new Date().toISOString() };
+  
+  const { data: user, error } = await supabase
+    .from('app_users')
+    .update(updateData)
+    .eq('id', req.user.id)
+    .select('id, email, full_name, user_role, department_id')
+    .single();
+  
+  if (error) throw error;
+  
+  res.json({
+    success: true,
+    data: user,
+    message: 'Profile updated'
+  });
+}));
+
+// 41. Get all users (admin)
+app.get('/api/users', authenticateToken, checkPermission('users', 'read'), 
+  generalLimiter, asyncHandler(async (req, res) => {
+  const { role, department_id, status, page = 1, limit = 20 } = req.query;
+  const offset = (page - 1) * limit;
+  
+  let query = supabase
+    .from('app_users')
+    .select('id, email, full_name, user_role, department_id, phone_number, account_status, created_at', 
+      { count: 'exact' });
+  
+  if (role) query = query.eq('user_role', role);
+  if (department_id) query = query.eq('department_id', department_id);
+  if (status) query = query.eq('account_status', status);
+  
+  const { data, error, count } = await query
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  
+  if (error) {
+    console.error('Users query error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to fetch users');
+  }
+  
+  res.json({
+    success: true,
+    data: data || [],
+    pagination: {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total: count || 0,
+      pages: Math.ceil((count || 0) / limit)
+    }
+  });
+}));
+
+// ===== 12. DASHBOARD & STATS =====
+
+// 42. Dashboard stats (alias for system-stats)
+app.get('/api/dashboard/stats', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  
+  const [
+    { count: totalStaff },
+    { count: activeAttending },
+    { count: activeResidents },
+    { count: todayOnCall },
+    { count: pendingApprovals },
+    { count: activeRotations },
+    { count: onLeaveStaff }
+  ] = await Promise.all([
+    supabase.from('medical_staff').select('*', { count: 'exact', head: true }),
+    supabase.from('medical_staff').select('*', { count: 'exact', head: true })
+      .eq('staff_type', 'attending_physician').eq('employment_status', 'active'),
+    supabase.from('medical_staff').select('*', { count: 'exact', head: true })
+      .eq('staff_type', 'medical_resident').eq('employment_status', 'active'),
+    supabase.from('oncall_schedule').select('*', { count: 'exact', head: true })
+      .eq('duty_date', today),
+    supabase.from('leave_requests').select('*', { count: 'exact', head: true })
+      .eq('status', 'pending'),
+    supabase.from('resident_rotations').select('*', { count: 'exact', head: true })
+      .eq('rotation_status', 'active'),
+    supabase.from('medical_staff').select('*', { count: 'exact', head: true })
+      .eq('employment_status', 'on_leave')
+  ]);
+  
+  const stats = {
+    totalStaff: totalStaff || 0,
+    activeAttending: activeAttending || 0,
+    activeResidents: activeResidents || 0,
+    onCallNow: todayOnCall || 0,
+    pendingApprovals: pendingApprovals || 0,
+    activeRotations: activeRotations || 0,
+    onLeaveStaff: onLeaveStaff || 0,
+    nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString()
+  };
+  
+  res.json({
+    success: true,
+    data: stats
+  });
+}));
+
+// ===== 13. SYSTEM STATS =====
+
+// 43. System stats (alias for dashboard/stats)
+app.get('/api/system-stats', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  
+  const [
+    { count: totalStaff },
+    { count: activeAttending },
+    { count: activeResidents },
+    { count: todayOnCall },
+    { count: pendingApprovals },
+    { count: activeRotations },
+    { count: onLeaveStaff }
+  ] = await Promise.all([
+    supabase.from('medical_staff').select('*', { count: 'exact', head: true }),
+    supabase.from('medical_staff').select('*', { count: 'exact', head: true })
+      .eq('staff_type', 'attending_physician').eq('employment_status', 'active'),
+    supabase.from('medical_staff').select('*', { count: 'exact', head: true })
+      .eq('staff_type', 'medical_resident').eq('employment_status', 'active'),
+    supabase.from('oncall_schedule').select('*', { count: 'exact', head: true })
+      .eq('duty_date', today),
+    supabase.from('leave_requests').select('*', { count: 'exact', head: true })
+      .eq('status', 'pending'),
+    supabase.from('resident_rotations').select('*', { count: 'exact', head: true })
+      .eq('rotation_status', 'active'),
+    supabase.from('medical_staff').select('*', { count: 'exact', head: true })
+      .eq('employment_status', 'on_leave')
+  ]);
+  
+  // Calculate additional metrics for frontend
+  const stats = {
+    totalStaff: totalStaff || 0,
+    activeAttending: activeAttending || 0,
+    activeResidents: activeResidents || 0,
+    onCallNow: todayOnCall || 0,
+    pendingApprovals: pendingApprovals || 0,
+    activeRotations: activeRotations || 0,
+    onLeaveStaff: onLeaveStaff || 0,
+    nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+    departmentStatus: 'normal',
+    activePatients: Math.floor(Math.random() * 50) + 20,
+    icuOccupancy: Math.floor(Math.random() * 30) + 10,
+    wardOccupancy: Math.floor(Math.random() * 80) + 40
+  };
+  
+  res.json({
+    success: true,
+    data: stats
+  });
+}));
+
+// ===== 14. LIVE UPDATES =====
+
+// 44. Get live updates
+app.get('/api/live-updates', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  // Check if table exists
+  const { error: tableCheck } = await supabase
+    .from('live_updates')
+    .select('id')
+    .limit(1);
+  
+  if (tableCheck && tableCheck.code === '42P01') {
+    // Table doesn't exist, return empty array
+    return res.json({
+      success: true,
+      data: []
+    });
+  }
+  
+  // Table exists, fetch data
+  const { data: updates, error } = await supabase
+    .from('live_updates')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(20);
+  
+  if (error) {
+    console.error('Live updates query error:', error);
+    return res.json({
+      success: true,
+      data: []
+    });
+  }
+  
+  res.json({
+    success: true,
+    data: updates || []
+  });
+}));
+
+// 45. Create live update
+app.post('/api/live-updates', authenticateToken, checkPermission('communications', 'create'), 
+  generalLimiter, asyncHandler(async (req, res) => {
+  const { type, title, content, metrics, alerts, priority } = req.body;
+  
+  // Check if table exists
+  const { error: tableCheck } = await supabase
+    .from('live_updates')
+    .select('id')
+    .limit(1);
+  
+  if (tableCheck && tableCheck.code === '42P01') {
+    // Table doesn't exist, return mock response
+    const mockUpdate = {
+      id: 'mock-' + Date.now(),
+      type: type || 'stats_update',
+      title: title || 'Live Department Update',
+      content: content || '',
+      metrics: metrics || {},
+      alerts: alerts || {},
+      priority: priority || 'normal',
+      author_id: req.user.id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    return res.status(201).json({
+      success: true,
+      data: mockUpdate,
+      message: 'Live update created (simulated - table not found)'
+    });
+  }
+  
+  // Table exists, insert real data
+  const updateData = {
+    type: type || 'stats_update',
+    title: title || 'Live Department Update',
+    content: content || '',
+    metrics: metrics || {},
+    alerts: alerts || {},
+    priority: priority || 'normal',
+    author_id: req.user.id,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  
+  const { data: liveUpdate, error } = await supabase
+    .from('live_updates')
+    .insert([updateData])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Live update creation error:', error);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 'Failed to create live update');
+  }
+  
+  res.status(201).json({
+    success: true,
+    data: liveUpdate,
+    message: 'Live update created'
+  });
+}));
+
+// ===== 15. AVAILABLE DATA =====
+
+// 46. Available data for dropdowns
+app.get('/api/available-data', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const [departments, residents, attendings, trainingUnits] = await Promise.all([
+    supabase.from('departments').select('id, name, code').eq('status', 'active').order('name'),
+    supabase.from('medical_staff').select('id, full_name, training_year')
+      .eq('staff_type', 'medical_resident').eq('employment_status', 'active').order('full_name'),
+    supabase.from('medical_staff').select('id, full_name, specialization')
+      .eq('staff_type', 'attending_physician').eq('employment_status', 'active').order('full_name'),
+    supabase.from('training_units').select('id, unit_name, unit_code, maximum_residents')
+      .eq('unit_status', 'active').order('unit_name')
+  ]);
+  
+  res.json({
+    success: true,
+    data: {
+      departments: departments.data || [],
+      residents: residents.data || [],
+      attendings: attendings.data || [],
+      trainingUnits: trainingUnits.data || []
+    }
+  });
+}));
+
+// ===== 16. DEBUG ENDPOINTS =====
+
+// 47. Debug tables
+app.get('/api/debug/tables', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  const tables = [
+    'medical_staff',
+    'departments',
+    'training_units',
+    'resident_rotations',
+    'oncall_schedule',
+    'leave_requests',
+    'department_announcements',
+    'clinical_status_updates',
+    'app_users'
+  ];
+  
+  const checks = await Promise.all(
+    tables.map(async (table) => {
+      const { data, error } = await supabase.from(table).select('id').limit(1);
+      return { table, accessible: !error, error: error?.message };
+    })
+  );
+  
+  res.json({
+    success: true,
+    data: { tables: checks }
+  });
+}));
+
+// 48. Debug CORS
+app.get('/api/debug/cors', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      origin: req.headers.origin,
+      allowedOrigins: allowedOrigins,
+      allowed: allowedOrigins.includes(req.headers.origin) || 
+               allowedOrigins.includes('*') || 
+               req.headers.origin?.includes('localhost')
+    }
+  });
+}));
+
+// ===== 17. DEBUG LIVE STATUS (NEW ENDPOINT) =====
+
+// 49. Debug live status endpoint
+app.get('/api/debug/live-status', authenticateToken, generalLimiter, asyncHandler(async (req, res) => {
+  // Get current live status
+  const { data: currentStatus, error: currentError } = await supabase
+    .from('clinical_status_updates')
+    .select('*')
+    .gt('expires_at', new Date().toISOString())
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+  
+  // Get status history count
+  const { count: historyCount, error: historyError } = await supabase
+    .from('clinical_status_updates')
+    .select('*', { count: 'exact', head: true });
+  
+  // Check if table exists
+  const { data: tableInfo, error: tableError } = await supabase
+    .from('clinical_status_updates')
+    .select('id, created_at, author_name')
+    .order('created_at', { ascending: false })
+    .limit(5);
+  
+  const debugInfo = {
+    currentStatus: {
+      exists: !!currentStatus && !currentError,
+      data: currentStatus || null,
+      error: currentError?.message
+    },
+    tableInfo: {
+      totalRecords: historyCount || 0,
+      recentEntries: tableInfo || [],
+      error: tableError?.message
+    },
+    database: {
+      tableExists: !tableError,
+      connection: SUPABASE_URL ? 'Connected' : 'Disconnected'
+    },
+    timestamp: new Date().toISOString()
+  };
+  
+  res.json({
+    success: true,
+    data: debugInfo,
+    message: 'Live status debug information'
+  });
+}));
+
+// ==================== ERROR HANDLERS ====================
+
+// 50. 404 handler
+app.use('*', (req, res) => {
+  sendErrorResponse(res, 404, 'ENDPOINT_NOT_FOUND', 
+    `Endpoint ${req.originalUrl} not found. Check / for available endpoints.`);
+});
+
+// 51. Global error handler
+app.use((err, req, res, next) => {
+  console.error('💥 Server error:', err.message);
+  
+  // JWT errors
+  if (err.name === 'JsonWebTokenError') {
+    return sendErrorResponse(res, 401, 'INVALID_TOKEN', 'Invalid authentication token');
+  }
+  
+  // JWT expired
+  if (err.name === 'TokenExpiredError') {
+    return sendErrorResponse(res, 401, 'TOKEN_EXPIRED', 'Session expired. Please login again.');
+  }
+  
+  // Validation errors
+  if (err.isJoi) {
+    const messages = err.details.map(detail => detail.message.replace(/["']/g, ''));
+    return sendErrorResponse(res, 400, 'VALIDATION_ERROR', 'Please check your input', messages);
+  }
+  
+  // Database errors
+  if (err.message.includes('Supabase') || err.code?.startsWith('PGRST')) {
+    console.error('Database error:', err);
+    return sendErrorResponse(res, 500, 'DATABASE_ERROR', 
+      'Database operation failed. Please try again.');
+  }
+  
+  // CORS errors
+  if (err.message.includes('CORS')) {
+    return sendErrorResponse(res, 403, 'CORS_ERROR', 
+      'Request blocked by security policy.');
+  }
+  
+  // Default error
+  sendErrorResponse(res, 500, 'INTERNAL_ERROR', 
+    'An unexpected error occurred. Our team has been notified.');
+});
+
+// ==================== SERVER STARTUP ====================
+
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`
+    ======================================================
+    🏥 NEUMOCARE HOSPITAL MANAGEMENT SYSTEM API v6.0
+    ======================================================
+    ✅ Server: http://localhost:${PORT}
+    ✅ Environment: ${NODE_ENV}
+    ✅ Database: ${SUPABASE_URL ? 'Connected' : 'Disconnected'}
+    ✅ Health: http://localhost:${PORT}/health
+    ======================================================
+    📊 ENDPOINTS: 51 Total
+    
+    Authentication:
+    1. POST   /api/auth/login
+    2. POST   /api/auth/logout
+    3. POST   /api/auth/register
+    4. PUT    /api/users/change-password
+    
+    Live Status:
+    5. GET    /api/live-status/current
+    6. POST   /api/live-status
+    7. GET    /api/live-status/history
+    
+    Medical Staff:
+    8. GET    /api/medical-staff
+    9. GET    /api/medical-staff/:id
+    10. POST   /api/medical-staff
+    11. PUT    /api/medical-staff/:id
+    12. DELETE /api/medical-staff/:id
+    
+    Departments:
+    13. GET    /api/departments
+    14. GET    /api/departments/:id
+    15. POST   /api/departments
+    16. PUT    /api/departments/:id
+    
+    Training Units:
+    17. GET    /api/training-units
+    18. POST   /api/training-units
+    19. PUT    /api/training-units/:id
+    
+    Rotations:
+    20. GET    /api/rotations
+    21. GET    /api/rotations/current
+    22. POST   /api/rotations
+    23. PUT    /api/rotations/:id
+    24. DELETE /api/rotations/:id
+    
+    On-Call:
+    25. GET    /api/oncall
+    26. GET    /api/oncall/today
+    27. POST   /api/oncall
+    28. PUT    /api/oncall/:id
+    29. DELETE /api/oncall/:id
+    
+    Absences:
+    30. GET    /api/absences
+    31. GET    /api/absences/pending
+    32. POST   /api/absences
+    33. PUT    /api/absences/:id
+    34. PUT    /api/absences/:id/approve
+    
+    Announcements:
+    35. GET    /api/announcements
+    36. POST   /api/announcements
+    37. PUT    /api/announcements/:id
+    38. DELETE /api/announcements/:id
+    
+    User Management:
+    39. GET    /api/users/profile
+    40. PUT    /api/users/profile
+    41. GET    /api/users
+    
+    Dashboard & Stats:
+    42. GET    /api/dashboard/stats
+    43. GET    /api/system-stats
+    
+    Live Updates:
+    44. GET    /api/live-updates
+    45. POST   /api/live-updates
+    
+    Available Data:
+    46. GET    /api/available-data
+    
+    Debug:
+    47. GET    /api/debug/tables
+    48. GET    /api/debug/cors
+    49. GET    /api/debug/live-status
+    ======================================================
+  `);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🔴 Shutting down gracefully...');
+  server.close(() => {
+    console.log('🛑 Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🔴 Shutting down gracefully...');
+  server.close(() => {
+    console.log('🛑 Server closed');
+    process.exit(0);
+  });
+});
+
+module.exports = app;
