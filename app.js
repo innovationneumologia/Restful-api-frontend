@@ -397,15 +397,21 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // ===== NEW LIVE STATUS ENDPOINTS =====
-            async getClinicalStatus() {
-                try {
-                    const data = await this.request('/api/live-status/current');
-                    return data || null;
-                } catch (error) {
-                    console.error('Failed to load clinical status:', error);
-                    return null;
-                }
-            }
+async getClinicalStatus() {
+  try {
+    console.log('🌐 Calling API: /api/live-status/current');
+    const data = await this.request('/api/live-status/current');
+    console.log('📡 API response data:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Clinical status API error:', error);
+    return {
+      success: false,
+      data: null,
+      error: error.message
+    };
+  }
+},
             
             async createClinicalStatus(statusData) {
                 return await this.request('/api/live-status', {
@@ -742,24 +748,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 
                 // ============ 7. NEW LIVE STATUS METHODS ============
-                
                 const loadClinicalStatus = async () => {
-                    isLoadingStatus.value = true;
-                    try {
-                        const data = await API.getClinicalStatus();
-                        if (data && data.data) {
-                            clinicalStatus.value = data.data;
-                        } else {
-                            clinicalStatus.value = null;
-                        }
-                    } catch (error) {
-                        console.error('Failed to load clinical status:', error);
-                        clinicalStatus.value = null;
-                        showToast('Error', 'Failed to load live status', 'Please try refreshing the page');
-                    } finally {
-                        isLoadingStatus.value = false;
-                    }
-                };
+  isLoadingStatus.value = true;
+  try {
+    console.log('🔍 Loading clinical status from API...');
+    const response = await API.getClinicalStatus();
+    
+    console.log('📦 API response:', response);
+    
+    if (response && response.success) {
+      if (response.data) {
+        clinicalStatus.value = response.data;
+        console.log('✅ Clinical status loaded:', clinicalStatus.value);
+      } else {
+        clinicalStatus.value = null;
+        console.log('ℹ️ No clinical status available (empty data)');
+      }
+    } else {
+      clinicalStatus.value = null;
+      console.log('ℹ️ API returned no success');
+    }
+  } catch (error) {
+    console.error('❌ Failed to load clinical status:', error);
+    clinicalStatus.value = null;
+    showToast('Error', 'Failed to load live status', 'Please try refreshing the page');
+  } finally {
+    isLoadingStatus.value = false;
+  }
+};
                 
                 const loadActiveMedicalStaff = async () => {
                     try {
