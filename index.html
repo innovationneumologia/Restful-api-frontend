@@ -2212,125 +2212,147 @@
                 <div class="live-stats-header">
                     <div class="live-stats-title">
                         <i class="fas fa-chart-line"></i>
-                        Live Department Updates
-                        <span class="badge badge-primary ml-2" v-if="unreadLiveUpdates > 0">{{ unreadLiveUpdates }}</span>
+                        Live Clinical Status
+                        <span class="badge badge-primary ml-2" v-if="clinicalStatus && !isStatusExpired(clinicalStatus.expires_at)">LIVE</span>
+                        <span class="badge badge-warning ml-2" v-if="clinicalStatus && isStatusExpired(clinicalStatus.expires_at)">EXPIRED</span>
                     </div>
                     <button class="live-stats-close" @click="statsSidebarOpen = false" aria-label="Close statistics sidebar">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 
-                <!-- EDIT MODE - Department Head Only -->
-                <div v-if="hasPermission('system', 'manage_updates') && liveStatsEditMode" class="live-stats-edit-mode">
-                    <div class="live-stats-edit-header">
-                        <h4>Edit Live Updates</h4>
-                        <button class="btn btn-sm btn-success" @click="saveLiveStatsUpdates">
-                            <i class="fas fa-save"></i> Publish
-                        </button>
+                <!-- EDIT MODE - For authorized staff -->
+                <div v-if="hasPermission('communications', 'create') && liveStatsEditMode" class="live-stats-edit-mode">
+                    <div v-if="isLoadingStatus" class="p-4 text-center">
+                        <i class="fas fa-spinner fa-spin fa-lg text-blue-600"></i>
+                        <p class="mt-2 text-sm text-gray-600">Saving status update...</p>
                     </div>
                     
-                    <!-- Daily Status Update -->
-                    <div class="form-group">
-                        <label class="form-label">Daily Status Update *</label>
-                        <textarea class="form-control form-textarea" v-model="liveStatsData.dailyUpdate" 
-                                  rows="3" placeholder="Enter today's department status (e.g., ER: 3 critical cases, ICU: 90% capacity, Ward A full...)"
-                                  required></textarea>
-                        <small class="text-muted">Visible to all staff in real-time</small>
-                    </div>
-                    
-                    <!-- Key Metrics Input -->
-                    <div class="form-group">
-                        <label class="form-label">Key Metrics (Optional)</label>
-                        <div class="live-metric-input">
-                            <div class="metric-input-row">
-                                <input type="text" class="form-control" v-model="liveStatsData.metric1.label" 
-                                       placeholder="Metric name (e.g., ER Wait Time)">
-                                <input type="text" class="form-control" v-model="liveStatsData.metric1.value" 
-                                       placeholder="Value (e.g., 15 mins)">
-                            </div>
+                    <div v-else>
+                        <div class="form-group">
+                            <label class="form-label">Clinical Status Update *</label>
+                            <textarea 
+                                v-model="newStatusText" 
+                                class="form-control form-textarea" 
+                                rows="4" 
+                                placeholder="Enter current clinical status (e.g., ER: 15 cases with 3 critical, ICU: 85% capacity, Ward B: 70% occupancy, 2 staff on leave)"
+                                maxlength="500"
+                                required
+                                :disabled="isLoadingStatus"></textarea>
+                            <small class="text-muted">Maximum 500 characters. This will be visible to all staff.</small>
                         </div>
-                        <div class="live-metric-input">
-                            <div class="metric-input-row">
-                                <input type="text" class="form-control" v-model="liveStatsData.metric2.label" 
-                                       placeholder="Metric name (e.g., ICU Bed Availability)">
-                                <input type="text" class="form-control" v-model="liveStatsData.metric2.value" 
-                                       placeholder="Value (e.g., 2 beds)">
-                            </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Updated By *</label>
+                            <select 
+                                v-model="selectedAuthorId" 
+                                class="form-select" 
+                                :disabled="isLoadingStatus || activeMedicalStaff.length === 0"
+                                required>
+                                <option value="">Select Staff Member</option>
+                                <option 
+                                    v-for="staff in activeMedicalStaff" 
+                                    :key="staff.id" 
+                                    :value="staff.id">
+                                    {{ staff.full_name }} ({{ formatStaffType(staff.staff_type) }})
+                                </option>
+                            </select>
+                            <small v-if="activeMedicalStaff.length === 0" class="text-danger">
+                                No active medical staff found. Please check the medical staff module.
+                            </small>
                         </div>
-                    </div>
-                    
-                    <!-- Status Flags -->
-                    <div class="form-group">
-                        <label class="form-label">Status Alerts</label>
-                        <div class="status-flags-grid">
-                            <label class="status-flag-item">
-                                <input type="checkbox" v-model="liveStatsData.alerts.erBusy">
-                                <span class="status-flag-label">ER Busy</span>
-                            </label>
-                            <label class="status-flag-item">
-                                <input type="checkbox" v-model="liveStatsData.alerts.icuFull">
-                                <span class="status-flag-label">ICU Full</span>
-                            </label>
-                            <label class="status-flag-item">
-                                <input type="checkbox" v-model="liveStatsData.alerts.wardFull">
-                                <span class="status-flag-label">Ward Full</span>
-                            </label>
-                            <label class="status-flag-item">
-                                <input type="checkbox" v-model="liveStatsData.alerts.staffShortage">
-                                <span class="status-flag-label">Staff Shortage</span>
-                            </label>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Visible For (Hours) *</label>
+                            <select 
+                                v-model="expiryHours" 
+                                class="form-select" 
+                                :disabled="isLoadingStatus"
+                                required>
+                                <option value="2">2 hours</option>
+                                <option value="4">4 hours</option>
+                                <option value="8" selected>8 hours (default)</option>
+                                <option value="12">12 hours</option>
+                                <option value="24">24 hours</option>
+                            </select>
+                            <small class="text-muted">Status will automatically expire after this time.</small>
                         </div>
-                    </div>
-                    
-                    <div class="flex gap-2 mt-4">
-                        <button class="btn btn-sm btn-outline flex-1" @click="liveStatsEditMode = false">
-                            Cancel
-                        </button>
-                        <button class="btn btn-sm btn-primary flex-1" @click="saveLiveStatsUpdates">
-                            <i class="fas fa-paper-plane"></i> Update All Staff
-                        </button>
+                        
+                        <div class="flex gap-2 mt-4">
+                            <button 
+                                class="btn btn-outline flex-1" 
+                                @click="liveStatsEditMode = false"
+                                :disabled="isLoadingStatus">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                            <button 
+                                class="btn btn-primary flex-1" 
+                                @click="saveClinicalStatus" 
+                                :disabled="!newStatusText.trim() || !selectedAuthorId || isLoadingStatus">
+                                <i class="fas fa-paper-plane"></i> 
+                                {{ isLoadingStatus ? 'Saving...' : 'Publish Status' }}
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- VIEW MODE - All Staff -->
                 <div v-else>
-                    <!-- Edit Toggle for Department Head -->
-                    <div v-if="hasPermission('system', 'manage_updates')" class="mb-4">
-                        <button class="btn btn-sm btn-outline w-100" @click="liveStatsEditMode = true">
-                            <i class="fas fa-edit"></i> Update Live Stats
+                    <!-- Edit Toggle for Authorized Users -->
+                    <div v-if="hasPermission('communications', 'create')" class="mb-4">
+                        <button v-if="clinicalStatus" 
+                                class="btn btn-outline w-100" 
+                                @click="liveStatsEditMode = true"
+                                :disabled="isLoadingStatus">
+                            <i class="fas fa-edit"></i> Update Status
+                        </button>
+                        <button v-else 
+                                class="btn btn-primary w-100" 
+                                @click="liveStatsEditMode = true"
+                                :disabled="isLoadingStatus">
+                            <i class="fas fa-plus"></i> Add Status Update
                         </button>
                     </div>
                     
-                    <!-- Daily Update Display -->
+                    <!-- Clinical Status Display -->
                     <div class="live-update-display">
-                        <div v-if="liveStatsData.dailyUpdate" class="live-update-card">
+                        <div v-if="isLoadingStatus" class="p-4 text-center">
+                            <i class="fas fa-spinner fa-spin fa-lg text-blue-600"></i>
+                            <p class="mt-2 text-sm text-gray-600">Loading clinical status...</p>
+                        </div>
+                        
+                        <div v-else-if="clinicalStatus" class="live-update-card">
                             <div class="live-update-header">
-                                <h4>Current Department Status</h4>
-                                <span class="live-update-time">{{ formatRelativeTime(liveStatsData.lastUpdated) }}</span>
+                                <h4>Current Clinical Status</h4>
+                                <span class="live-update-time">{{ formatRelativeTime(clinicalStatus.created_at) }}</span>
                             </div>
                             <div class="live-update-content">
-                                {{ liveStatsData.dailyUpdate }}
+                                {{ clinicalStatus.status_text }}
                             </div>
-                            <div class="live-update-author" v-if="liveStatsData.updatedBy">
-                                <i class="fas fa-user-md text-xs"></i>
-                                <small>Updated by: {{ liveStatsData.updatedBy }}</small>
+                            <div class="live-update-author">
+                                <i class="fas fa-user-md"></i>
+                                <small>Updated by: {{ clinicalStatus.author_name }}</small>
+                                <span class="mx-2">•</span>
+                                <small><i class="fas fa-clock"></i> Expires: {{ formatTime(clinicalStatus.expires_at) }}</small>
+                            </div>
+                            <div v-if="isStatusExpired(clinicalStatus.expires_at)" class="mt-2 p-2 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                                <div class="flex items-center text-yellow-800">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    <span class="text-xs">This status has expired and may no longer be current.</span>
+                                </div>
                             </div>
                         </div>
-                        <div v-else class="p-4 text-center text-gray-500 bg-gray-50 rounded-md">
-                            <i class="fas fa-info-circle mb-2"></i>
-                            <p class="text-sm">No status update available</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Key Metrics Display -->
-                    <div class="live-metrics-display" v-if="liveStatsData.metric1.label || liveStatsData.metric2.label">
-                        <div class="live-metric-card" v-if="liveStatsData.metric1.label">
-                            <div class="live-metric-label">{{ liveStatsData.metric1.label }}</div>
-                            <div class="live-metric-value">{{ liveStatsData.metric1.value }}</div>
-                        </div>
-                        <div class="live-metric-card" v-if="liveStatsData.metric2.label">
-                            <div class="live-metric-label">{{ liveStatsData.metric2.label }}</div>
-                            <div class="live-metric-value">{{ liveStatsData.metric2.value }}</div>
+                        
+                        <div v-else class="p-6 text-center text-gray-500 bg-gray-50 rounded-md">
+                            <i class="fas fa-info-circle fa-2x mb-3"></i>
+                            <p class="text-sm font-medium">No clinical status available</p>
+                            <p class="text-xs mt-1">Add a status update to keep staff informed</p>
+                            <button 
+                                v-if="hasPermission('communications', 'create')" 
+                                class="btn btn-sm btn-primary mt-3"
+                                @click="liveStatsEditMode = true">
+                                <i class="fas fa-plus"></i> Add First Status
+                            </button>
                         </div>
                     </div>
                     
@@ -2363,7 +2385,7 @@
                         <div class="space-y-2">
                             <div class="flex justify-between items-center">
                                 <span class="text-xs text-gray-600">Next Shift Change:</span>
-                                <span class="text-xs font-medium">{{ formatTime(systemStats.nextShiftChange) }}</span>
+                                <span class="text-xs font-medium">{{ systemStats.nextShiftChange ? formatTime(systemStats.nextShiftChange) : 'N/A' }}</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-xs text-gray-600">Pending Approvals:</span>
@@ -2373,6 +2395,23 @@
                                 <span class="text-xs text-gray-600">Unread Announcements:</span>
                                 <span class="text-xs font-medium">{{ unreadAnnouncements || 0 }}</span>
                             </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-600">Status Updates Today:</span>
+                                <span class="text-xs font-medium">{{ systemStats.statusUpdatesToday || 0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div v-if="hasPermission('communications', 'create')" class="mt-4">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Quick Actions</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button class="btn btn-sm btn-outline" @click="liveStatsEditMode = true">
+                                <i class="fas fa-edit"></i> Update Status
+                            </button>
+                            <button class="btn btn-sm btn-outline" @click="showCommunicationsModal">
+                                <i class="fas fa-bullhorn"></i> Announcement
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -3723,7 +3762,7 @@
                                 <i class="fas fa-bullhorn"></i> Announcement
                             </button>
                             <button class="modal-tab" :class="{ active: communicationsModal.activeTab === 'stats_update' }" 
-                                    @click="communicationsModal.activeTab = 'stats_update'" v-if="hasPermission('system', 'manage_updates')">
+                                    @click="communicationsModal.activeTab = 'stats_update'" v-if="hasPermission('communications', 'create')">
                                 <i class="fas fa-chart-line"></i> Live Stats Update
                             </button>
                         </div>
@@ -4398,4 +4437,4 @@
         });
     </script>
 </body>
-</html>
+                                        </html>
