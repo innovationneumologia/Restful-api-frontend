@@ -67,20 +67,16 @@ class ApiService {
         this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
     }
     
-    // API-06: Generate request headers with auth token
     getHeaders() {
         const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         };
         const token = localStorage.getItem(CONFIG.TOKEN_KEY);
-        if (token && token.trim()) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (token && token.trim()) headers['Authorization'] = `Bearer ${token}`;
         return headers;
     }
     
-    // API-07: Core request handler
     async request(endpoint, options = {}) {
         const url = `${CONFIG.API_BASE_URL}${endpoint}`;
         try {
@@ -90,27 +86,20 @@ class ApiService {
                 mode: 'cors',
                 cache: 'no-cache'
             };
-            
             if (options.body && typeof options.body === 'object') {
                 config.body = JSON.stringify(options.body);
             }
             
             const response = await fetch(url, config);
-            
-            // Handle 500 errors specifically
             if (response.status === 500) {
                 let errorDetails = '';
                 try {
                     const errorData = await response.json();
                     errorDetails = errorData.error || errorData.message || '';
-                } catch {
-                    errorDetails = response.statusText;
-                }
+                } catch { errorDetails = response.statusText; }
                 throw new Error(`Server error (500) on ${endpoint}: ${errorDetails}`);
             }
-            
             if (response.status === 204) return null;
-            
             if (!response.ok) {
                 if (response.status === 401) {
                     this.token = null;
@@ -118,30 +107,24 @@ class ApiService {
                     localStorage.removeItem(CONFIG.USER_KEY);
                     throw new Error('Session expired. Please login again.');
                 }
-                
                 let errorText;
                 try {
                     const errorData = await response.json();
                     errorText = errorData.error || errorData.message || `HTTP ${response.status}`;
-                } catch {
-                    errorText = `HTTP ${response.status}: ${response.statusText}`;
-                }
+                } catch { errorText = `HTTP ${response.status}: ${response.statusText}`; }
                 throw new Error(errorText);
             }
-            
             const contentType = response.headers.get('content-type');
             return contentType && contentType.includes('application/json')
                 ? await response.json()
                 : await response.text();
-                
         } catch (error) {
             if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error);
             throw error;
         }
     }
     
-    // ===== AUTHENTICATION ENDPOINTS =====
-    async login(email, password) { // API-08: POST /api/auth/login
+    async login(email, password) {
         try {
             const data = await this.request('/api/auth/login', {
                 method: 'POST',
@@ -158,7 +141,7 @@ class ApiService {
         }
     }
     
-    async logout() { // API-09: POST /api/auth/logout
+    async logout() {
         try {
             await this.request('/api/auth/logout', { method: 'POST' });
         } finally {
@@ -168,205 +151,181 @@ class ApiService {
         }
     }
     
-    // ===== MEDICAL STAFF ENDPOINTS =====
-    async getMedicalStaff() { // API-10: GET /api/medical-staff
+    async getMedicalStaff() {
         try {
             const data = await this.request('/api/medical-staff');
             return EnhancedUtils.ensureArray(data);
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
     
-    async createMedicalStaff(staffData) { // API-11: POST /api/medical-staff
+    async createMedicalStaff(staffData) {
         return await this.request('/api/medical-staff', {
             method: 'POST',
             body: staffData
         });
     }
     
-    async updateMedicalStaff(id, staffData) { // API-12: PUT /api/medical-staff/:id
+    async updateMedicalStaff(id, staffData) {
         return await this.request(`/api/medical-staff/${id}`, {
             method: 'PUT',
             body: staffData
         });
     }
     
-    async deleteMedicalStaff(id) { // API-13: DELETE /api/medical-staff/:id
+    async deleteMedicalStaff(id) {
         return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
     }
     
-    // ===== DEPARTMENT ENDPOINTS =====
-    async getDepartments() { // API-14: GET /api/departments
+    async getDepartments() {
         try {
             const data = await this.request('/api/departments');
             return EnhancedUtils.ensureArray(data);
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
     
-    async createDepartment(departmentData) { // API-15: POST /api/departments
+    async createDepartment(departmentData) {
         return await this.request('/api/departments', {
             method: 'POST',
             body: departmentData
         });
     }
     
-    async updateDepartment(id, departmentData) { // API-16: PUT /api/departments/:id
+    async updateDepartment(id, departmentData) {
         return await this.request(`/api/departments/${id}`, {
             method: 'PUT',
             body: departmentData
         });
     }
     
-    // ===== TRAINING UNIT ENDPOINTS =====
-    async getTrainingUnits() { // API-17: GET /api/training-units
+    async getTrainingUnits() {
         try {
             const data = await this.request('/api/training-units');
             return EnhancedUtils.ensureArray(data);
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
     
-    async createTrainingUnit(unitData) { // API-18: POST /api/training-units
+    async createTrainingUnit(unitData) {
         return await this.request('/api/training-units', {
             method: 'POST',
             body: unitData
         });
     }
     
-    async updateTrainingUnit(id, unitData) { // API-19: PUT /api/training-units/:id
+    async updateTrainingUnit(id, unitData) {
         return await this.request(`/api/training-units/${id}`, {
             method: 'PUT',
             body: unitData
         });
     }
     
-    // ===== ROTATION ENDPOINTS =====
-    async getRotations() { // API-20: GET /api/rotations
+    async getRotations() {
         try {
             const data = await this.request('/api/rotations');
             return EnhancedUtils.ensureArray(data);
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
     
-    async createRotation(rotationData) { // API-21: POST /api/rotations
+    async createRotation(rotationData) {
         return await this.request('/api/rotations', {
             method: 'POST',
             body: rotationData
         });
     }
     
-    async updateRotation(id, rotationData) { // API-22: PUT /api/rotations/:id
+    async updateRotation(id, rotationData) {
         return await this.request(`/api/rotations/${id}`, {
             method: 'PUT',
             body: rotationData
         });
     }
     
-    async deleteRotation(id) { // API-23: DELETE /api/rotations/:id
+    async deleteRotation(id) {
         return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
     }
     
-    // ===== ON-CALL ENDPOINTS =====
-    async getOnCallSchedule() { // API-24: GET /api/oncall
+    async getOnCallSchedule() {
         try {
             const data = await this.request('/api/oncall');
             return EnhancedUtils.ensureArray(data);
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
     
-    async getOnCallToday() { // API-25: GET /api/oncall/today
+    async getOnCallToday() {
         try {
             const data = await this.request('/api/oncall/today');
             return EnhancedUtils.ensureArray(data);
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
     
-    async createOnCall(scheduleData) { // API-26: POST /api/oncall
+    async createOnCall(scheduleData) {
         return await this.request('/api/oncall', {
             method: 'POST',
             body: scheduleData
         });
     }
     
-    async updateOnCall(id, scheduleData) { // API-27: PUT /api/oncall/:id
+    async updateOnCall(id, scheduleData) {
         return await this.request(`/api/oncall/${id}`, {
             method: 'PUT',
             body: scheduleData
         });
     }
     
-    async deleteOnCall(id) { // API-28: DELETE /api/oncall/:id
+    async deleteOnCall(id) {
         return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
     }
     
-    // ===== ABSENCE ENDPOINTS =====
-    async getAbsences() { // API-29: GET /api/absences
+    async getAbsences() {
         try {
             const data = await this.request('/api/absences');
             return EnhancedUtils.ensureArray(data);
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
     
-    async createAbsence(absenceData) { // API-30: POST /api/absences
+    async createAbsence(absenceData) {
         return await this.request('/api/absences', {
             method: 'POST',
             body: absenceData
         });
     }
     
-    async updateAbsence(id, absenceData) { // API-31: PUT /api/absences/:id
+    async updateAbsence(id, absenceData) {
         return await this.request(`/api/absences/${id}`, {
             method: 'PUT',
             body: absenceData
         });
     }
     
-    async deleteAbsence(id) { // API-32: DELETE /api/absences/:id
+    async deleteAbsence(id) {
         return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
     }
     
-    // ===== ANNOUNCEMENT ENDPOINTS =====
-    async getAnnouncements() { // API-33: GET /api/announcements
+    async getAnnouncements() {
         try {
             const data = await this.request('/api/announcements');
             return EnhancedUtils.ensureArray(data);
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
     
-    async createAnnouncement(announcementData) { // API-34: POST /api/announcements
+    async createAnnouncement(announcementData) {
         return await this.request('/api/announcements', {
             method: 'POST',
             body: announcementData
         });
     }
     
-    async updateAnnouncement(id, announcementData) { // API-35: PUT /api/announcements/:id
+    async updateAnnouncement(id, announcementData) {
         return await this.request(`/api/announcements/${id}`, {
             method: 'PUT',
             body: announcementData
         });
     }
     
-    async deleteAnnouncement(id) { // API-36: DELETE /api/announcements/:id
+    async deleteAnnouncement(id) {
         return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
     }
     
-    // ===== LIVE STATUS ENDPOINTS (COMPATIBLE) =====
-    async getClinicalStatus() { // API-37: GET /api/live-status/current
+    async getClinicalStatus() {
         try {
             const data = await this.request('/api/live-status/current');
             return data?.data || null;
@@ -376,26 +335,25 @@ class ApiService {
         }
     }
     
-    async createClinicalStatus(statusData) { // API-38: POST /api/live-status
+    async createClinicalStatus(statusData) {
         return await this.request('/api/live-status', {
             method: 'POST',
             body: statusData
         });
     }
     
-    async updateClinicalStatus(id, statusData) { // API-39: PUT /api/live-status/:id
+    async updateClinicalStatus(id, statusData) {
         return await this.request(`/api/live-status/${id}`, {
             method: 'PUT',
             body: statusData
         });
     }
     
-    async deleteClinicalStatus(id) { // API-40: DELETE /api/live-status/:id
+    async deleteClinicalStatus(id) {
         return await this.request(`/api/live-status/${id}`, { method: 'DELETE' });
     }
     
-    // ===== SYSTEM STATS ENDPOINT =====
-    async getSystemStats() { // API-41: GET /api/system-stats
+    async getSystemStats() {
         try {
             return await this.request('/api/system-stats');
         } catch {
@@ -409,248 +367,47 @@ class ApiService {
         }
     }
     
-    // ===== USER ENDPOINTS =====
-    async getUsers() { // API-42: GET /api/users
+    async getUsers() {
         try {
             const data = await this.request('/api/users');
             return EnhancedUtils.ensureArray(data);
-        } catch {
-            return [];
-        }
+        } catch { return []; }
     }
     
-    async getUserProfile() { // API-43: GET /api/users/profile
+    async getUserProfile() {
         try {
             return await this.request('/api/users/profile');
-        } catch {
-            return null;
-        }
+        } catch { return null; }
     }
     
-    async updateUserProfile(profileData) { // API-44: PUT /api/users/profile
+    async updateUserProfile(profileData) {
         return await this.request('/api/users/profile', {
             method: 'PUT',
             body: profileData
         });
     }
     
-    // ===== HEALTH CHECK ENDPOINTS =====
-    async getHealthStatus() { // API-45: GET /health
+    async getHealthStatus() {
         try {
             return await this.request('/health');
-        } catch {
-            return { status: 'unhealthy' };
-        }
+        } catch { return { status: 'unhealthy' }; }
     }
     
-    async debugTables() { // API-46: GET /api/debug/tables
+    async debugTables() {
         try {
             return await this.request('/api/debug/tables');
-        } catch {
-            return null;
-        }
+        } catch { return null; }
     }
     
-    async debugCors() { // API-47: GET /api/debug/cors
+    async debugCors() {
         try {
             return await this.request('/api/debug/cors');
-        } catch {
-            return null;
-        }
+        } catch { return null; }
     }
 }
 
 // Initialize API Service
 const API = new ApiService();
-           
-            // ===== AUTHENTICATION ENDPOINTS =====
-            async login(email, password) { // API-08: POST /api/auth/login
-                try { 
-                    const data = await this.request('/api/auth/login', { method: 'POST', body: { email, password } });
-                    if (data.token) { this.token = data.token; localStorage.setItem(CONFIG.TOKEN_KEY, data.token); localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user)); }
-                    return data;
-                } catch (error) { throw new Error('Login failed: ' + error.message); }
-            }
-            
-            async logout() { // API-09: POST /api/auth/logout
-                try { await this.request('/api/auth/logout', { method: 'POST' }); } 
-                finally { this.token = null; localStorage.removeItem(CONFIG.TOKEN_KEY); localStorage.removeItem(CONFIG.USER_KEY); }
-            }
-            
-            // ===== MEDICAL STAFF ENDPOINTS =====
-            async getMedicalStaff() { // API-10: GET /api/medical-staff
-                try { return EnhancedUtils.ensureArray(await this.request('/api/medical-staff')); } catch { return []; }
-            }
-            
-            async createMedicalStaff(staffData) { // API-11: POST /api/medical-staff
-                return await this.request('/api/medical-staff', { method: 'POST', body: staffData });
-            }
-            
-            async updateMedicalStaff(id, staffData) { // API-12: PUT /api/medical-staff/:id
-                return await this.request(`/api/medical-staff/${id}`, { method: 'PUT', body: staffData });
-            }
-            
-            async deleteMedicalStaff(id) { // API-13: DELETE /api/medical-staff/:id
-                return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== DEPARTMENT ENDPOINTS =====
-            async getDepartments() { // API-14: GET /api/departments
-                try { return EnhancedUtils.ensureArray(await this.request('/api/departments')); } catch { return []; }
-            }
-            
-            async createDepartment(departmentData) { // API-15: POST /api/departments
-                return await this.request('/api/departments', { method: 'POST', body: departmentData });
-            }
-            
-            async updateDepartment(id, departmentData) { // API-16: PUT /api/departments/:id
-                return await this.request(`/api/departments/${id}`, { method: 'PUT', body: departmentData });
-            }
-            
-            // ===== TRAINING UNIT ENDPOINTS =====
-            async getTrainingUnits() { // API-17: GET /api/training-units
-                try { return EnhancedUtils.ensureArray(await this.request('/api/training-units')); } catch { return []; }
-            }
-            
-            async createTrainingUnit(unitData) { // API-18: POST /api/training-units
-                return await this.request('/api/training-units', { method: 'POST', body: unitData });
-            }
-            
-            async updateTrainingUnit(id, unitData) { // API-19: PUT /api/training-units/:id
-                return await this.request(`/api/training-units/${id}`, { method: 'PUT', body: unitData });
-            }
-            
-            // ===== ROTATION ENDPOINTS =====
-            async getRotations() { // API-20: GET /api/rotations
-                try { return EnhancedUtils.ensureArray(await this.request('/api/rotations')); } catch { return []; }
-            }
-            
-            async createRotation(rotationData) { // API-21: POST /api/rotations
-                return await this.request('/api/rotations', { method: 'POST', body: rotationData });
-            }
-            
-            async updateRotation(id, rotationData) { // API-22: PUT /api/rotations/:id
-                return await this.request(`/api/rotations/${id}`, { method: 'PUT', body: rotationData });
-            }
-            
-            async deleteRotation(id) { // API-23: DELETE /api/rotations/:id
-                return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ON-CALL ENDPOINTS =====
-            async getOnCallSchedule() { // API-24: GET /api/oncall
-                try { return EnhancedUtils.ensureArray(await this.request('/api/oncall')); } catch { return []; }
-            }
-            
-            async getOnCallToday() { // API-25: GET /api/oncall/today
-                try { return EnhancedUtils.ensureArray(await this.request('/api/oncall/today')); } catch { return []; }
-            }
-            
-            async createOnCall(scheduleData) { // API-26: POST /api/oncall
-                return await this.request('/api/oncall', { method: 'POST', body: scheduleData });
-            }
-            
-            async updateOnCall(id, scheduleData) { // API-27: PUT /api/oncall/:id
-                return await this.request(`/api/oncall/${id}`, { method: 'PUT', body: scheduleData });
-            }
-            
-            async deleteOnCall(id) { // API-28: DELETE /api/oncall/:id
-                return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ABSENCE ENDPOINTS =====
-            async getAbsences() { // API-29: GET /api/absences
-                try { return EnhancedUtils.ensureArray(await this.request('/api/absences')); } catch { return []; }
-            }
-            
-            async createAbsence(absenceData) { // API-30: POST /api/absences
-                return await this.request('/api/absences', { method: 'POST', body: absenceData });
-            }
-            
-            async updateAbsence(id, absenceData) { // API-31: PUT /api/absences/:id
-                return await this.request(`/api/absences/${id}`, { method: 'PUT', body: absenceData });
-            }
-            
-            async deleteAbsence(id) { // API-32: DELETE /api/absences/:id
-                return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ANNOUNCEMENT ENDPOINTS =====
-            async getAnnouncements() { // API-33: GET /api/announcements
-                try { return EnhancedUtils.ensureArray(await this.request('/api/announcements')); } catch { return []; }
-            }
-            
-            async createAnnouncement(announcementData) { // API-34: POST /api/announcements
-                return await this.request('/api/announcements', { method: 'POST', body: announcementData });
-            }
-            
-            async updateAnnouncement(id, announcementData) { // API-35: PUT /api/announcements/:id
-                return await this.request(`/api/announcements/${id}`, { method: 'PUT', body: announcementData });
-            }
-            
-            async deleteAnnouncement(id) { // API-36: DELETE /api/announcements/:id
-                return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== LIVE STATUS ENDPOINTS (FIXED FOR COMPATIBILITY) =====
-            async createClinicalStatus(statusData) { // API-38: POST /api/live-status (COMPATIBLE)
-    try {
-        return await this.request('/api/live-status', { 
-            method: 'POST', 
-            body: statusData 
-        });
-    } catch (error) {
-        console.error('Failed to create clinical status:', error);
-        throw new Error(`Cannot update live status: ${error.message}`);
-    }
-}
-            
-            async createClinicalStatus(statusData) { // API-38: POST /api/live-status (COMPATIBLE)
-                return await this.request('/api/live-status', { method: 'POST', body: statusData });
-            }
-            
-            async updateClinicalStatus(id, statusData) { // API-39: PUT /api/live-status/:id
-                return await this.request(`/api/live-status/${id}`, { method: 'PUT', body: statusData });
-            }
-            
-            async deleteClinicalStatus(id) { // API-40: DELETE /api/live-status/:id
-                return await this.request(`/api/live-status/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== SYSTEM STATS ENDPOINT =====
-            async getSystemStats() { // API-41: GET /api/system-stats
-                try { return await this.request('/api/system-stats'); } catch { return { activeAttending: 0, activeResidents: 0, onCallNow: 0, inSurgery: 0, pendingApprovals: 0 }; }
-            }
-            
-            // ===== USER ENDPOINTS =====
-            async getUsers() { // API-42: GET /api/users
-                try { return EnhancedUtils.ensureArray(await this.request('/api/users')); } catch { return []; }
-            }
-            
-            async getUserProfile() { // API-43: GET /api/users/profile
-                try { return await this.request('/api/users/profile'); } catch { return null; }
-            }
-            
-            async updateUserProfile(profileData) { // API-44: PUT /api/users/profile
-                return await this.request('/api/users/profile', { method: 'PUT', body: profileData });
-            }
-            
-            // ===== HEALTH CHECK ENDPOINTS =====
-            async getHealthStatus() { // API-45: GET /health
-                try { return await this.request('/health'); } catch { return { status: 'unhealthy' }; }
-            }
-            
-            async debugTables() { // API-46: GET /api/debug/tables
-                try { return await this.request('/api/debug/tables'); } catch { return null; }
-            }
-            
-            async debugCors() { // API-47: GET /api/debug/cors
-                try { return await this.request('/api/debug/cors'); } catch { return null; }
-            }
-        }
-        
-        // Initialize API Service
-        const API = new ApiService();
         
         // ============ 5. CREATE VUE APP ============
         const app = createApp({
