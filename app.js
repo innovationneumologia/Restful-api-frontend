@@ -325,22 +325,23 @@ class ApiService {
         return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
     }
     
-    async getClinicalStatus() {
-        try {
-            const data = await this.request('/api/live-status/current');
-            return data?.data || null;
-        } catch (error) {
-            console.error('Failed to load clinical status:', error);
-            return null;
-        }
+async getClinicalStatus() {
+    try {
+        const data = await this.request('/api/live-status/current');
+        return data?.data || null;
+    } catch (error) {
+        console.error('Failed to load clinical status:', error);
+        // Return null without mock data
+        return null;
     }
-    
-    async createClinicalStatus(statusData) {
-        return await this.request('/api/live-status', {
-            method: 'POST',
-            body: statusData
-        });
-    }
+}
+
+async createClinicalStatus(statusData) {
+    return await this.request('/api/live-status', {
+        method: 'POST',
+        body: statusData
+    });
+}
     
     async updateClinicalStatus(id, statusData) {
         return await this.request(`/api/live-status/${id}`, {
