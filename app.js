@@ -2378,6 +2378,8 @@ const API = new ApiService();
                     departmentModal,
                     userProfileModal,
                     confirmationModal,
+                      isStatusExpired,
+
                     
                     // ============ NEUMAC ENHANCEMENT METHODS ============
                     getShiftStatusClass,
