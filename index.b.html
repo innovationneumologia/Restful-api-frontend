@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeumoCare | Pulmonology Management System</title>
+    <title>NeumoCare | Pulmonology Management</title>
     
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Vue.js 3 -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     
     <style>
         /* ============ MEDICAL BLUE THEME ============ */
@@ -78,15 +79,17 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
             color: var(--gray-900);
-            line-height: 1.5;
+            line-height: 1.6;
             min-height: 100vh;
             scroll-behavior: smooth;
+            font-size: 14px;
         }
 
         h1, h2, h3, h4, h5, h6 {
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
             line-height: 1.3;
+            letter-spacing: -0.01em;
         }
 
         /* ============ UTILITY CLASSES ============ */
@@ -1336,6 +1339,237 @@
             letter-spacing: 0.5px;
         }
 
+        /* ============ ENHANCED TRAINING UNITS GRID ============ */
+        .training-units-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .training-unit-card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 20px;
+            border: 1px solid var(--medical-light-blue);
+            border-left: 4px solid var(--medical-teal);
+            transition: all var(--transition-normal) ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .training-unit-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+            border-left-color: var(--medical-blue);
+        }
+
+        .training-unit-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--medical-light-blue);
+        }
+
+        .training-unit-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .training-unit-title i {
+            color: var(--medical-blue);
+            font-size: 16px;
+        }
+
+        .training-unit-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-grow: 1;
+        }
+
+        .training-unit-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .training-unit-stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .training-unit-stat-label {
+            font-size: 12px;
+            color: var(--medical-gray);
+            font-weight: 500;
+        }
+
+        .training-unit-stat-value {
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            font-size: 13px;
+        }
+
+        .training-unit-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .training-unit-tag {
+            background: var(--medical-light-blue);
+            color: var(--medical-blue);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .training-unit-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .training-unit-action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+            min-height: 36px;
+        }
+
+        /* ============ ENHANCED DEPARTMENTS GRID ============ */
+        .departments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .department-card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 20px;
+            border: 1px solid var(--medical-light-blue);
+            border-left: 4px solid var(--medical-blue);
+            transition: all var(--transition-normal) ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .department-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+            border-left-color: var(--medical-teal);
+        }
+
+        .department-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--medical-light-blue);
+        }
+
+        .department-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .department-title i {
+            color: var(--medical-blue);
+            font-size: 16px;
+        }
+
+        .department-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-grow: 1;
+        }
+
+        .department-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .department-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .department-info-label {
+            font-size: 12px;
+            color: var(--medical-gray);
+            font-weight: 500;
+        }
+
+        .department-info-value {
+            font-weight: 600;
+            color: var(--medical-dark-blue);
+            font-size: 13px;
+        }
+
+        .department-units {
+            margin-top: 12px;
+        }
+
+        .department-units-label {
+            font-size: 12px;
+            color: var(--medical-gray);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .department-units-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .department-unit-tag {
+            background: linear-gradient(135deg, rgba(0, 119, 190, 0.1), rgba(0, 119, 190, 0.05));
+            color: var(--medical-blue);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            border: 1px solid rgba(0, 119, 190, 0.15);
+        }
+
+        .department-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .department-action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+            min-height: 36px;
+        }
+
         /* ============ MODALS ============ */
         .modal-overlay {
             position: fixed;
@@ -1888,6 +2122,12 @@
             .dynamic-status-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+            .training-units-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .departments-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         @media (max-width: 1024px) {
@@ -1951,6 +2191,12 @@
             .metric-inputs-grid {
                 grid-template-columns: 1fr;
             }
+            .training-units-grid {
+                grid-template-columns: 1fr;
+            }
+            .departments-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 480px) {
@@ -2006,6 +2252,31 @@
         }
         ::-webkit-scrollbar-thumb:hover {
             background: var(--medical-dark-blue);
+        }
+
+        /* ============ EMPTY STATE STYLES ============ */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--gray-600);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            color: var(--gray-400);
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-description {
+            font-size: 14px;
+            color: var(--gray-600);
         }
     </style>
 </head>
@@ -2192,10 +2463,12 @@
                 
                 <div class="sidebar-footer">
                     <div class="sidebar-user">
-                        <div class="user-avatar" aria-hidden="true">{{ getInitials(currentUser.full_name) }}</div>
+                        <div class="user-avatar" aria-hidden="true">
+                            {{ currentUser && currentUser.full_name ? getInitials(currentUser.full_name) : '' }}
+                        </div>
                         <div class="user-info" v-if="!sidebarCollapsed">
-                            <div class="user-name">{{ currentUser.full_name }}</div>
-                            <div class="user-role">{{ getUserRoleDisplay(currentUser.user_role) }}</div>
+                            <div class="user-name">{{ currentUser && currentUser.full_name ? currentUser.full_name : '' }}</div>
+                            <div class="user-role">{{ currentUser && currentUser.user_role ? getUserRoleDisplay(currentUser.user_role) : '' }}</div>
                         </div>
                     </div>
                 </div>
@@ -2212,168 +2485,198 @@
                 <div class="live-stats-header">
                     <div class="live-stats-title">
                         <i class="fas fa-chart-line"></i>
-                        Live Department Updates
-                        <span class="badge badge-primary ml-2" v-if="unreadLiveUpdates > 0">{{ unreadLiveUpdates }}</span>
+                        Live Clinical Status
+                        <span class="badge badge-primary ml-2" v-if="clinicalStatus && !isStatusExpired(clinicalStatus.expires_at)">LIVE</span>
+                        <span class="badge badge-warning ml-2" v-if="clinicalStatus && isStatusExpired(clinicalStatus.expires_at)">EXPIRED</span>
                     </div>
                     <button class="live-stats-close" @click="statsSidebarOpen = false" aria-label="Close statistics sidebar">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 
-                <!-- EDIT MODE - Department Head Only -->
-                <div v-if="hasPermission('system', 'manage_updates') && liveStatsEditMode" class="live-stats-edit-mode">
-                    <div class="live-stats-edit-header">
-                        <h4>Edit Live Updates</h4>
-                        <button class="btn btn-sm btn-success" @click="saveLiveStatsUpdates">
-                            <i class="fas fa-save"></i> Publish
-                        </button>
+                <!-- EDIT MODE - For authorized staff -->
+                <div v-if="hasPermission('communications', 'create') && liveStatsEditMode" class="live-stats-edit-mode">
+                    <div v-if="isLoadingStatus" class="p-4 text-center">
+                        <i class="fas fa-spinner fa-spin fa-lg text-blue-600"></i>
+                        <p class="mt-2 text-sm text-gray-600">Saving status update...</p>
                     </div>
                     
-                    <!-- Daily Status Update -->
-                    <div class="form-group">
-                        <label class="form-label">Daily Status Update *</label>
-                        <textarea class="form-control form-textarea" v-model="liveStatsData.dailyUpdate" 
-                                  rows="3" placeholder="Enter today's department status (e.g., ER: 3 critical cases, ICU: 90% capacity, Ward A full...)"
-                                  required></textarea>
-                        <small class="text-muted">Visible to all staff in real-time</small>
-                    </div>
-                    
-                    <!-- Key Metrics Input -->
-                    <div class="form-group">
-                        <label class="form-label">Key Metrics (Optional)</label>
-                        <div class="live-metric-input">
-                            <div class="metric-input-row">
-                                <input type="text" class="form-control" v-model="liveStatsData.metric1.label" 
-                                       placeholder="Metric name (e.g., ER Wait Time)">
-                                <input type="text" class="form-control" v-model="liveStatsData.metric1.value" 
-                                       placeholder="Value (e.g., 15 mins)">
-                            </div>
+                    <div v-else>
+                        <div class="form-group">
+                            <label class="form-label">Clinical Status Update *</label>
+                            <textarea 
+                                v-model="newStatusText" 
+                                class="form-control form-textarea" 
+                                rows="4" 
+                                placeholder="Enter current clinical status"
+                                maxlength="500"
+                                required
+                                :disabled="isLoadingStatus"></textarea>
+                            <small class="text-muted">Maximum 500 characters</small>
                         </div>
-                        <div class="live-metric-input">
-                            <div class="metric-input-row">
-                                <input type="text" class="form-control" v-model="liveStatsData.metric2.label" 
-                                       placeholder="Metric name (e.g., ICU Bed Availability)">
-                                <input type="text" class="form-control" v-model="liveStatsData.metric2.value" 
-                                       placeholder="Value (e.g., 2 beds)">
-                            </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Updated By *</label>
+                            <select 
+                                v-model="selectedAuthorId" 
+                                class="form-select" 
+                                :disabled="isLoadingStatus || activeMedicalStaff.length === 0"
+                                required>
+                                <option value="">Select Staff Member</option>
+                                <option 
+                                    v-for="staff in activeMedicalStaff" 
+                                    :key="staff.id" 
+                                    :value="staff.id">
+                                    {{ staff.full_name }} ({{ formatStaffType(staff.staff_type) }})
+                                </option>
+                            </select>
+                            <small v-if="activeMedicalStaff.length === 0" class="text-danger">
+                                No active medical staff found
+                            </small>
                         </div>
-                    </div>
-                    
-                    <!-- Status Flags -->
-                    <div class="form-group">
-                        <label class="form-label">Status Alerts</label>
-                        <div class="status-flags-grid">
-                            <label class="status-flag-item">
-                                <input type="checkbox" v-model="liveStatsData.alerts.erBusy">
-                                <span class="status-flag-label">ER Busy</span>
-                            </label>
-                            <label class="status-flag-item">
-                                <input type="checkbox" v-model="liveStatsData.alerts.icuFull">
-                                <span class="status-flag-label">ICU Full</span>
-                            </label>
-                            <label class="status-flag-item">
-                                <input type="checkbox" v-model="liveStatsData.alerts.wardFull">
-                                <span class="status-flag-label">Ward Full</span>
-                            </label>
-                            <label class="status-flag-item">
-                                <input type="checkbox" v-model="liveStatsData.alerts.staffShortage">
-                                <span class="status-flag-label">Staff Shortage</span>
-                            </label>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Visible For (Hours) *</label>
+                            <select 
+                                v-model="expiryHours" 
+                                class="form-select" 
+                                :disabled="isLoadingStatus"
+                                required>
+                                <option value="2">2 hours</option>
+                                <option value="4">4 hours</option>
+                                <option value="8" selected>8 hours</option>
+                                <option value="12">12 hours</option>
+                                <option value="24">24 hours</option>
+                            </select>
+                            <small class="text-muted">Status will automatically expire</small>
                         </div>
-                    </div>
-                    
-                    <div class="flex gap-2 mt-4">
-                        <button class="btn btn-sm btn-outline flex-1" @click="liveStatsEditMode = false">
-                            Cancel
-                        </button>
-                        <button class="btn btn-sm btn-primary flex-1" @click="saveLiveStatsUpdates">
-                            <i class="fas fa-paper-plane"></i> Update All Staff
-                        </button>
+                        
+                        <div class="flex gap-2 mt-4">
+                            <button 
+                                class="btn btn-outline flex-1" 
+                                @click="liveStatsEditMode = false"
+                                :disabled="isLoadingStatus">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                            <button 
+                                class="btn btn-primary flex-1" 
+                                @click="saveClinicalStatus" 
+                                :disabled="!newStatusText.trim() || !selectedAuthorId || isLoadingStatus">
+                                <i class="fas fa-paper-plane"></i> 
+                                {{ isLoadingStatus ? 'Saving...' : 'Publish Status' }}
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- VIEW MODE - All Staff -->
                 <div v-else>
-                    <!-- Edit Toggle for Department Head -->
-                    <div v-if="hasPermission('system', 'manage_updates')" class="mb-4">
-                        <button class="btn btn-sm btn-outline w-100" @click="liveStatsEditMode = true">
-                            <i class="fas fa-edit"></i> Update Live Stats
+                    <!-- Edit Button -->
+                    <div v-if="hasPermission('communications', 'create')" class="mb-4">
+                        <button v-if="clinicalStatus" 
+                                class="btn btn-outline w-100" 
+                                @click="showCreateStatusModal"
+                                :disabled="isLoadingStatus">
+                            <i class="fas fa-edit"></i> Update Status
+                        </button>
+                        <button v-else 
+                                class="btn btn-primary w-100" 
+                                @click="showCreateStatusModal"
+                                :disabled="isLoadingStatus">
+                            <i class="fas fa-plus"></i> Add Status
                         </button>
                     </div>
                     
-                    <!-- Daily Update Display -->
-                    <div class="live-update-display">
-                        <div v-if="liveStatsData.dailyUpdate" class="live-update-card">
-                            <div class="live-update-header">
-                                <h4>Current Department Status</h4>
-                                <span class="live-update-time">{{ formatRelativeTime(liveStatsData.lastUpdated) }}</span>
+                    <!-- Status Display -->
+                    <div class="space-y-4">
+                        <div v-if="isLoadingStatus" class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin text-blue-600"></i>
+                            <p class="text-sm text-gray-600 mt-2">Loading...</p>
+                        </div>
+                        
+                        <div v-else-if="clinicalStatus" class="bg-white rounded-lg border p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-semibold">Current Status</h4>
+                                <span class="text-xs text-gray-500">{{ formatRelativeTime(clinicalStatus.created_at) }}</span>
                             </div>
-                            <div class="live-update-content">
-                                {{ liveStatsData.dailyUpdate }}
+                            <p class="text-sm text-gray-700 mb-3">{{ clinicalStatus.status_text }}</p>
+                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                                <i class="fas fa-user-md"></i>
+                                <span>{{ clinicalStatus.author_name }}</span>
+                                <span class="mx-1">•</span>
+                                <i class="fas fa-clock"></i>
+                                <span>Expires {{ formatTime(clinicalStatus.expires_at) }}</span>
                             </div>
-                            <div class="live-update-author" v-if="liveStatsData.updatedBy">
-                                <i class="fas fa-user-md text-xs"></i>
-                                <small>Updated by: {{ liveStatsData.updatedBy }}</small>
+                            <div v-if="isStatusExpired(clinicalStatus.expires_at)" 
+                                 class="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                Status expired
                             </div>
                         </div>
-                        <div v-else class="p-4 text-center text-gray-500 bg-gray-50 rounded-md">
-                            <i class="fas fa-info-circle mb-2"></i>
-                            <p class="text-sm">No status update available</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Key Metrics Display -->
-                    <div class="live-metrics-display" v-if="liveStatsData.metric1.label || liveStatsData.metric2.label">
-                        <div class="live-metric-card" v-if="liveStatsData.metric1.label">
-                            <div class="live-metric-label">{{ liveStatsData.metric1.label }}</div>
-                            <div class="live-metric-value">{{ liveStatsData.metric1.value }}</div>
-                        </div>
-                        <div class="live-metric-card" v-if="liveStatsData.metric2.label">
-                            <div class="live-metric-label">{{ liveStatsData.metric2.label }}</div>
-                            <div class="live-metric-value">{{ liveStatsData.metric2.value }}</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Active Clinicians Count -->
-                    <div class="active-clinicians-card">
-                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Active Clinicians</h4>
-                        <div class="clinician-count-grid">
-                            <div class="clinician-count-item">
-                                <div class="clinician-count-value">{{ systemStats.activeAttending || 0 }}</div>
-                                <div class="clinician-count-label">Attending</div>
-                            </div>
-                            <div class="clinician-count-item">
-                                <div class="clinician-count-value">{{ systemStats.activeResidents || 0 }}</div>
-                                <div class="clinician-count-label">Residents</div>
-                            </div>
-                            <div class="clinician-count-item">
-                                <div class="clinician-count-value">{{ systemStats.onCallNow || 0 }}</div>
-                                <div class="clinician-count-label">On-call</div>
-                            </div>
-                            <div class="clinician-count-item">
-                                <div class="clinician-count-value">{{ systemStats.inSurgery || 0 }}</div>
-                                <div class="clinician-count-label">In Surgery</div>
-                            </div>
+                        
+                        <div v-else class="text-center py-6 bg-gray-50 rounded-lg">
+                            <i class="fas fa-stethoscope text-gray-300 text-xl mb-2"></i>
+                            <p class="text-sm text-gray-600 mb-3">No clinical status</p>
                         </div>
                     </div>
+                </div>
                     
-                    <!-- System Information -->
-                    <div class="bg-gray-50 rounded-md p-4">
-                        <h4 class="text-sm font-semibold text-gray-700 mb-3">System Information</h4>
-                        <div class="space-y-2">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-gray-600">Next Shift Change:</span>
-                                <span class="text-xs font-medium">{{ formatTime(systemStats.nextShiftChange) }}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-gray-600">Pending Approvals:</span>
-                                <span class="text-xs font-medium">{{ systemStats.pendingApprovals || 0 }}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-gray-600">Unread Announcements:</span>
-                                <span class="text-xs font-medium">{{ unreadAnnouncements || 0 }}</span>
-                            </div>
+                <!-- Active Clinicians Count -->
+                <div class="active-clinicians-card">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Active Clinicians</h4>
+                    <div class="clinician-count-grid">
+                        <div class="clinician-count-item">
+                            <div class="clinician-count-value">{{ systemStats.activeAttending || 0 }}</div>
+                            <div class="clinician-count-label">Attending</div>
                         </div>
+                        <div class="clinician-count-item">
+                            <div class="clinician-count-value">{{ systemStats.activeResidents || 0 }}</div>
+                            <div class="clinician-count-label">Residents</div>
+                        </div>
+                        <div class="clinician-count-item">
+                            <div class="clinician-count-value">{{ systemStats.onCallNow || 0 }}</div>
+                            <div class="clinician-count-label">On-call</div>
+                        </div>
+                        <div class="clinician-count-item">
+                            <div class="clinician-count-value">{{ systemStats.inSurgery || 0 }}</div>
+                            <div class="clinician-count-label">In Surgery</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- System Information -->
+                <div class="bg-gray-50 rounded-md p-4">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">System Information</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-600">Next Shift Change:</span>
+                            <span class="text-xs font-medium">{{ systemStats.nextShiftChange ? formatTime(systemStats.nextShiftChange) : 'N/A' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-600">Pending Approvals:</span>
+                            <span class="text-xs font-medium">{{ systemStats.pendingApprovals || 0 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-600">Unread Announcements:</span>
+                            <span class="text-xs font-medium">{{ unreadAnnouncements || 0 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-600">Status Updates Today:</span>
+                            <span class="text-xs font-medium">{{ systemStats.statusUpdatesToday || 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div v-if="hasPermission('communications', 'create')" class="mt-4">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Quick Actions</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="btn btn-sm btn-outline" @click="liveStatsEditMode = true">
+                            <i class="fas fa-edit"></i> Update Status
+                        </button>
+                        <button class="btn btn-sm btn-outline" @click="showCommunicationsModal">
+                            <i class="fas fa-bullhorn"></i> Announcement
+                        </button>
                     </div>
                 </div>
             </div>
@@ -2417,9 +2720,9 @@
                             <div class="relative">
                                 <button class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 transition" 
                                         @click="userMenuOpen = !userMenuOpen" 
-                                        :aria-label="`${currentUser.full_name} profile menu`"
+                                        :aria-label="`${currentUser && currentUser.full_name ? currentUser.full_name : ''} profile menu`"
                                         :aria-expanded="userMenuOpen">
-                                    <div class="user-avatar">{{ getInitials(currentUser.full_name) }}</div>
+                                    <div class="user-avatar">{{ currentUser && currentUser.full_name ? getInitials(currentUser.full_name) : '' }}</div>
                                     <i class="fas fa-chevron-down text-xs"></i>
                                 </button>
                                 
@@ -2569,7 +2872,7 @@
                                         <span class="status-indicator status-oncall">On-call</span>
                                     </div>
                                     <div v-if="todaysOnCall.length === 0" class="breakdown-item">
-                                        <span class="label text-gray-500">No on-call scheduled today</span>
+                                        <span class="label text-gray-500">No on-call scheduled</span>
                                     </div>
                                 </div>
                             </div>
@@ -2637,37 +2940,37 @@
                                                 <p>No on-call scheduled today</p>
                                             </td>
                                         </tr>
-                                      <tr v-else v-for="shift in todaysOnCall" :key="shift.id">
-    <td>{{ shift.startTime }} - {{ shift.endTime }}</td>
-    <td>
-        <div class="flex items-center gap-3">
-            <div class="user-avatar">{{ getInitials(shift.physicianName) }}</div>
-            <div>
-                <div class="font-medium">{{ shift.physicianName }}</div>
-                <div class="text-xs text-gray-500">{{ shift.staffType }}</div>
-            </div>
-        </div>
-    </td>
-    <td>
-        <span class="badge" :class="shift.shiftTypeClass">
-            {{ shift.shiftType }}
-        </span>
-    </td>
-    <td>{{ shift.coverageArea }}</td>
-    <td>
-        <span v-if="shift.backupPhysician">{{ shift.backupPhysician }}</span>
-        <span v-else class="text-gray-500 text-xs">None</span>
-    </td>
-    <td>
-        <button class="btn btn-sm btn-outline" 
-                @click="contactPhysician(shift)"
-                :disabled="!shift.contactInfo || shift.contactInfo === 'No contact info'"
-                aria-label="Contact physician">
-            <i class="fas" :class="shift.contactInfo && shift.contactInfo.includes('@') ? 'fa-envelope' : 'fa-phone'"></i> 
-            {{ shift.contactInfo && shift.contactInfo.includes('@') ? 'Email' : 'Contact' }}
-        </button>
-    </td>
-</tr>
+                                        <tr v-else v-for="shift in todaysOnCall" :key="shift.id">
+                                            <td>{{ shift.startTime }} - {{ shift.endTime }}</td>
+                                            <td>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="user-avatar">{{ getInitials(shift.physicianName) }}</div>
+                                                    <div>
+                                                        <div class="font-medium">{{ shift.physicianName }}</div>
+                                                        <div class="text-xs text-gray-500">{{ shift.staffType }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge" :class="shift.shiftTypeClass">
+                                                    {{ shift.shiftType }}
+                                                </span>
+                                            </td>
+                                            <td>{{ shift.coverageArea }}</td>
+                                            <td>
+                                                <span v-if="shift.backupPhysician">{{ shift.backupPhysician }}</span>
+                                                <span v-else class="text-gray-500 text-xs">None</span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline" 
+                                                        @click="contactPhysician(shift)"
+                                                        :disabled="!shift.contactInfo || shift.contactInfo === 'No contact info'"
+                                                        aria-label="Contact physician">
+                                                    <i class="fas" :class="shift.contactInfo && shift.contactInfo.includes('@') ? 'fa-envelope' : 'fa-phone'"></i> 
+                                                    {{ shift.contactInfo && shift.contactInfo.includes('@') ? 'Email' : 'Contact' }}
+                                                </button>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -2764,11 +3067,11 @@
                                                 <span v-else class="text-gray-500 text-xs">Not assigned</span>
                                             </td>
                                             <td>
-    <span v-if="getCurrentRotationForStaff(staff.id)">
-        {{ getTrainingUnitName(getCurrentRotationForStaff(staff.id).training_unit_id) }}
-    </span>
-    <span v-else class="text-gray-500 text-xs">Not assigned</span>
-</td>
+                                                <span v-if="getCurrentRotationForStaff(staff.id)">
+                                                    {{ getTrainingUnitName(getCurrentRotationForStaff(staff.id).training_unit_id) }}
+                                                </span>
+                                                <span v-else class="text-gray-500 text-xs">Not assigned</span>
+                                            </td>
                                             
                                             <td>
                                                 <span class="status-indicator" :class="'status-' + staff.employment_status">
@@ -2790,9 +3093,10 @@
                                             </td>
                                         </tr>
                                         <tr v-if="filteredMedicalStaff.length === 0">
-                                            <td colspan="7" class="text-center py-8 text-gray-500">
-                                                <i class="fas fa-user-md text-2xl mb-2"></i>
-                                                <p>No medical staff found matching your criteria</p>
+                                            <td colspan="7" class="empty-state">
+                                                <i class="fas fa-user-md empty-state-icon"></i>
+                                                <div class="empty-state-title">No medical staff found</div>
+                                                <div class="empty-state-description">Try adjusting your search criteria</div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -2890,9 +3194,10 @@
                                             </td>
                                         </tr>
                                         <tr v-if="filteredOnCallSchedules.length === 0">
-                                            <td colspan="7" class="text-center py-8 text-gray-500">
-                                                <i class="fas fa-phone-medical text-2xl mb-2"></i>
-                                                <p>No on-call schedules found</p>
+                                            <td colspan="7" class="empty-state">
+                                                <i class="fas fa-phone-medical empty-state-icon"></i>
+                                                <div class="empty-state-title">No on-call schedules found</div>
+                                                <div class="empty-state-description">Try adjusting your filters</div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -2998,9 +3303,10 @@
                                             </td>
                                         </tr>
                                         <tr v-if="filteredRotations.length === 0">
-                                            <td colspan="8" class="text-center py-8 text-gray-500">
-                                                <i class="fas fa-calendar-alt text-2xl mb-2"></i>
-                                                <p>No rotations found</p>
+                                            <td colspan="8" class="empty-state">
+                                                <i class="fas fa-calendar-alt empty-state-icon"></i>
+                                                <div class="empty-state-title">No rotations found</div>
+                                                <div class="empty-state-description">Try adjusting your filters</div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -3023,10 +3329,10 @@
                             </div>
                             
                             <!-- Training Units Grid -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                                <div v-for="unit in trainingUnits" :key="unit.id" class="card hover:shadow-lg transition-shadow">
-                                    <div class="card-header">
-                                        <div class="card-title">
+                            <div class="training-units-grid">
+                                <div v-for="unit in trainingUnits" :key="unit.id" class="training-unit-card">
+                                    <div class="training-unit-header">
+                                        <div class="training-unit-title">
                                             <i class="fas fa-clinic-medical"></i>
                                             {{ unit.unit_name }}
                                         </div>
@@ -3035,45 +3341,46 @@
                                         </span>
                                     </div>
                                     
-                                    <div class="space-y-3">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600">Code:</span>
+                                    <div class="training-unit-stats">
+                                        <div class="training-unit-stat-row">
+                                            <span class="training-unit-stat-label">Code:</span>
                                             <span class="font-mono text-sm">{{ unit.unit_code }}</span>
                                         </div>
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600">Department:</span>
+                                        <div class="training-unit-stat-row">
+                                            <span class="training-unit-stat-label">Department:</span>
                                             <span class="text-sm">{{ getDepartmentName(unit.department_id) }}</span>
                                         </div>
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600">Current Capacity:</span>
-                                            <span class="text-sm">{{ unit.current_residents || 0 }}/{{ unit.maximum_residents }}</span>
+                                        <div class="training-unit-stat-row">
+                                            <span class="training-unit-stat-label">Capacity:</span>
+                                            <span class="text-sm font-semibold">{{ unit.current_residents || 0 }}/{{ unit.maximum_residents }}</span>
                                         </div>
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600">Supervisor:</span>
+                                        <div class="training-unit-stat-row">
+                                            <span class="training-unit-stat-label">Supervisor:</span>
                                             <span class="text-sm">{{ getSupervisorName(unit.supervising_attending_id) || 'Not assigned' }}</span>
-                                        </div>
-                                        <div v-if="unit.specialty" class="mt-2">
-                                            <span class="badge badge-info">{{ unit.specialty }}</span>
                                         </div>
                                     </div>
                                     
-                                    <div class="mt-4 flex gap-2">
-                                        <button class="btn btn-sm btn-outline flex-1" @click="editTrainingUnit(unit)" 
+                                    <div v-if="unit.specialty" class="training-unit-tags">
+                                        <span class="training-unit-tag">{{ unit.specialty }}</span>
+                                    </div>
+                                    
+                                    <div class="training-unit-actions">
+                                        <button class="btn btn-outline training-unit-action-btn" @click="editTrainingUnit(unit)" 
                                                 v-if="hasPermission('training_units', 'update')"
                                                 aria-label="Edit training unit">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
-                                        <button class="btn btn-sm btn-primary flex-1" @click="viewUnitResidents(unit)"
+                                        <button class="btn btn-primary training-unit-action-btn" @click="viewUnitResidents(unit)"
                                                 aria-label="View unit residents">
                                             <i class="fas fa-users"></i> Residents
                                         </button>
                                     </div>
                                 </div>
                                 
-                                <div v-if="trainingUnits.length === 0" class="col-span-full text-center py-12 text-gray-500">
-                                    <i class="fas fa-hospital-user text-3xl mb-3"></i>
-                                    <p class="text-lg">No training units found</p>
-                                    <p class="text-sm mt-1">Add a training unit to get started</p>
+                                <div v-if="trainingUnits.length === 0" class="col-span-full empty-state">
+                                    <i class="fas fa-hospital-user empty-state-icon"></i>
+                                    <div class="empty-state-title">No training units found</div>
+                                    <div class="empty-state-description">Add a training unit to begin</div>
                                 </div>
                             </div>
                         </div>
@@ -3172,9 +3479,10 @@
                                             </td>
                                         </tr>
                                         <tr v-if="filteredAbsences.length === 0">
-                                            <td colspan="8" class="text-center py-8 text-gray-500">
-                                                <i class="fas fa-user-clock text-2xl mb-2"></i>
-                                                <p>No absences found</p>
+                                            <td colspan="8" class="empty-state">
+                                                <i class="fas fa-user-clock empty-state-icon"></i>
+                                                <div class="empty-state-title">No absences found</div>
+                                                <div class="empty-state-description">Try adjusting your filters</div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -3198,10 +3506,10 @@
                             </div>
                             
                             <!-- Departments Grid -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-                                <div v-for="department in departments" :key="department.id" class="card hover:shadow-lg transition-shadow">
-                                    <div class="card-header">
-                                        <div class="card-title">
+                            <div class="departments-grid">
+                                <div v-for="department in departments" :key="department.id" class="department-card">
+                                    <div class="department-header">
+                                        <div class="department-title">
                                             <i class="fas fa-hospital"></i>
                                             {{ department.name }}
                                         </div>
@@ -3210,49 +3518,56 @@
                                         </span>
                                     </div>
                                     
-                                    <div class="space-y-3">
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600">Code:</span>
+                                    <div class="department-info">
+                                        <div class="department-info-row">
+                                            <span class="department-info-label">Code:</span>
                                             <span class="font-mono text-sm">{{ department.code }}</span>
                                         </div>
-                                        <div v-if="department.head_of_department_id" class="flex justify-between items-center">
-                                            <span class="text-sm text-gray-600">Head of Department:</span>
+                                        <div v-if="department.head_of_department_id" class="department-info-row">
+                                            <span class="department-info-label">Head of Department:</span>
                                             <span class="text-sm">{{ getStaffName(department.head_of_department_id) }}</span>
                                         </div>
-                                        <div class="mt-2">
-                                            <div class="text-xs text-gray-600 mb-1">Clinical Units:</div>
-                                            <div class="flex flex-wrap gap-1">
-                                                <span v-for="unit in getDepartmentUnits(department.id)" :key="unit.id" 
-                                                      class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-                                                    {{ unit.name }}
-                                                </span>
-                                                <span v-if="getDepartmentUnits(department.id).length === 0" 
-                                                      class="text-gray-500 text-xs">No units</span>
-                                            </div>
-                                        </div>
-                                        <div class="mt-2">
-                                            <div class="text-xs text-gray-600 mb-1">Staff Count:</div>
-                                            <div class="text-sm">{{ getDepartmentStaffCount(department.id) }} staff members</div>
+                                        <div class="department-info-row">
+                                            <span class="department-info-label">Staff Count:</span>
+                                            <span class="text-sm font-semibold">{{ getDepartmentStaffCount(department.id) }} staff members</span>
                                         </div>
                                     </div>
                                     
-                                    <div class="mt-4 flex gap-2">
-                                        <button class="btn btn-sm btn-outline flex-1" @click="editDepartment(department)" 
+                                    <div class="department-units">
+                                        <div class="department-units-label">Clinical Units:</div>
+                                        <div class="department-units-tags">
+                                            <span v-for="unit in getDepartmentUnits(department.id).slice(0, 4)" :key="unit.id" 
+                                                  class="department-unit-tag">
+                                                {{ unit.name }}
+                                            </span>
+                                            <span v-if="getDepartmentUnits(department.id).length > 4" 
+                                                  class="department-unit-tag">
+                                                +{{ getDepartmentUnits(department.id).length - 4 }} more
+                                            </span>
+                                            <span v-if="getDepartmentUnits(department.id).length === 0" 
+                                                  class="department-unit-tag text-gray-500">
+                                                No units
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="department-actions">
+                                        <button class="btn btn-outline department-action-btn" @click="editDepartment(department)" 
                                                 v-if="hasPermission('system', 'manage_departments')"
                                                 aria-label="Edit department">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
-                                        <button class="btn btn-sm btn-primary flex-1" @click="viewDepartmentStaff(department)"
+                                        <button class="btn btn-primary department-action-btn" @click="viewDepartmentStaff(department)"
                                                 aria-label="View department staff">
                                             <i class="fas fa-users"></i> Staff
                                         </button>
                                     </div>
                                 </div>
                                 
-                                <div v-if="departments.length === 0" class="col-span-full text-center py-12 text-gray-500">
-                                    <i class="fas fa-sitemap text-3xl mb-3"></i>
-                                    <p class="text-lg">No departments found</p>
-                                    <p class="text-sm mt-1">Add a department to get started</p>
+                                <div v-if="departments.length === 0" class="col-span-full empty-state">
+                                    <i class="fas fa-sitemap empty-state-icon"></i>
+                                    <div class="empty-state-title">No departments found</div>
+                                    <div class="empty-state-description">Add a department to begin</div>
                                 </div>
                             </div>
                         </div>
@@ -3306,10 +3621,10 @@
                                     </div>
                                 </div>
                                 
-                                <div v-if="recentAnnouncements.length === 0" class="text-center py-12 text-gray-500">
-                                    <i class="fas fa-bullhorn text-3xl mb-3"></i>
-                                    <p class="text-lg">No communications found</p>
-                                    <p class="text-sm mt-1">Post an announcement to get started</p>
+                                <div v-if="recentAnnouncements.length === 0" class="empty-state">
+                                    <i class="fas fa-bullhorn empty-state-icon"></i>
+                                    <div class="empty-state-title">No communications found</div>
+                                    <div class="empty-state-description">Post an announcement to begin</div>
                                 </div>
                             </div>
                         </div>
@@ -3320,7 +3635,7 @@
 
             <!-- ============ MODALS ============ -->
             
-            <!-- MODAL 1: Dynamic Staff Profile (NO PHONE NUMBERS) -->
+            <!-- MODAL 1: Dynamic Staff Profile -->
             <div v-if="staffProfileModal.show" class="modal-overlay">
                 <div class="modal-container modal-wide">
                     <div class="modal-header">
@@ -3570,7 +3885,7 @@
                 </div>
             </div>
 
-            <!-- MODAL 2: Add/Edit Medical Staff (NO PHONE FIELD) -->
+            <!-- MODAL 2: Add/Edit Medical Staff -->
             <div v-if="medicalStaffModal.show" class="modal-overlay">
                 <div class="modal-container">
                     <div class="modal-header">
@@ -3723,7 +4038,7 @@
                                 <i class="fas fa-bullhorn"></i> Announcement
                             </button>
                             <button class="modal-tab" :class="{ active: communicationsModal.activeTab === 'stats_update' }" 
-                                    @click="communicationsModal.activeTab = 'stats_update'" v-if="hasPermission('system', 'manage_updates')">
+                                    @click="communicationsModal.activeTab = 'stats_update'" v-if="hasPermission('communications', 'create')">
                                 <i class="fas fa-chart-line"></i> Live Stats Update
                             </button>
                         </div>
@@ -3799,9 +4114,9 @@
                                         <label class="form-label">Key Highlights</label>
                                         <div class="space-y-2">
                                             <input type="text" class="form-control" v-model="communicationsModal.form.highlight1" 
-                                                   placeholder="Highlight 1 (e.g., ER: 3 critical cases)" aria-label="Highlight 1">
+                                                   placeholder="Highlight 1" aria-label="Highlight 1">
                                             <input type="text" class="form-control" v-model="communicationsModal.form.highlight2" 
-                                                   placeholder="Highlight 2 (e.g., ICU: 90% capacity)" aria-label="Highlight 2">
+                                                   placeholder="Highlight 2" aria-label="Highlight 2">
                                         </div>
                                     </div>
                                     
@@ -3835,9 +4150,9 @@
                                         <div class="metric-inputs-grid">
                                             <div class="space-y-2">
                                                 <input type="text" class="form-control" v-model="communicationsModal.form.metricName" 
-                                                       placeholder="Metric name (e.g., ER Wait Time)" aria-label="Metric name">
+                                                       placeholder="Metric name" aria-label="Metric name">
                                                 <input type="text" class="form-control" v-model="communicationsModal.form.metricValue" 
-                                                       placeholder="Current value (e.g., 15 mins)" aria-label="Metric value">
+                                                       placeholder="Current value" aria-label="Metric value">
                                             </div>
                                             <div class="space-y-2">
                                                 <select class="form-select" v-model="communicationsModal.form.metricTrend" aria-label="Metric trend">
@@ -3846,7 +4161,7 @@
                                                     <option value="stable">Stable →</option>
                                                 </select>
                                                 <input type="text" class="form-control" v-model="communicationsModal.form.metricChange" 
-                                                       placeholder="Change amount (e.g., +5%)" aria-label="Change amount">
+                                                       placeholder="Change amount" aria-label="Change amount">
                                             </div>
                                         </div>
                                     </div>
@@ -4040,16 +4355,16 @@
                                     </option>
                                 </select>
                             </div>
-                           <div class="form-group">
-    <label class="form-label">Start Date *</label>
-    <input type="date" class="form-control" v-model="rotationModal.form.start_date" 
-           required aria-required="true" aria-label="Start Date">
-</div>
-<div class="form-group">
-    <label class="form-label">End Date *</label>
-    <input type="date" class="form-control" v-model="rotationModal.form.end_date" 
-           required aria-required="true" aria-label="End Date">
-</div>
+                            <div class="form-group">
+                                <label class="form-label">Start Date *</label>
+                                <input type="date" class="form-control" v-model="rotationModal.form.start_date" 
+                                       required aria-required="true" aria-label="Start Date">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">End Date *</label>
+                                <input type="date" class="form-control" v-model="rotationModal.form.end_date" 
+                                       required aria-required="true" aria-label="End Date">
+                            </div>
                             <div class="form-group">
                                 <label class="form-label">Supervising Attending</label>
                                 <select class="form-select" v-model="rotationModal.form.supervising_attending_id" 
