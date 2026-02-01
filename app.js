@@ -263,9 +263,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // ===== LIVE STATUS ENDPOINTS (FIXED FOR COMPATIBILITY) =====
-            async getClinicalStatus() { // API-37: GET /api/live-status/current (COMPATIBLE)
-                try { const data = await this.request('/api/live-status/current'); return data?.data || null; } catch { return null; }
-            }
+            async createClinicalStatus(statusData) { // API-38: POST /api/live-status (COMPATIBLE)
+    try {
+        return await this.request('/api/live-status', { 
+            method: 'POST', 
+            body: statusData 
+        });
+    } catch (error) {
+        console.error('Failed to create clinical status:', error);
+        throw new Error(`Cannot update live status: ${error.message}`);
+    }
+}
             
             async createClinicalStatus(statusData) { // API-38: POST /api/live-status (COMPATIBLE)
                 return await this.request('/api/live-status', { method: 'POST', body: statusData });
