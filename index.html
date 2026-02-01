@@ -2192,9 +2192,9 @@
                 
                 <div class="sidebar-footer">
                     <div class="sidebar-user">
-                        <div class="user-avatar" aria-hidden="true">{{ getInitials(currentUser.full_name) }}</div>
+                        <div class="user-avatar" aria-hidden="true">{{ currentUser?.full_name || '' }}</div>
                         <div class="user-info" v-if="!sidebarCollapsed">
-                            <div class="user-name">{{ currentUser.full_name }}</div>
+                            <div class="user-name">{{ currentUser?.full_name || '' }}</div>
                             <div class="user-role">{{ getUserRoleDisplay(currentUser.user_role) }}</div>
                         </div>
                     </div>
@@ -2448,9 +2448,9 @@
                             <div class="relative">
                                 <button class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 transition" 
                                         @click="userMenuOpen = !userMenuOpen" 
-                                        :aria-label="`${currentUser.full_name} profile menu`"
+                                        :aria-label="`${{ currentUser?.full_name || '' }} profile menu`"
                                         :aria-expanded="userMenuOpen">
-                                    <div class="user-avatar">{{ getInitials(currentUser.full_name) }}</div>
+                                    <div class="user-avatar">{{ currentUser?.full_name || '' }}</div>
                                     <i class="fas fa-chevron-down text-xs"></i>
                                 </button>
                                 
