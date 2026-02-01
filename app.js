@@ -473,6 +473,12 @@ const API = new ApiService();
                 const userMenuOpen = ref(false);
                 const statsSidebarOpen = ref(false);
                 const globalSearchQuery = ref('');
+                const showCreateStatusModal = () => {
+  liveStatsEditMode.value = true;
+  newStatusText.value = '';
+  selectedAuthorId.value = '';
+  expiryHours.value = 8;
+};
                 
                 // 6.3 Loading States
                 const loading = ref(false);
@@ -554,6 +560,16 @@ const API = new ApiService();
                     reason: '',
                     startDate: ''
                 });
+                const isStatusExpired = (expiresAt) => {
+  if (!expiresAt) return true;
+  try {
+    const expires = new Date(expiresAt);
+    const now = new Date();
+    return now > expires;
+  } catch {
+    return true;
+  }
+};
                 
                 // 6.9 Modal States
                 const staffProfileModal = reactive({
@@ -799,43 +815,42 @@ const API = new ApiService();
                     }
                 };
                 
-                const saveClinicalStatus = async () => {
-                    if (!newStatusText.value.trim() || !selectedAuthorId.value) {
-                        showToast('Error', 'Validation failed', 'Please fill all required fields');
-                        return;
-                    }
-                    
-                    isLoadingStatus.value = true;
-                    try {
-                        const response = await API.createClinicalStatus({
-                            status_text: newStatusText.value.trim(),
-                            author_id: selectedAuthorId.value,
-                            expires_in_hours: expiryHours.value
-                        });
-                        
-                        if (response && response.data) {
-                            // Update local state
-                            clinicalStatus.value = response.data;
-                            newStatusText.value = '';
-                            selectedAuthorId.value = '';
-                            liveStatsEditMode.value = false;
-                            
-                            // Show success
-                            showToast('Success', 'Status Updated', 'Live status has been updated for all staff');
-                            
-                            // Refresh system stats if needed
-                            if (loadSystemStats) {
-                                await loadSystemStats();
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Failed to save clinical status:', error);
-                        showToast('Error', 'Save Failed', 'Could not update status. Please try again.');
-                    } finally {
-                        isLoadingStatus.value = false;
-                    }
-                };
-                
+            const saveClinicalStatus = async () => {
+  if (!newStatusText.value.trim() || !selectedAuthorId.value) {
+    showToast('Error', 'Validation failed', 'Please fill all required fields');
+    return;
+  }
+  
+  isLoadingStatus.value = true;
+  try {
+    const response = await API.createClinicalStatus({
+      status_text: newStatusText.value.trim(),
+      author_id: selectedAuthorId.value,
+      expires_in_hours: expiryHours.value
+    });
+    
+    if (response && response.success && response.data) {
+      // Update local state
+      clinicalStatus.value = response.data;
+      newStatusText.value = '';
+      selectedAuthorId.value = '';
+      liveStatsEditMode.value = false;
+      
+      // Show success
+      showToast('Success', 'Status Updated', 'Live status has been updated for all staff');
+      
+      // Refresh system stats if needed
+      await loadSystemStats();
+    } else {
+      throw new Error(response?.error || 'Failed to save status');
+    }
+  } catch (error) {
+    console.error('Failed to save clinical status:', error);
+    showToast('Error', 'Save Failed', error.message || 'Could not update status. Please try again.');
+  } finally {
+    isLoadingStatus.value = false;
+  }
+};
                 const formatDateForBackend = (dateString) => {
                     if (!dateString) return '';
                     
@@ -867,6 +882,9 @@ const API = new ApiService();
                 const authToken = computed(() => {
                     return localStorage.getItem(CONFIG.TOKEN_KEY);
                 });
+                const unreadAnnouncements = computed(() => {
+  return announcements.value.filter(a => !a.read).length;
+});
                 
                 const unreadLiveUpdates = computed(() => {
                     if (!clinicalStatus.value) return 0;
