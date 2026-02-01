@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('✅ Vue.js loaded successfully:', Vue.version);
         
-        const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
+        const { createApp, ref, reactive, computed, onMounted, watch, onUnmounted } = Vue;
         
         // ============ 2. CONFIGURATION ============
         const CONFIG = {
@@ -115,329 +115,342 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // ============ 4. COMPLETE API SERVICE ============
-        class ApiService {
-            constructor() {
-                this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
+       // ============ 4. COMPLETE API SERVICE ============
+class ApiService {
+    constructor() {
+        this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
+    }
+    
+    getHeaders() {
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        };
+        
+        const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+        if (token && token.trim()) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        return headers;
+    }
+    
+    async request(endpoint, options = {}) {
+        const url = `${CONFIG.API_BASE_URL}${endpoint}`;
+        
+        try {
+            const config = {
+                method: options.method || 'GET',
+                headers: this.getHeaders(),
+                mode: 'cors',
+                cache: 'no-cache'
+            };
+            
+            if (options.body && typeof options.body === 'object') {
+                config.body = JSON.stringify(options.body);
             }
             
-            getHeaders() {
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                };
-                
-                const token = localStorage.getItem(CONFIG.TOKEN_KEY);
-                if (token && token.trim()) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-                
-                return headers;
-            }
+            const response = await fetch(url, config);
             
-            async request(endpoint, options = {}) {
-                const url = `${CONFIG.API_BASE_URL}${endpoint}`;
-                
-                try {
-                    const config = {
-                        method: options.method || 'GET',
-                        headers: this.getHeaders(),
-                        mode: 'cors',
-                        cache: 'no-cache'
-                    };
-                    
-                    if (options.body && typeof options.body === 'object') {
-                        config.body = JSON.stringify(options.body);
-                    }
-                    
-                    const response = await fetch(url, config);
-                    
-                    if (response.status === 204) return null;
-                    
-                    if (!response.ok) {
-                        if (response.status === 401) {
-                            this.token = null;
-                            localStorage.removeItem(CONFIG.TOKEN_KEY);
-                            localStorage.removeItem(CONFIG.USER_KEY);
-                            throw new Error('Session expired. Please login again.');
-                        }
-                        
-                        let errorText;
-                        try {
-                            errorText = await response.text();
-                        } catch {
-                            errorText = `HTTP ${response.status}: ${response.statusText}`;
-                        }
-                        
-                        throw new Error(errorText);
-                    }
-                    
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        return await response.json();
-                    }
-                    
-                    return await response.text();
-                    
-                } catch (error) {
-                    if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error);
-                    throw error;
-                }
-            }
+            if (response.status === 204) return null;
             
-            // ===== AUTHENTICATION ENDPOINTS =====
-            async login(email, password) {
-                try {
-                    const data = await this.request('/api/auth/login', {
-                        method: 'POST',
-                        body: { email, password }
-                    });
-                    
-                    if (data.token) {
-                        this.token = data.token;
-                        localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
-                        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
-                    }
-                    
-                    return data;
-                } catch (error) {
-                    throw new Error('Login failed: ' + error.message);
-                }
-            }
-            
-            async logout() {
-                try {
-                    await this.request('/api/auth/logout', { method: 'POST' });
-                } finally {
+            if (!response.ok) {
+                if (response.status === 401) {
                     this.token = null;
                     localStorage.removeItem(CONFIG.TOKEN_KEY);
                     localStorage.removeItem(CONFIG.USER_KEY);
+                    throw new Error('Session expired. Please login again.');
                 }
-            }
-            
-            // ===== MEDICAL STAFF ENDPOINTS =====
-            async getMedicalStaff() {
+                
+                let errorText;
                 try {
-                    const data = await this.request('/api/medical-staff');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createMedicalStaff(staffData) {
-                return await this.request('/api/medical-staff', {
-                    method: 'POST',
-                    body: staffData
-                });
-            }
-            
-            async updateMedicalStaff(id, staffData) {
-                return await this.request(`/api/medical-staff/${id}`, {
-                    method: 'PUT',
-                    body: staffData
-                });
-            }
-            
-            async deleteMedicalStaff(id) {
-                return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== DEPARTMENT ENDPOINTS =====
-            async getDepartments() {
-                try {
-                    const data = await this.request('/api/departments');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createDepartment(departmentData) {
-                return await this.request('/api/departments', {
-                    method: 'POST',
-                    body: departmentData
-                });
-            }
-            
-            async updateDepartment(id, departmentData) {
-                return await this.request(`/api/departments/${id}`, {
-                    method: 'PUT',
-                    body: departmentData
-                });
-            }
-            
-            // ===== TRAINING UNIT ENDPOINTS =====
-            async getTrainingUnits() {
-                try {
-                    const data = await this.request('/api/training-units');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createTrainingUnit(unitData) {
-                return await this.request('/api/training-units', {
-                    method: 'POST',
-                    body: unitData
-                });
-            }
-            
-            async updateTrainingUnit(id, unitData) {
-                return await this.request(`/api/training-units/${id}`, {
-                    method: 'PUT',
-                    body: unitData
-                });
-            }
-            
-            // ===== ROTATION ENDPOINTS =====
-            async getRotations() {
-                try {
-                    const data = await this.request('/api/rotations');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createRotation(rotationData) {
-                return await this.request('/api/rotations', {
-                    method: 'POST',
-                    body: rotationData
-                });
-            }
-            
-            async updateRotation(id, rotationData) {
-                return await this.request(`/api/rotations/${id}`, {
-                    method: 'PUT',
-                    body: rotationData
-                });
-            }
-            
-            async deleteRotation(id) {
-                return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ON-CALL ENDPOINTS =====
-            async getOnCallSchedule() {
-                try {
-                    const data = await this.request('/api/oncall');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async getOnCallToday() {
-                try {
-                    const data = await this.request('/api/oncall/today');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createOnCall(scheduleData) {
-                return await this.request('/api/oncall', {
-                    method: 'POST',
-                    body: scheduleData
-                });
-            }
-            
-            async updateOnCall(id, scheduleData) {
-                return await this.request(`/api/oncall/${id}`, {
-                    method: 'PUT',
-                    body: scheduleData
-                });
-            }
-            
-            async deleteOnCall(id) {
-                return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ABSENCE ENDPOINTS =====
-            async getAbsences() {
-                try {
-                    const data = await this.request('/api/absences');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createAbsence(absenceData) {
-                return await this.request('/api/absences', {
-                    method: 'POST',
-                    body: absenceData
-                });
-            }
-            
-            async updateAbsence(id, absenceData) {
-                return await this.request(`/api/absences/${id}`, {
-                    method: 'PUT',
-                    body: absenceData
-                });
-            }
-            
-            async deleteAbsence(id) {
-                return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ANNOUNCEMENT ENDPOINTS =====
-            async getAnnouncements() {
-                try {
-                    const data = await this.request('/api/announcements');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createAnnouncement(announcementData) {
-                return await this.request('/api/announcements', {
-                    method: 'POST',
-                    body: announcementData
-                });
-            }
-            
-            async updateAnnouncement(id, announcementData) {
-                return await this.request(`/api/announcements/${id}`, {
-                    method: 'PUT',
-                    body: announcementData
-                });
-            }
-            
-            async deleteAnnouncement(id) {
-                return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== LIVE UPDATE ENDPOINTS =====
-            async getLiveUpdates() {
-                try {
-                    const data = await this.request('/api/live-updates');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createLiveUpdate(updateData) {
-                return await this.request('/api/live-updates', {
-                    method: 'POST',
-                    body: updateData
-                });
-            }
-            
-            async updateLiveUpdate(id, updateData) {
-                return await this.request(`/api/live-updates/${id}`, {
-                    method: 'PUT',
-                    body: updateData
-                });
-            }
-            
-            // ===== SYSTEM STATS ENDPOINT =====
-            async getSystemStats() {
-                try {
-                    const data = await this.request('/api/system-stats');
-                    return data || {};
+                    errorText = await response.text();
                 } catch {
-                    return {
-                        activeAttending: 0,
-                        activeResidents: 0,
-                        onCallNow: 0,
-                        inSurgery: 0,
-                        nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-                        pendingApprovals: 0
-                    };
+                    errorText = `HTTP ${response.status}: ${response.statusText}`;
                 }
+                
+                throw new Error(errorText);
             }
+            
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            }
+            
+            return await response.text();
+            
+        } catch (error) {
+            if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error);
+            throw error;
         }
-        
-        // Initialize API Service
-        const API = new ApiService();
+    }
+    
+    // ===== AUTHENTICATION ENDPOINTS =====
+    async login(email, password) {
+        try {
+            const data = await this.request('/api/auth/login', {
+                method: 'POST',
+                body: { email, password }
+            });
+            
+            if (data.token) {
+                this.token = data.token;
+                localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
+                localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
+            }
+            
+            return data;
+        } catch (error) {
+            throw new Error('Login failed: ' + error.message);
+        }
+    }
+    
+    async logout() {
+        try {
+            await this.request('/api/auth/logout', { method: 'POST' });
+        } finally {
+            this.token = null;
+            localStorage.removeItem(CONFIG.TOKEN_KEY);
+            localStorage.removeItem(CONFIG.USER_KEY);
+        }
+    }
+    
+    // ===== MEDICAL STAFF ENDPOINTS =====
+    async getMedicalStaff() {
+        try {
+            const data = await this.request('/api/medical-staff');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createMedicalStaff(staffData) {
+        return await this.request('/api/medical-staff', {
+            method: 'POST',
+            body: staffData
+        });
+    }
+    
+    async updateMedicalStaff(id, staffData) {
+        return await this.request(`/api/medical-staff/${id}`, {
+            method: 'PUT',
+            body: staffData
+        });
+    }
+    
+    async deleteMedicalStaff(id) {
+        return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== DEPARTMENT ENDPOINTS =====
+    async getDepartments() {
+        try {
+            const data = await this.request('/api/departments');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createDepartment(departmentData) {
+        return await this.request('/api/departments', {
+            method: 'POST',
+            body: departmentData
+        });
+    }
+    
+    async updateDepartment(id, departmentData) {
+        return await this.request(`/api/departments/${id}`, {
+            method: 'PUT',
+            body: departmentData
+        });
+    }
+    
+    // ===== TRAINING UNIT ENDPOINTS =====
+    async getTrainingUnits() {
+        try {
+            const data = await this.request('/api/training-units');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createTrainingUnit(unitData) {
+        return await this.request('/api/training-units', {
+            method: 'POST',
+            body: unitData
+        });
+    }
+    
+    async updateTrainingUnit(id, unitData) {
+        return await this.request(`/api/training-units/${id}`, {
+            method: 'PUT',
+            body: unitData
+        });
+    }
+    
+    // ===== ROTATION ENDPOINTS =====
+    async getRotations() {
+        try {
+            const data = await this.request('/api/rotations');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createRotation(rotationData) {
+        return await this.request('/api/rotations', {
+            method: 'POST',
+            body: rotationData
+        });
+    }
+    
+    async updateRotation(id, rotationData) {
+        return await this.request(`/api/rotations/${id}`, {
+            method: 'PUT',
+            body: rotationData
+        });
+    }
+    
+    async deleteRotation(id) {
+        return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== ON-CALL ENDPOINTS =====
+    async getOnCallSchedule() {
+        try {
+            const data = await this.request('/api/oncall');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async getOnCallToday() {
+        try {
+            const data = await this.request('/api/oncall/today');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createOnCall(scheduleData) {
+        return await this.request('/api/oncall', {
+            method: 'POST',
+            body: scheduleData
+        });
+    }
+    
+    async updateOnCall(id, scheduleData) {
+        return await this.request(`/api/oncall/${id}`, {
+            method: 'PUT',
+            body: scheduleData
+        });
+    }
+    
+    async deleteOnCall(id) {
+        return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== ABSENCE ENDPOINTS =====
+    async getAbsences() {
+        try {
+            const data = await this.request('/api/absences');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createAbsence(absenceData) {
+        return await this.request('/api/absences', {
+            method: 'POST',
+            body: absenceData
+        });
+    }
+    
+    async updateAbsence(id, absenceData) {
+        return await this.request(`/api/absences/${id}`, {
+            method: 'PUT',
+            body: absenceData
+        });
+    }
+    
+    async deleteAbsence(id) {
+        return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== ANNOUNCEMENT ENDPOINTS =====
+    async getAnnouncements() {
+        try {
+            const data = await this.request('/api/announcements');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createAnnouncement(announcementData) {
+        return await this.request('/api/announcements', {
+            method: 'POST',
+            body: announcementData
+        });
+    }
+    
+    async updateAnnouncement(id, announcementData) {
+        return await this.request(`/api/announcements/${id}`, {
+            method: 'PUT',
+            body: announcementData
+        });
+    }
+    
+    async deleteAnnouncement(id) {
+        return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== NEW LIVE STATUS ENDPOINTS =====
+    async getClinicalStatus() {
+        try {
+            console.log('🌐 Calling API: /api/live-status/current');
+            const data = await this.request('/api/live-status/current');
+            console.log('📡 API response data:', data);
+            return data;
+        } catch (error) {
+            console.error('❌ Clinical status API error:', error);
+            return {
+                success: false,
+                data: null,
+                error: error.message
+            };
+        }
+    }
+    
+    async createClinicalStatus(statusData) {
+        return await this.request('/api/live-status', {
+            method: 'POST',
+            body: statusData
+        });
+    }
+    
+    async updateClinicalStatus(id, statusData) {
+        return await this.request(`/api/live-status/${id}`, {
+            method: 'PUT',
+            body: statusData
+        });
+    }
+    
+    async deleteClinicalStatus(id) {
+        return await this.request(`/api/live-status/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== SYSTEM STATS ENDPOINT =====
+    async getSystemStats() {
+        try {
+            const data = await this.request('/api/system-stats');
+            return data || {};
+        } catch {
+            return {
+                activeAttending: 0,
+                activeResidents: 0,
+                onCallNow: 0,
+                inSurgery: 0,
+                nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+                pendingApprovals: 0
+            };
+        }
+    }
+}
+
+// Initialize API Service
+const API = new ApiService();
         
         // ============ 5. CREATE VUE APP ============
         const app = createApp({
@@ -460,11 +473,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 const userMenuOpen = ref(false);
                 const statsSidebarOpen = ref(false);
                 const globalSearchQuery = ref('');
+                const showCreateStatusModal = () => {
+  liveStatsEditMode.value = true;
+  newStatusText.value = '';
+  selectedAuthorId.value = '';
+  expiryHours.value = 8;
+};
                 
                 // 6.3 Loading States
                 const loading = ref(false);
                 const saving = ref(false);
                 const loadingSchedule = ref(false);
+                const isLoadingStatus = ref(false);
                 
                 // 6.4 Data Stores
                 const medicalStaff = ref([]);
@@ -474,9 +494,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 const absences = ref([]);
                 const onCallSchedule = ref([]);
                 const announcements = ref([]);
-                const liveUpdates = ref([]);
                 
-                // 6.5 Dashboard Data
+                // 6.5 NEW LIVE STATUS DATA - Replace liveStatsData
+                const clinicalStatus = ref(null);
+                const newStatusText = ref('');
+                const selectedAuthorId = ref('');
+                const expiryHours = ref(8);
+                const activeMedicalStaff = ref([]);
+                const liveStatsEditMode = ref(false);
+                
+                // Auto-refresh interval reference
+                const statusRefreshInterval = ref(null);
+                
+                // 6.6 Dashboard Data
                 const systemStats = ref({
                     totalStaff: 0,
                     activeAttending: 0,
@@ -497,34 +527,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const todaysOnCall = ref([]);
                 const todaysOnCallCount = computed(() => todaysOnCall.value.length);
-                
-                // 6.6 Live Stats Data
-                const liveStatsEditMode = ref(false);
-                const liveStatsData = reactive({
-                    dailyUpdate: 'ER: 3 critical cases, ICU: 90% capacity, Ward A full',
-                    metric1: { label: 'ER Wait Time', value: '15 mins' },
-                    metric2: { label: 'ICU Bed Availability', value: '2 beds' },
-                    alerts: {
-                        erBusy: false,
-                        icuFull: false,
-                        wardFull: false,
-                        staffShortage: false
-                    },
-                    lastUpdated: new Date().toISOString(),
-                    updatedBy: ''
-                });
-                
-                const unreadLiveUpdates = computed(() => {
-                    const lastRead = localStorage.getItem('last_live_update_read') || '1970-01-01T00:00:00.000Z';
-                    return liveUpdates.value.filter(update => new Date(update.created_at) > new Date(lastRead)).length;
-                });
-                
-                const unreadAnnouncements = computed(() => {
-                    const lastRead = localStorage.getItem('last_announcement_read') || '1970-01-01T00:00:00.000Z';
-                    return announcements.value.filter(announcement => 
-                        new Date(announcement.created_at) > new Date(lastRead)
-                    ).length;
-                });
                 
                 // 6.7 UI Components
                 const toasts = ref([]);
@@ -558,6 +560,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     reason: '',
                     startDate: ''
                 });
+                const isStatusExpired = (expiresAt) => {
+  if (!expiresAt) return true;
+  try {
+    const expires = new Date(expiresAt);
+    const now = new Date();
+    return now > expires;
+  } catch {
+    return true;
+  }
+};
                 
                 // 6.9 Modal States
                 const staffProfileModal = reactive({
@@ -751,6 +763,94 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
+                // ============ 7. NEW LIVE STATUS METHODS ============
+                const loadClinicalStatus = async () => {
+  isLoadingStatus.value = true;
+  try {
+    console.log('🔍 Loading clinical status from API...');
+    const response = await API.getClinicalStatus();
+    
+    console.log('📦 API response:', response);
+    
+    if (response && response.success) {
+      if (response.data) {
+        clinicalStatus.value = response.data;
+        console.log('✅ Clinical status loaded:', clinicalStatus.value);
+      } else {
+        clinicalStatus.value = null;
+        console.log('ℹ️ No clinical status available (empty data)');
+      }
+    } else {
+      clinicalStatus.value = null;
+      console.log('ℹ️ API returned no success');
+    }
+  } catch (error) {
+    console.error('❌ Failed to load clinical status:', error);
+    clinicalStatus.value = null;
+    showToast('Error', 'Failed to load live status', 'Please try refreshing the page');
+  } finally {
+    isLoadingStatus.value = false;
+  }
+};
+                
+                const loadActiveMedicalStaff = async () => {
+                    try {
+                        const data = await API.getMedicalStaff();
+                        activeMedicalStaff.value = data.filter(staff => 
+                            staff.employment_status === 'active'
+                        );
+                        
+                        // Auto-select current user if they're medical staff
+                        if (currentUser.value) {
+                            const currentUserStaff = activeMedicalStaff.value.find(
+                                staff => staff.professional_email === currentUser.value.email
+                            );
+                            if (currentUserStaff) {
+                                selectedAuthorId.value = currentUserStaff.id;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Failed to load active medical staff:', error);
+                        activeMedicalStaff.value = [];
+                    }
+                };
+                
+            const saveClinicalStatus = async () => {
+  if (!newStatusText.value.trim() || !selectedAuthorId.value) {
+    showToast('Error', 'Validation failed', 'Please fill all required fields');
+    return;
+  }
+  
+  isLoadingStatus.value = true;
+  try {
+    const response = await API.createClinicalStatus({
+      status_text: newStatusText.value.trim(),
+      author_id: selectedAuthorId.value,
+      expires_in_hours: expiryHours.value
+    });
+    
+    if (response && response.success && response.data) {
+      // Update local state
+      clinicalStatus.value = response.data;
+      newStatusText.value = '';
+      selectedAuthorId.value = '';
+      liveStatsEditMode.value = false;
+      
+      // Show success
+      showToast('Success', 'Status Updated', 'Live status has been updated for all staff');
+      
+      // Refresh system stats if needed
+      await loadSystemStats();
+    } else {
+      throw new Error(response?.error || 'Failed to save status');
+    }
+  } catch (error) {
+    console.error('Failed to save clinical status:', error);
+    showToast('Error', 'Save Failed', error.message || 'Could not update status. Please try again.');
+  } finally {
+    isLoadingStatus.value = false;
+  }
+};
                 const formatDateForBackend = (dateString) => {
                     if (!dateString) return '';
                     
@@ -777,7 +877,167 @@ document.addEventListener('DOMContentLoaded', function() {
                     return dateString;
                 };
                 
-                // ============ 7. NEUMAC ENHANCEMENT FUNCTIONS ============
+                // ============ 8. COMPUTED PROPERTIES ============
+                
+                const authToken = computed(() => {
+                    return localStorage.getItem(CONFIG.TOKEN_KEY);
+                });
+                const unreadAnnouncements = computed(() => {
+  return announcements.value.filter(a => !a.read).length;
+});
+                
+                const unreadLiveUpdates = computed(() => {
+                    if (!clinicalStatus.value) return 0;
+                    const lastSeen = localStorage.getItem('lastSeenStatusId');
+                    return lastSeen !== clinicalStatus.value.id ? 1 : 0;
+                });
+                
+                const formattedExpiry = computed(() => {
+                    if (!clinicalStatus.value || !clinicalStatus.value.expires_at) return '';
+                    const expires = new Date(clinicalStatus.value.expires_at);
+                    const now = new Date();
+                    const diffHours = Math.ceil((expires - now) / (1000 * 60 * 60));
+                    
+                    if (diffHours <= 1) return 'Expires soon';
+                    if (diffHours <= 4) return `Expires in ${diffHours}h`;
+                    return `Expires ${EnhancedUtils.formatTime(clinicalStatus.value.expires_at)}`;
+                });
+                
+                const availablePhysicians = computed(() => {
+                    return medicalStaff.value.filter(staff => 
+                        (staff.staff_type === 'attending_physician' || 
+                         staff.staff_type === 'fellow' || 
+                         staff.staff_type === 'nurse_practitioner') && 
+                        staff.employment_status === 'active'
+                    );
+                });
+                
+                const availableResidents = computed(() => {
+                    return medicalStaff.value.filter(staff => 
+                        staff.staff_type === 'medical_resident' && 
+                        staff.employment_status === 'active'
+                    );
+                });
+                
+                const availableAttendings = computed(() => {
+                    return medicalStaff.value.filter(staff => 
+                        staff.staff_type === 'attending_physician' && 
+                        staff.employment_status === 'active'
+                    );
+                });
+                
+                const availableHeadsOfDepartment = computed(() => {
+                    return availableAttendings.value;
+                });
+                
+                const availableReplacementStaff = computed(() => {
+                    return medicalStaff.value.filter(staff => 
+                        staff.employment_status === 'active' && 
+                        staff.staff_type === 'medical_resident'
+                    );
+                });
+                
+                const filteredMedicalStaff = computed(() => {
+                    let filtered = medicalStaff.value;
+                    
+                    if (staffFilters.search) {
+                        const search = staffFilters.search.toLowerCase();
+                        filtered = filtered.filter(staff =>
+                            staff.full_name?.toLowerCase().includes(search) ||
+                            staff.staff_id?.toLowerCase().includes(search) ||
+                            staff.professional_email?.toLowerCase().includes(search)
+                        );
+                    }
+                    
+                    if (staffFilters.staffType) {
+                        filtered = filtered.filter(staff => staff.staff_type === staffFilters.staffType);
+                    }
+                    
+                    if (staffFilters.department) {
+                        filtered = filtered.filter(staff => staff.department_id === staffFilters.department);
+                    }
+                    
+                    if (staffFilters.status) {
+                        filtered = filtered.filter(staff => staff.employment_status === staffFilters.status);
+                    }
+                    
+                    return filtered;
+                });
+                
+                const filteredOnCallSchedules = computed(() => {
+                    let filtered = onCallSchedule.value;
+                    
+                    if (onCallFilters.date) {
+                        filtered = filtered.filter(schedule => schedule.duty_date === onCallFilters.date);
+                    }
+                    
+                    if (onCallFilters.shiftType) {
+                        filtered = filtered.filter(schedule => schedule.shift_type === onCallFilters.shiftType);
+                    }
+                    
+                    if (onCallFilters.physician) {
+                        filtered = filtered.filter(schedule =>
+                            schedule.primary_physician_id === onCallFilters.physician ||
+                            schedule.backup_physician_id === onCallFilters.physician
+                        );
+                    }
+                    
+                    if (onCallFilters.coverageArea) {
+                        filtered = filtered.filter(schedule => schedule.coverage_area === onCallFilters.coverageArea);
+                    }
+                    
+                    return filtered;
+                });
+                
+                const filteredRotations = computed(() => {
+                    let filtered = rotations.value;
+                    
+                    if (rotationFilters.resident) {
+                        filtered = filtered.filter(rotation => rotation.resident_id === rotationFilters.resident);
+                    }
+                    
+                    if (rotationFilters.status) {
+                        filtered = filtered.filter(rotation => rotation.rotation_status === rotationFilters.status);
+                    }
+                    
+                    if (rotationFilters.trainingUnit) {
+                        filtered = filtered.filter(rotation => rotation.training_unit_id === rotationFilters.trainingUnit);
+                    }
+                    
+                    if (rotationFilters.supervisor) {
+                        filtered = filtered.filter(rotation => rotation.supervising_attending_id === rotationFilters.supervisor);
+                    }
+                    
+                    return filtered;
+                });
+                
+                const filteredAbsences = computed(() => {
+                    let filtered = absences.value;
+                    
+                    if (absenceFilters.staff) {
+                        filtered = filtered.filter(absence => absence.staff_member_id === absenceFilters.staff);
+                    }
+                    
+                    if (absenceFilters.status) {
+                        filtered = filtered.filter(absence => absence.status === absenceFilters.status);
+                    }
+                    
+                    if (absenceFilters.reason) {
+                        filtered = filtered.filter(absence => absence.absence_reason === absenceFilters.reason);
+                    }
+                    
+                    if (absenceFilters.startDate) {
+                        filtered = filtered.filter(absence => absence.start_date >= absenceFilters.startDate);
+                    }
+                    
+                    return filtered;
+                });
+                
+                const recentAnnouncements = computed(() => {
+                    return announcements.value.slice(0, 10);
+                });
+                
+                // ============ 9. NEUMAC ENHANCEMENT FUNCTIONS ============
                 
                 const getShiftStatusClass = (shift) => {
                     if (!shift || !shift.raw) return 'neumac-status-oncall';
@@ -891,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return 'fa-calendar-check';
                 };
                 
-                // ============ 8. UTILITY FUNCTIONS ============
+                // ============ 10. UTILITY FUNCTIONS ============
                 
                 const showToast = (title, message, type = 'info', duration = 5000) => {
                     const icons = {
@@ -1056,7 +1316,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return map[currentView.value] || 'Search across system...';
                 };
                 
-                // ============ 9. DATA HELPER FUNCTIONS ============
+                // ============ 11. DATA HELPER FUNCTIONS ============
                 
                 const getDepartmentName = (departmentId) => {
                     if (!departmentId) return 'Not assigned';
@@ -1107,7 +1367,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return EnhancedUtils.calculateDateDifference(startDate, endDate);
                 };
                 
-                // ============ 10. DYNAMIC PROFILE FUNCTIONS ============
+                // ============ 12. DYNAMIC PROFILE FUNCTIONS ============
                 
                 const getCurrentUnit = (staffId) => {
                     const rotation = rotations.value.find(r => 
@@ -1147,7 +1407,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return 'available';
                 };
                 
-                // RESTORED FROM ORIGINAL CODE
                 const getCurrentPatientCount = (staffId) => {
                     const staff = medicalStaff.value.find(s => s.id === staffId);
                     if (!staff) return 0;
@@ -1219,7 +1478,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return schedule ? schedule.coverage_area : 'N/A';
                 };
                 
-                // RESTORED FROM ORIGINAL CODE
                 const getRotationSupervisor = (staffId) => {
                     const rotation = rotations.value.find(r => 
                         r.resident_id === staffId && r.rotation_status === 'active'
@@ -1263,7 +1521,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return EnhancedUtils.formatRelativeTime(dateString);
                 };
                 
-                // ============ 11. PERMISSION FUNCTIONS ============
+                // ============ 13. PERMISSION FUNCTIONS ============
                 
                 const hasPermission = (module, action = 'read') => {
                     const role = currentUser.value?.user_role;
@@ -1277,37 +1535,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return permissions.includes(action) || permissions.includes('*');
                 };
                 
-                // ============ 12. LIVE STATS FUNCTIONS ============
-                
-                const saveLiveStatsUpdates = async () => {
-                    saving.value = true;
-                    try {
-                        liveStatsData.lastUpdated = new Date().toISOString();
-                        liveStatsData.updatedBy = currentUser.value?.full_name;
-                        
-                        await API.createLiveUpdate({
-                            type: 'stats_update',
-                            title: 'Live Department Update',
-                            content: liveStatsData.dailyUpdate,
-                            metrics: {
-                                metric1: liveStatsData.metric1,
-                                metric2: liveStatsData.metric2
-                            },
-                            alerts: liveStatsData.alerts,
-                            priority: 'high'
-                        });
-                        
-                        liveStatsEditMode.value = false;
-                        showToast('Success', 'Live stats updated successfully', 'success');
-                        loadLiveUpdates();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                // ============ 13. DATA LOADING FUNCTIONS ============
+                // ============ 14. DATA LOADING FUNCTIONS ============
                 
                 const loadMedicalStaff = async () => {
                     try {
@@ -1439,24 +1667,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                const loadLiveUpdates = async () => {
-                    try {
-                        const data = await API.getLiveUpdates();
-                        liveUpdates.value = data;
-                        
-                        if (data.length > 0) {
-                            const latest = data[0];
-                            if (latest.type === 'stats_update') {
-                                liveStatsData.dailyUpdate = latest.content;
-                                liveStatsData.lastUpdated = latest.created_at;
-                                liveStatsData.updatedBy = latest.author;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Failed to load live updates:', error);
-                    }
-                };
-                
                 const loadSystemStats = async () => {
                     try {
                         const data = await API.getSystemStats();
@@ -1510,9 +1720,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             loadOnCallSchedule(),
                             loadTodaysOnCall(),
                             loadAnnouncements(),
-                            loadLiveUpdates(),
+                            loadClinicalStatus(),
                             loadSystemStats()
                         ]);
+                        
+                        // Load active medical staff for dropdown
+                        await loadActiveMedicalStaff();
                         
                         updateDashboardStats();
                         showToast('Success', 'System data loaded successfully', 'success');
@@ -1524,7 +1737,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // ============ 14. AUTHENTICATION FUNCTIONS ============
+                // ============ 15. AUTHENTICATION FUNCTIONS ============
                 
                 const handleLogin = async () => {
                     if (!loginForm.email || !loginForm.password) {
@@ -1565,13 +1778,20 @@ document.addEventListener('DOMContentLoaded', function() {
                                 currentUser.value = null;
                                 currentView.value = 'login';
                                 userMenuOpen.value = false;
+                                
+                                // Clear intervals
+                                if (statusRefreshInterval.value) {
+                                    clearInterval(statusRefreshInterval.value);
+                                    statusRefreshInterval.value = null;
+                                }
+                                
                                 showToast('Info', 'Logged out successfully', 'info');
                             }
                         }
                     });
                 };
                 
-                // ============ 15. NAVIGATION & UI FUNCTIONS ============
+                // ============ 16. NAVIGATION & UI FUNCTIONS ============
                 
                 const switchView = (view) => {
                     currentView.value = view;
@@ -1593,7 +1813,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (index > -1) systemAlerts.value.splice(index, 1);
                 };
                 
-                // ============ 16. MODAL SHOW FUNCTIONS ============
+                // ============ 17. MODAL SHOW FUNCTIONS ============
                 
                 const showAddMedicalStaffModal = () => {
                     medicalStaffModal.mode = 'add';
@@ -1726,7 +1946,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     userMenuOpen.value = false;
                 };
                 
-                // ============ 17. VIEW/EDIT FUNCTIONS ============
+                // ============ 18. VIEW/EDIT FUNCTIONS ============
                 
                 const viewStaffDetails = (staff) => {
                     staffProfileModal.staff = staff;
@@ -1770,7 +1990,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     absenceModal.show = true;
                 };
                 
-                // ============ 18. SAVE FUNCTIONS ============
+                // ============ 19. SAVE FUNCTIONS ============
                 
                 const saveMedicalStaff = async () => {
                     saving.value = true;
@@ -1973,32 +2193,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             announcements.value.unshift(result);
                             showToast('Success', 'Announcement posted successfully', 'success');
                         } else {
-                            const updateData = {
-                                type: 'stats_update',
-                                title: 'Live Department Update',
-                                content: communicationsModal.form.dailySummary,
-                                metrics: {
-                                    metric1: communicationsModal.form.metricName ? {
-                                        label: communicationsModal.form.metricName,
-                                        value: communicationsModal.form.metricValue
-                                    } : null,
-                                    metric2: communicationsModal.form.metricChange ? {
-                                        label: 'Change',
-                                        value: communicationsModal.form.metricChange
-                                    } : null
-                                },
-                                alerts: communicationsModal.form.alerts,
-                                priority: communicationsModal.form.alertLevel || 'normal'
-                            };
-                            
-                            const result = await API.createLiveUpdate(updateData);
-                            liveUpdates.value.unshift(result);
-                            
-                            liveStatsData.dailyUpdate = communicationsModal.form.dailySummary;
-                            liveStatsData.lastUpdated = new Date().toISOString();
-                            liveStatsData.updatedBy = currentUser.value?.full_name;
-                            
-                            showToast('Success', 'Live stats updated successfully', 'success');
+                            // Use the new clinical status API instead of old live updates
+                            await saveClinicalStatus();
                         }
                         
                         communicationsModal.show = false;
@@ -2025,7 +2221,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // ============ 19. ACTION FUNCTIONS ============
+                // ============ 20. ACTION FUNCTIONS ============
                 
                 const contactPhysician = (shift) => {
                     if (shift.contactInfo && shift.contactInfo !== 'No contact info') {
@@ -2051,142 +2247,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     showToast('Unit Residents', `Viewing residents for ${unit.unit_name}`, 'info');
                 };
                 
-                // ============ 20. COMPUTED PROPERTIES ============
-                
-                const availablePhysicians = computed(() => {
-                    return medicalStaff.value.filter(staff => 
-                        (staff.staff_type === 'attending_physician' || 
-                         staff.staff_type === 'fellow' || 
-                         staff.staff_type === 'nurse_practitioner') && 
-                        staff.employment_status === 'active'
-                    );
-                });
-                
-                const availableResidents = computed(() => {
-                    return medicalStaff.value.filter(staff => 
-                        staff.staff_type === 'medical_resident' && 
-                        staff.employment_status === 'active'
-                    );
-                });
-                
-                const availableAttendings = computed(() => {
-                    return medicalStaff.value.filter(staff => 
-                        staff.staff_type === 'attending_physician' && 
-                        staff.employment_status === 'active'
-                    );
-                });
-                
-                const availableHeadsOfDepartment = computed(() => {
-                    return availableAttendings.value;
-                });
-                
-                const availableReplacementStaff = computed(() => {
-                    return medicalStaff.value.filter(staff => 
-                        staff.employment_status === 'active' && 
-                        staff.staff_type === 'medical_resident'
-                    );
-                });
-                
-                const filteredMedicalStaff = computed(() => {
-                    let filtered = medicalStaff.value;
-                    
-                    if (staffFilters.search) {
-                        const search = staffFilters.search.toLowerCase();
-                        filtered = filtered.filter(staff =>
-                            staff.full_name?.toLowerCase().includes(search) ||
-                            staff.staff_id?.toLowerCase().includes(search) ||
-                            staff.professional_email?.toLowerCase().includes(search)
-                        );
-                    }
-                    
-                    if (staffFilters.staffType) {
-                        filtered = filtered.filter(staff => staff.staff_type === staffFilters.staffType);
-                    }
-                    
-                    if (staffFilters.department) {
-                        filtered = filtered.filter(staff => staff.department_id === staffFilters.department);
-                    }
-                    
-                    if (staffFilters.status) {
-                        filtered = filtered.filter(staff => staff.employment_status === staffFilters.status);
-                    }
-                    
-                    return filtered;
-                });
-                
-                const filteredOnCallSchedules = computed(() => {
-                    let filtered = onCallSchedule.value;
-                    
-                    if (onCallFilters.date) {
-                        filtered = filtered.filter(schedule => schedule.duty_date === onCallFilters.date);
-                    }
-                    
-                    if (onCallFilters.shiftType) {
-                        filtered = filtered.filter(schedule => schedule.shift_type === onCallFilters.shiftType);
-                    }
-                    
-                    if (onCallFilters.physician) {
-                        filtered = filtered.filter(schedule =>
-                            schedule.primary_physician_id === onCallFilters.physician ||
-                            schedule.backup_physician_id === onCallFilters.physician
-                        );
-                    }
-                    
-                    if (onCallFilters.coverageArea) {
-                        filtered = filtered.filter(schedule => schedule.coverage_area === onCallFilters.coverageArea);
-                    }
-                    
-                    return filtered;
-                });
-                
-                const filteredRotations = computed(() => {
-                    let filtered = rotations.value;
-                    
-                    if (rotationFilters.resident) {
-                        filtered = filtered.filter(rotation => rotation.resident_id === rotationFilters.resident);
-                    }
-                    
-                    if (rotationFilters.status) {
-                        filtered = filtered.filter(rotation => rotation.rotation_status === rotationFilters.status);
-                    }
-                    
-                    if (rotationFilters.trainingUnit) {
-                        filtered = filtered.filter(rotation => rotation.training_unit_id === rotationFilters.trainingUnit);
-                    }
-                    
-                    if (rotationFilters.supervisor) {
-                        filtered = filtered.filter(rotation => rotation.supervising_attending_id === rotationFilters.supervisor);
-                    }
-                    
-                    return filtered;
-                });
-                
-                const filteredAbsences = computed(() => {
-                    let filtered = absences.value;
-                    
-                    if (absenceFilters.staff) {
-                        filtered = filtered.filter(absence => absence.staff_member_id === absenceFilters.staff);
-                    }
-                    
-                    if (absenceFilters.status) {
-                        filtered = filtered.filter(absence => absence.status === absenceFilters.status);
-                    }
-                    
-                    if (absenceFilters.reason) {
-                        filtered = filtered.filter(absence => absence.absence_reason === absenceFilters.reason);
-                    }
-                    
-                    if (absenceFilters.startDate) {
-                        filtered = filtered.filter(absence => absence.start_date >= absenceFilters.startDate);
-                    }
-                    
-                    return filtered;
-                });
-                
-                const recentAnnouncements = computed(() => {
-                    return announcements.value.slice(0, 10);
-                });
-                
                 // ============ 21. LIFECYCLE ============
                 
                 onMounted(() => {
@@ -2207,12 +2267,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         currentView.value = 'login';
                     }
                     
-                    setInterval(() => {
-                        if (currentUser.value) {
-                            loadTodaysOnCall();
-                            updateDashboardStats();
+                    // Set up auto-refresh intervals
+                    statusRefreshInterval.value = setInterval(() => {
+                        if (currentUser.value && !isLoadingStatus.value) {
+                            loadClinicalStatus();
                         }
-                    }, 60000);
+                    }, 60000); // Refresh every 60 seconds
+                    
+                    // Watch for sidebar opening to load status if needed
+                    watch(() => statsSidebarOpen.value, (newVal) => {
+                        if (newVal && !clinicalStatus.value && !isLoadingStatus.value) {
+                            loadClinicalStatus();
+                        }
+                    });
                     
                     document.addEventListener('keydown', (e) => {
                         if (e.key === 'Escape') {
@@ -2236,6 +2303,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 });
                 
+                onUnmounted(() => {
+                    // Clean up intervals
+                    if (statusRefreshInterval.value) {
+                        clearInterval(statusRefreshInterval.value);
+                    }
+                });
+                
                 watch([medicalStaff, rotations, trainingUnits, absences], 
                     () => {
                         updateDashboardStats();
@@ -2252,6 +2326,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     loading,
                     saving,
                     loadingSchedule,
+                    isLoadingStatus,
                     
                     currentView,
                     sidebarCollapsed,
@@ -2269,16 +2344,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     onCallSchedule,
                     announcements,
                     
+                    // NEW: Live Status Data
+                    clinicalStatus,
+                    newStatusText,
+                    selectedAuthorId,
+                    expiryHours,
+                    activeMedicalStaff,
+                    liveStatsEditMode,
+                    
                     // Dashboard
                     systemStats,
                     todaysOnCall,
                     todaysOnCallCount,
-                    
-                    // Live Stats
-                    liveStatsEditMode,
-                    liveStatsData,
-                    unreadLiveUpdates,
-                    unreadAnnouncements,
                     
                     // UI
                     toasts,
@@ -2301,6 +2378,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     departmentModal,
                     userProfileModal,
                     confirmationModal,
+                      isStatusExpired,
+
                     
                     // ============ NEUMAC ENHANCEMENT METHODS ============
                     getShiftStatusClass,
@@ -2311,6 +2390,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     getMeterFillClass,
                     getAbsenceReasonIcon,
                     getScheduleIcon,
+                    
+                    // NEW: Live Status Methods
+                    loadClinicalStatus,
+                    loadActiveMedicalStaff,
+                    saveClinicalStatus,
                     
                     // Formatting Functions
                     formatDate: EnhancedUtils.formatDate,
@@ -2381,9 +2465,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     toggleStatsSidebar,
                     handleGlobalSearch,
                     
-                    // Live Stats
-                    saveLiveStatsUpdates,
-                    
                     // Modal Show Functions
                     showAddMedicalStaffModal,
                     showAddDepartmentModal,
@@ -2420,6 +2501,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     saveUserProfile,
                     
                     // Computed Properties
+                    authToken,
+                    unreadLiveUpdates,
+                    formattedExpiry,
                     availablePhysicians,
                     availableResidents,
                     availableAttendings,
@@ -2437,7 +2521,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // ============ 23. MOUNT APP ============
         app.mount('#app');
         
-        console.log('✅ NeumoCare v8.0 mounted successfully with ALL features and NEUMAC enhancements!');
+        console.log('✅ NeumoCare v8.0 mounted successfully with COMPLETE live status API integration!');
         
     } catch (error) {
         console.error('💥 FATAL ERROR mounting app:', error);
