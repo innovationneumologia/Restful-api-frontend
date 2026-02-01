@@ -469,7 +469,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (absenceFilters.startDate) filtered = filtered.filter(absence => absence.start_date >= absenceFilters.startDate);
                     return filtered;
                 });
-                const recentAnnouncements = computed(() => announcements.value.slice(0, 10)); // COMP-13: Recent announcementsconst unreadAnnouncements = computed(() => {
+                const recentAnnouncements = computed(() => announcements.value.slice(0, 10)); // COMP-13: Recent announcements
+
+const unreadAnnouncements = computed(() => {
     // Simple implementation - adjust based on your needs
     return announcements.value.filter(a => !a.is_read).length;
 });
