@@ -840,7 +840,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     contactPhysician, viewAnnouncement, viewDepartmentStaff, viewUnitResidents,
                     saveMedicalStaff, saveDepartment, saveTrainingUnit, saveRotation, saveOnCallSchedule, saveAbsence, saveCommunication, saveUserProfile,
                     // Computed Properties
-                    authToken, unreadLiveUpdates, formattedExpiry, availablePhysicians, availableResidents, availableAttendings, availableHeadsOfDepartment, availableReplacementStaff, filteredMedicalStaff, filteredOnCallSchedules, filteredRotations, filteredAbsences, recentAnnouncements
+                    authToken, unreadLiveUpdates, formattedExpiry, availablePhysicians, availableResidents, availableAttendings, availableHeadsOfDepartment, availableReplacementStaff, filteredMedicalStaff, filteredOnCallSchedules, filteredRotations, filteredAbsences,    unreadAnnouncements,
+ recentAnnouncements
                 };
             }
         });
