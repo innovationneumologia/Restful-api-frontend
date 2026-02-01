@@ -472,10 +472,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 const recentAnnouncements = computed(() => announcements.value.slice(0, 10)); // COMP-13: Recent announcements
 
 const unreadAnnouncements = computed(() => {
-    // Simple implementation - adjust based on your needs
-    return announcements.value.filter(a => !a.is_read).length;
+    // Count unread announcements - adjust based on your data structure
+    if (!announcements.value || !Array.isArray(announcements.value)) return 0;
+    
+    return announcements.value.filter(announcement => {
+        // If announcement has is_read property
+        if (announcement.is_read !== undefined) {
+            return !announcement.is_read;
+        }
+        
+        // If no is_read property, check if it's recent (last 24 hours)
+        const created = new Date(announcement.created_at || announcement.publish_start_date);
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        return created > oneDayAgo;
+    }).length;
 });
-                
+
                 
                 // ============ 9. NEUMAC ENHANCEMENT FUNCTIONS ============
                 const getShiftStatusClass = (shift) => { // NEUMAC-01: Get shift status CSS class
