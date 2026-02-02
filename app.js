@@ -190,67 +190,43 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // ===== AUTHENTICATION ENDPOINTS =====
-        async login(email, password) {
+   async login(email, password) {
     try {
-        console.log('🔐 Attempting login for:', email);
+        console.log('🔐 Attempting REAL login for:', email);
         
-        // TEMPORARY: Force test with hardcoded credentials
-        if (email === 'admin@neumocare.org' && password === 'password123') {
-            const mockUser = {
-                id: '11111111-1111-1111-1111-111111111111',
-                email: 'admin@neumocare.org',
-                full_name: 'System Administrator',
-                user_role: 'system_admin'
-            };
-            
-            localStorage.setItem(CONFIG.TOKEN_KEY, 'mock-token-for-testing');
-            localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(mockUser));
-            
-            return {
-                token: 'mock-token-for-testing',
-                user: mockUser
-            };
-        }
-        
-        const data = await this.request('/api/auth/login', {
+        // REMOVE ALL MOCK CODE - Use real API only
+        const response = await this.request('/api/auth/login', {
             method: 'POST',
             body: { email, password }
         });
         
-        console.log('✅ Login response:', data);
+        console.log('✅ Login API response:', response);
         
-        if (data.token) {
-            this.token = data.token;
-            localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
-            localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
+        // Handle response format
+        let token, user;
+        
+        if (response.token && response.user) {
+            // Direct response format
+            token = response.token;
+            user = response.user;
+        } else if (response.success && response.data && response.data.token) {
+            // Wrapped response format
+            token = response.data.token;
+            user = response.data.user;
         } else {
-            // If server returns wrapped response
-            if (data.success && data.data && data.data.token) {
-                this.token = data.data.token;
-                localStorage.setItem(CONFIG.TOKEN_KEY, data.data.token);
-                localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.data.user));
-            }
+            throw new Error('Invalid login response format');
         }
         
-        return data;
+        // Save to localStorage
+        this.token = token;
+        localStorage.setItem(CONFIG.TOKEN_KEY, token);
+        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(user));
+        
+        return { token, user };
+        
     } catch (error) {
-        console.error('❌ Login failed:', error);
-        
-        // Fallback mock login for testing
-        const mockUser = {
-            id: 'test-' + Date.now(),
-            email: email,
-            full_name: email.split('@')[0],
-            user_role: 'medical_resident'
-        };
-        
-        localStorage.setItem(CONFIG.TOKEN_KEY, 'mock-token-' + Date.now());
-        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(mockUser));
-        
-        return {
-            token: 'mock-token-' + Date.now(),
-            user: mockUser
-        };
+        console.error('❌ REAL Login failed:', error);
+        throw error; // Don't fallback to mock
     }
 }
             // ===== MEDICAL STAFF ENDPOINTS =====
