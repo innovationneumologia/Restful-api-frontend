@@ -2116,6 +2116,7 @@ const saveMedicalStaff = async () => {
                     editRotation,
                     editOnCallSchedule,
                     editAbsence,
+                    getCurrentUnit,
                     
                     // Action Functions
                     contactPhysician,
