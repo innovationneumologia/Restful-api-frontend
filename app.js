@@ -1300,7 +1300,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         department_id: '',
                         academic_degree: '',
                         specialization: '',
-                        resident_year: '',
+                        training_year: '',
                         clinical_certificate: '',
                         certificate_status: 'current'
                     };
@@ -1474,6 +1474,14 @@ const showAddOnCallModal = () => {
                 
 const saveMedicalStaff = async () => {
     saving.value = true;
+    
+    // Add validation
+    if (!medicalStaffModal.form.full_name || !medicalStaffModal.form.full_name.trim()) {
+        showToast('Error', 'Full name is required', 'error');
+        saving.value = false;
+        return;
+    }
+    
     try {
         // Prepare data with correct field names for server
         const staffData = {
@@ -1485,9 +1493,8 @@ const saveMedicalStaff = async () => {
             department_id: medicalStaffModal.form.department_id || null,
             academic_degree: medicalStaffModal.form.academic_degree || null,
             specialization: medicalStaffModal.form.specialization || null,
-            // FIXED: Convert string to integer for database
-            training_year: medicalStaffModal.form.resident_year ? 
-                parseInt(medicalStaffModal.form.resident_year, 10) : null,
+            // FIXED: Send as string, not integer
+            training_year: medicalStaffModal.form.training_year || null,
             clinical_certificate: medicalStaffModal.form.clinical_certificate || null,
             certificate_status: medicalStaffModal.form.certificate_status || null
         };
