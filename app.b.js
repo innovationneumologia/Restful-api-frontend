@@ -1,5 +1,5 @@
 // ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM v8.0 ============
-// 100% COMPLETE VERSION - ALL FUNCTIONALITY INCLUDED
+// 100% COMPLETE VERSION - WITH UPDATED ABSENCE RECORDS SYSTEM
 // ===================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // ============ 4. COMPLETE API SERVICE ============
+        // ============ 4. COMPLETE API SERVICE WITH UPDATED ABSENCE ENDPOINTS ============
         class ApiService {
             constructor() {
                 this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
@@ -348,30 +348,120 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
             }
             
-            // ===== ABSENCE ENDPOINTS =====
-            async getAbsences() {
+            // ===== UPDATED: ABSENCE RECORDS ENDPOINTS =====
+            async getAbsenceRecords(params = {}) {
                 try {
-                    const data = await this.request('/api/absences');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
+                    const queryString = new URLSearchParams(params).toString();
+                    const endpoint = queryString ? `/api/absence-records?${queryString}` : '/api/absence-records';
+                    const response = await this.request(endpoint);
+                    return EnhancedUtils.ensureArray(response.data || response);
+                } catch (error) {
+                    console.error('Failed to get absence records:', error);
+                    return [];
+                }
             }
             
-            async createAbsence(absenceData) {
-                return await this.request('/api/absences', {
+            async getCurrentAbsences() {
+                try {
+                    const response = await this.request('/api/absence-records/current');
+                    return EnhancedUtils.ensureArray(response.data || response);
+                } catch (error) {
+                    console.error('Failed to get current absences:', error);
+                    return [];
+                }
+            }
+            
+            async getUpcomingAbsences() {
+                try {
+                    const response = await this.request('/api/absence-records/upcoming');
+                    return EnhancedUtils.ensureArray(response.data || response);
+                } catch (error) {
+                    console.error('Failed to get upcoming absences:', error);
+                    return [];
+                }
+            }
+            
+            async getAbsenceRecord(id) {
+                try {
+                    const response = await this.request(`/api/absence-records/${id}`);
+                    return response.data || response;
+                } catch (error) {
+                    console.error('Failed to get absence record:', error);
+                    return null;
+                }
+            }
+            
+            async createAbsenceRecord(absenceData) {
+                const apiData = {
+                    staff_member_id: absenceData.staff_member_id,
+                    absence_type: absenceData.absence_type,
+                    absence_reason: absenceData.absence_reason,
+                    start_date: absenceData.start_date,
+                    end_date: absenceData.end_date,
+                    coverage_arranged: absenceData.coverage_arranged,
+                    covering_staff_id: absenceData.covering_staff_id,
+                    coverage_notes: absenceData.coverage_notes || '',
+                    hod_notes: absenceData.hod_notes || ''
+                };
+                
+                return await this.request('/api/absence-records', {
                     method: 'POST',
-                    body: absenceData
+                    body: apiData
                 });
             }
             
-            async updateAbsence(id, absenceData) {
-                return await this.request(`/api/absences/${id}`, {
+            async updateAbsenceRecord(id, absenceData) {
+                const apiData = {
+                    staff_member_id: absenceData.staff_member_id,
+                    absence_type: absenceData.absence_type,
+                    absence_reason: absenceData.absence_reason,
+                    start_date: absenceData.start_date,
+                    end_date: absenceData.end_date,
+                    coverage_arranged: absenceData.coverage_arranged,
+                    covering_staff_id: absenceData.covering_staff_id,
+                    coverage_notes: absenceData.coverage_notes || '',
+                    hod_notes: absenceData.hod_notes || ''
+                };
+                
+                return await this.request(`/api/absence-records/${id}`, {
                     method: 'PUT',
-                    body: absenceData
+                    body: apiData
                 });
             }
             
-            async deleteAbsence(id) {
-                return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
+            async markAbsenceReturned(id, returnData = {}) {
+                return await this.request(`/api/absence-records/${id}/return`, {
+                    method: 'PUT',
+                    body: returnData
+                });
+            }
+            
+            async deleteAbsenceRecord(id) {
+                return await this.request(`/api/absence-records/${id}`, { method: 'DELETE' });
+            }
+            
+            async getAbsenceDashboardStats() {
+                try {
+                    const response = await this.request('/api/absence-records/dashboard/stats');
+                    return response.data || response;
+                } catch (error) {
+                    console.error('Failed to get absence dashboard stats:', error);
+                    return {};
+                }
+            }
+            
+            async getStaffAbsenceHistory(staffId, params = {}) {
+                try {
+                    const queryString = new URLSearchParams(params).toString();
+                    const endpoint = queryString 
+                        ? `/api/absence-records/staff/${staffId}?${queryString}`
+                        : `/api/absence-records/staff/${staffId}`;
+                    const response = await this.request(endpoint);
+                    return EnhancedUtils.ensureArray(response.data || response);
+                } catch (error) {
+                    console.error('Failed to get staff absence history:', error);
+                    return [];
+                }
             }
             
             // ===== ANNOUNCEMENT ENDPOINTS =====
@@ -487,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const departments = ref([]);
                 const trainingUnits = ref([]);
                 const rotations = ref([]);
-                const absences = ref([]);
+                const absences = ref([]); // Now stores absence records
                 const onCallSchedule = ref([]);
                 const announcements = ref([]);
                 
@@ -510,6 +600,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     endingThisWeek: 0,
                     startingNextWeek: 0,
                     onLeaveStaff: 0,
+                    upcomingAbsences: 0,
                     departmentStatus: 'normal',
                     activePatients: 0,
                     icuOccupancy: 0,
@@ -549,9 +640,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const absenceFilters = reactive({
                     staff: '',
-                    status: '',
-                    reason: '',
-                    startDate: ''
+                    absence_type: '',
+                    current_status: '',
+                    absence_reason: '',
+                    start_date: '',
+                    coverage_arranged: ''
                 });
                 
                 // 6.9 Modal States
@@ -660,15 +753,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const absenceModal = reactive({
                     show: false,
                     mode: 'add',
-                    activeTab: 'basic',
                     form: {
                         staff_member_id: '',
+                        absence_type: 'planned',
                         absence_reason: 'vacation',
                         start_date: new Date().toISOString().split('T')[0],
                         end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        status: 'active',
-                        replacement_staff_id: '',
-                        notes: ''
+                        coverage_arranged: false,
+                        covering_staff_id: null,
+                        coverage_notes: '',
+                        hod_notes: ''
                     }
                 });
                 
@@ -831,25 +925,48 @@ document.addEventListener('DOMContentLoaded', function() {
                     return map[status] || status;
                 };
                 
+                // UPDATED: Format Absence Reason
                 const formatAbsenceReason = (reason) => {
                     const map = {
-                        'vacation': 'Vacation',
-                        'sick_leave': 'Sick Leave',
-                        'conference': 'Conference',
-                        'training': 'Training',
-                        'personal': 'Personal',
-                        'other': 'Other'
+                        'vacation': 'Vacation 🏖️',
+                        'conference': 'Conference/Training 🎓',
+                        'sick_leave': 'Sick Leave 🤒',
+                        'training': 'Training/Workshop 📚',
+                        'personal': 'Personal Leave 🔔',
+                        'other': 'Other Leave ...'
                     };
                     return map[reason] || reason;
                 };
                 
+                // NEW: Format Absence Type
+                const formatAbsenceType = (type) => {
+                    const map = {
+                        'planned': 'Planned',
+                        'unplanned': 'Unplanned'
+                    };
+                    return map[type] || type;
+                };
+                
+                // UPDATED: Format Absence Status
                 const formatAbsenceStatus = (status) => {
                     const map = {
-                        'active': 'Active',
-                        'upcoming': 'Upcoming',
-                        'completed': 'Completed'
+                        'planned_leave': 'Planned Leave 📅',
+                        'currently_absent': 'Currently Absent 🏥',
+                        'returned_to_duty': 'Returned to Duty ✅',
+                        'cancelled': 'Cancelled ❌'
                     };
                     return map[status] || status;
+                };
+                
+                // NEW: Format Coverage Status
+                const formatCoverageStatus = (coverage_arranged, covering_staff_id) => {
+                    if (coverage_arranged && covering_staff_id) {
+                        return '✅ Covered';
+                    } else if (coverage_arranged) {
+                        return '⚠️ Partial Coverage';
+                    } else {
+                        return '❌ No Coverage';
+                    }
                 };
                 
                 const formatRotationStatus = (status) => {
@@ -1056,8 +1173,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const getAbsenceReasonIcon = (reason) => {
                     const icons = {
                         'vacation': 'fa-umbrella-beach',
-                        'sick_leave': 'fa-procedures',
                         'conference': 'fa-chalkboard-teacher',
+                        'sick_leave': 'fa-procedures',
                         'training': 'fa-graduation-cap',
                         'personal': 'fa-user-clock',
                         'other': 'fa-question-circle'
@@ -1260,7 +1377,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             staff.employment_status === 'active'
                         );
                         
-                        // Auto-select current user if they're medical staff
                         if (currentUser.value) {
                             const currentUserStaff = activeMedicalStaff.value.find(
                                 staff => staff.professional_email === currentUser.value.email
@@ -1326,7 +1442,210 @@ document.addEventListener('DOMContentLoaded', function() {
                     expiryHours.value = 8;
                 };
                 
-                // ============ 11. DELETE FUNCTIONS ============
+                // ============ 11. UPDATED ABSENCE FUNCTIONS ============
+                
+                // UPDATED: Load absences using new API
+                const loadAbsences = async () => {
+                    try {
+                        const data = await API.getAbsenceRecords();
+                        absences.value = data;
+                        console.log('Loaded absence records:', data.length);
+                    } catch (error) {
+                        console.error('Failed to load absence records:', error);
+                        showToast('Error', 'Failed to load absence records', 'error');
+                    }
+                };
+                
+                // NEW: Load current absences
+                const loadCurrentAbsences = async () => {
+                    try {
+                        const data = await API.getCurrentAbsences();
+                        return data;
+                    } catch (error) {
+                        console.error('Failed to load current absences:', error);
+                        return [];
+                    }
+                };
+                
+                // NEW: Load upcoming absences
+                const loadUpcomingAbsences = async () => {
+                    try {
+                        const data = await API.getUpcomingAbsences();
+                        return data;
+                    } catch (error) {
+                        console.error('Failed to load upcoming absences:', error);
+                        return [];
+                    }
+                };
+                
+                // UPDATED: Show add absence modal
+                const showAddAbsenceModal = () => {
+                    const today = new Date().toISOString().split('T')[0];
+                    
+                    absenceModal.mode = 'add';
+                    absenceModal.form = {
+                        staff_member_id: '',
+                        absence_type: 'planned',
+                        absence_reason: 'vacation',
+                        start_date: today,
+                        end_date: today,
+                        coverage_arranged: false,
+                        covering_staff_id: null,
+                        coverage_notes: '',
+                        hod_notes: ''
+                    };
+                    absenceModal.show = true;
+                };
+                
+                // UPDATED: Edit absence
+                const editAbsence = async (absence) => {
+                    try {
+                        const fullRecord = await API.getAbsenceRecord(absence.id);
+                        
+                        if (!fullRecord) {
+                            showToast('Error', 'Cannot load absence record details', 'error');
+                            return;
+                        }
+                        
+                        absenceModal.mode = 'edit';
+                        absenceModal.form = {
+                            id: fullRecord.id,
+                            staff_member_id: fullRecord.staff_member_id,
+                            absence_type: fullRecord.absence_type,
+                            absence_reason: fullRecord.absence_reason,
+                            start_date: fullRecord.start_date,
+                            end_date: fullRecord.end_date,
+                            coverage_arranged: fullRecord.coverage_arranged,
+                            covering_staff_id: fullRecord.covering_staff_id,
+                            coverage_notes: fullRecord.coverage_notes || '',
+                            hod_notes: fullRecord.hod_notes || ''
+                        };
+                        absenceModal.show = true;
+                    } catch (error) {
+                        console.error('Failed to load absence record for editing:', error);
+                        showToast('Error', 'Cannot load absence record details', 'error');
+                    }
+                };
+                
+                // UPDATED: Save absence
+                const saveAbsence = async () => {
+                    saving.value = true;
+                    
+                    if (!absenceModal.form.staff_member_id) {
+                        showToast('Error', 'Please select a staff member', 'error');
+                        saving.value = false;
+                        return;
+                    }
+                    
+                    if (!absenceModal.form.start_date || !absenceModal.form.end_date) {
+                        showToast('Error', 'Please select start and end dates', 'error');
+                        saving.value = false;
+                        return;
+                    }
+                    
+                    const startDate = new Date(absenceModal.form.start_date);
+                    const endDate = new Date(absenceModal.form.end_date);
+                    
+                    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                        showToast('Error', 'Invalid date format', 'error');
+                        saving.value = false;
+                        return;
+                    }
+                    
+                    if (endDate < startDate) {
+                        showToast('Error', 'End date must be after start date', 'error');
+                        saving.value = false;
+                        return;
+                    }
+                    
+                    try {
+                        if (absenceModal.mode === 'add') {
+                            const result = await API.createAbsenceRecord(absenceModal.form);
+                            absences.value.unshift(result.data || result);
+                            showToast('Success', 'Absence recorded successfully', 'success');
+                        } else {
+                            const result = await API.updateAbsenceRecord(absenceModal.form.id, absenceModal.form);
+                            const index = absences.value.findIndex(a => a.id === result.data.id);
+                            if (index !== -1) absences.value[index] = result.data;
+                            showToast('Success', 'Absence updated successfully', 'success');
+                        }
+                        
+                        absenceModal.show = false;
+                        updateDashboardStats();
+                        
+                    } catch (error) {
+                        console.error('Save absence error:', error);
+                        showToast('Error', error.message || 'Failed to save absence record', 'error');
+                    } finally {
+                        saving.value = false;
+                    }
+                };
+                
+                // NEW: Mark absence as returned
+                const markAsReturned = (absence) => {
+                    showConfirmation({
+                        title: 'Mark as Returned',
+                        message: `Mark ${getStaffName(absence.staff_member_id)} as returned to duty?`,
+                        icon: 'fa-check-circle',
+                        confirmButtonText: 'Mark Returned',
+                        confirmButtonClass: 'btn-success',
+                        details: 'This will update the absence record and mark the staff member as available.',
+                        onConfirm: async () => {
+                            try {
+                                const result = await API.markAbsenceReturned(absence.id, {
+                                    return_date: new Date().toISOString().split('T')[0],
+                                    notes: 'Marked returned via dashboard'
+                                });
+                                
+                                const index = absences.value.findIndex(a => a.id === absence.id);
+                                if (index > -1) {
+                                    absences.value[index] = {
+                                        ...absences.value[index],
+                                        current_status: 'returned_to_duty',
+                                        end_date: new Date().toISOString().split('T')[0]
+                                    };
+                                }
+                                
+                                showToast('Success', 'Staff marked as returned successfully', 'success');
+                                updateDashboardStats();
+                            } catch (error) {
+                                showToast('Error', error.message, 'error');
+                            }
+                        }
+                    });
+                };
+                
+                // UPDATED: Delete absence
+                const deleteAbsence = async (absence) => {
+                    showConfirmation({
+                        title: 'Cancel Absence Record',
+                        message: `Are you sure you want to cancel this absence record?`,
+                        icon: 'fa-trash',
+                        confirmButtonText: 'Cancel Absence',
+                        confirmButtonClass: 'btn-danger',
+                        details: `Staff: ${getStaffName(absence.staff_member_id)} - ${formatAbsenceReason(absence.absence_reason)}`,
+                        onConfirm: async () => {
+                            try {
+                                const result = await API.deleteAbsenceRecord(absence.id);
+                                
+                                const index = absences.value.findIndex(a => a.id === absence.id);
+                                if (index > -1) {
+                                    absences.value[index] = {
+                                        ...absences.value[index],
+                                        current_status: 'cancelled'
+                                    };
+                                }
+                                
+                                showToast('Success', 'Absence cancelled successfully', 'success');
+                                updateDashboardStats();
+                            } catch (error) {
+                                showToast('Error', error.message, 'error');
+                            }
+                        }
+                    });
+                };
+                
+                // ============ 12. OTHER DELETE FUNCTIONS ============
                 
                 const deleteMedicalStaff = async (staff) => {
                     showConfirmation({
@@ -1394,28 +1713,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 };
                 
-                const deleteAbsence = async (absence) => {
-                    showConfirmation({
-                        title: 'Delete Absence',
-                        message: `Are you sure you want to delete this absence record?`,
-                        icon: 'fa-trash',
-                        confirmButtonText: 'Delete',
-                        confirmButtonClass: 'btn-danger',
-                        details: `Staff: ${getStaffName(absence.staff_member_id)}`,
-                        onConfirm: async () => {
-                            try {
-                                await API.deleteAbsence(absence.id);
-                                const index = absences.value.findIndex(a => a.id === absence.id);
-                                if (index > -1) absences.value.splice(index, 1);
-                                showToast('Success', 'Absence deleted successfully', 'success');
-                                updateDashboardStats();
-                            } catch (error) {
-                                showToast('Error', error.message, 'error');
-                            }
-                        }
-                    });
-                };
-                
                 const deleteAnnouncement = async (announcement) => {
                     showConfirmation({
                         title: 'Delete Announcement',
@@ -1457,7 +1754,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 };
                 
-                // ============ 12. DATA LOADING FUNCTIONS ============
+                // ============ 13. DATA LOADING FUNCTIONS ============
                 
                 const loadMedicalStaff = async () => {
                     try {
@@ -1496,16 +1793,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (error) {
                         console.error('Failed to load rotations:', error);
                         showToast('Error', 'Failed to load rotations', 'error');
-                    }
-                };
-                
-                const loadAbsences = async () => {
-                    try {
-                        const data = await API.getAbsences();
-                        absences.value = data;
-                    } catch (error) {
-                        console.error('Failed to load absences:', error);
-                        showToast('Error', 'Failed to load absences', 'error');
                     }
                 };
                 
@@ -1596,6 +1883,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
+                // UPDATED: Update dashboard stats
                 const updateDashboardStats = () => {
                     systemStats.value.totalStaff = medicalStaff.value.length;
                     systemStats.value.activeAttending = medicalStaff.value.filter(s => 
@@ -1604,27 +1892,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     systemStats.value.activeResidents = medicalStaff.value.filter(s => 
                         s.staff_type === 'medical_resident' && s.employment_status === 'active'
                     ).length;
-                    systemStats.value.onLeaveStaff = medicalStaff.value.filter(s => 
-                        s.employment_status === 'on_leave'
+                    
+                    // Update onLeaveStaff based on absence records
+                    const currentlyAbsent = absences.value.filter(a => 
+                        a.current_status === 'currently_absent'
                     ).length;
+                    systemStats.value.onLeaveStaff = currentlyAbsent;
+                    
                     systemStats.value.activeRotations = rotations.value.filter(r => 
                         r.rotation_status === 'active'
                     ).length;
                     
+                    // Calculate upcoming absences
                     const today = new Date();
                     const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    systemStats.value.endingThisWeek = rotations.value.filter(r => {
-                        if (r.rotation_status !== 'active') return false;
-                        const endDate = new Date(r.rotation_end_date);
-                        return endDate >= today && endDate <= nextWeek;
-                    }).length;
-                    
-                    const nextWeekStart = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    const twoWeeks = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
-                    systemStats.value.startingNextWeek = rotations.value.filter(r => {
-                        if (r.rotation_status !== 'scheduled') return false;
-                        const startDate = new Date(r.rotation_start_date);
-                        return startDate >= nextWeekStart && startDate <= twoWeeks;
+                    systemStats.value.upcomingAbsences = absences.value.filter(a => {
+                        if (a.current_status !== 'planned_leave') return false;
+                        const startDate = new Date(a.start_date);
+                        return startDate >= today && startDate <= nextWeek;
                     }).length;
                 };
                 
@@ -1655,7 +1940,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // ============ 13. AUTHENTICATION FUNCTIONS ============
+                // ============ 14. AUTHENTICATION FUNCTIONS ============
                 
                 const handleLogin = async () => {
                     if (!loginForm.email || !loginForm.password) {
@@ -1702,7 +1987,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 };
                 
-                // ============ 14. NAVIGATION & UI FUNCTIONS ============
+                // ============ 15. NAVIGATION & UI FUNCTIONS ============
                 
                 const switchView = (view) => {
                     currentView.value = view;
@@ -1724,7 +2009,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (index > -1) systemAlerts.value.splice(index, 1);
                 };
                 
-                // ============ 15. MODAL SHOW FUNCTIONS ============
+                // ============ 16. MODAL SHOW FUNCTIONS ============
                 
                 const showAddMedicalStaffModal = () => {
                     medicalStaffModal.mode = 'add';
@@ -1800,20 +2085,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     onCallModal.show = true;
                 };
                 
-                const showAddAbsenceModal = () => {
-                    absenceModal.mode = 'add';
-                    absenceModal.form = {
-                        staff_member_id: '',
-                        absence_reason: 'vacation',
-                        start_date: new Date().toISOString().split('T')[0],
-                        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        status: 'active',
-                        replacement_staff_id: '',
-                        notes: ''
-                    };
-                    absenceModal.show = true;
-                };
-                
                 const showCommunicationsModal = () => {
                     communicationsModal.show = true;
                     communicationsModal.activeTab = 'announcement';
@@ -1858,7 +2129,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     userMenuOpen.value = false;
                 };
                 
-                // ============ 16. VIEW/EDIT FUNCTIONS ============
+                // ============ 17. VIEW/EDIT FUNCTIONS ============
                 
                 const viewStaffDetails = (staff) => {
                     staffProfileModal.staff = staff;
@@ -1896,13 +2167,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     onCallModal.show = true;
                 };
                 
-                const editAbsence = (absence) => {
-                    absenceModal.mode = 'edit';
-                    absenceModal.form = { ...absence };
-                    absenceModal.show = true;
-                };
-                
-                // ============ 17. SAVE FUNCTIONS ============
+                // ============ 18. SAVE FUNCTIONS ============
                 
                 const saveMedicalStaff = async () => {
                     saving.value = true;
@@ -2099,38 +2364,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                const saveAbsence = async () => {
-                    saving.value = true;
-                    try {
-                        const absenceData = {
-                            staff_member_id: absenceModal.form.staff_member_id,
-                            absence_reason: absenceModal.form.absence_reason,
-                            start_date: absenceModal.form.start_date,
-                            end_date: absenceModal.form.end_date,
-                            status: absenceModal.form.status || 'pending',
-                            replacement_staff_id: absenceModal.form.replacement_staff_id || null,
-                            notes: absenceModal.form.notes || ''
-                        };
-                        
-                        if (absenceModal.mode === 'add') {
-                            const result = await API.createAbsence(absenceData);
-                            absences.value.unshift(result);
-                            showToast('Success', 'Absence recorded successfully', 'success');
-                        } else {
-                            const result = await API.updateAbsence(absenceModal.form.id, absenceData);
-                            const index = absences.value.findIndex(a => a.id === result.id);
-                            if (index !== -1) absences.value[index] = result;
-                            showToast('Success', 'Absence updated successfully', 'success');
-                        }
-                        absenceModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
                 const saveCommunication = async () => {
                     saving.value = true;
                     try {
@@ -2173,7 +2406,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // ============ 18. ACTION FUNCTIONS ============
+                // ============ 19. ACTION FUNCTIONS ============
                 
                 const contactPhysician = (shift) => {
                     if (shift.contactInfo && shift.contactInfo !== 'No contact info') {
@@ -2199,7 +2432,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     showToast('Unit Residents', `Viewing residents for ${unit.unit_name}`, 'info');
                 };
                 
-                // ============ 19. PERMISSION FUNCTIONS ============
+                // ============ 20. PERMISSION FUNCTIONS ============
                 
                 const hasPermission = (module, action = 'read') => {
                     const role = currentUser.value?.user_role;
@@ -2213,7 +2446,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return permissions.includes(action) || permissions.includes('*');
                 };
                 
-                // ============ 20. COMPUTED PROPERTIES ============
+                // ============ 21. COMPUTED PROPERTIES ============
                 
                 const authToken = computed(() => {
                     return localStorage.getItem(CONFIG.TOKEN_KEY);
@@ -2348,6 +2581,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return filtered;
                 });
                 
+                // UPDATED: Filtered absences
                 const filteredAbsences = computed(() => {
                     let filtered = absences.value;
                     
@@ -2355,16 +2589,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         filtered = filtered.filter(absence => absence.staff_member_id === absenceFilters.staff);
                     }
                     
-                    if (absenceFilters.status) {
-                        filtered = filtered.filter(absence => absence.status === absenceFilters.status);
+                    if (absenceFilters.absence_type) {
+                        filtered = filtered.filter(absence => absence.absence_type === absenceFilters.absence_type);
                     }
                     
-                    if (absenceFilters.reason) {
-                        filtered = filtered.filter(absence => absence.absence_reason === absenceFilters.reason);
+                    if (absenceFilters.current_status) {
+                        filtered = filtered.filter(absence => absence.current_status === absenceFilters.current_status);
                     }
                     
-                    if (absenceFilters.startDate) {
-                        filtered = filtered.filter(absence => absence.start_date >= absenceFilters.startDate);
+                    if (absenceFilters.absence_reason) {
+                        filtered = filtered.filter(absence => absence.absence_reason === absenceFilters.absence_reason);
+                    }
+                    
+                    if (absenceFilters.start_date) {
+                        filtered = filtered.filter(absence => absence.start_date >= absenceFilters.start_date);
+                    }
+                    
+                    if (absenceFilters.coverage_arranged !== '') {
+                        filtered = filtered.filter(absence => 
+                            absence.coverage_arranged === (absenceFilters.coverage_arranged === 'true')
+                        );
                     }
                     
                     return filtered;
@@ -2374,7 +2618,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return announcements.value.slice(0, 10);
                 });
                 
-                // ============ 21. LIFECYCLE ============
+                // ============ 22. LIFECYCLE ============
                 
                 onMounted(() => {
                     console.log('🚀 Vue app mounted');
@@ -2435,7 +2679,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     { deep: true }
                 );
                 
-                // ============ 22. RETURN EXPOSED DATA/METHODS ============
+                // ============ 23. RETURN EXPOSED DATA/METHODS ============
                 return {
                     // State
                     currentUser,
@@ -2507,7 +2751,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     getStaffTypeClass,
                     formatEmploymentStatus,
                     formatAbsenceReason,
+                    formatAbsenceType,
                     formatAbsenceStatus,
+                    formatCoverageStatus,
                     formatRotationStatus,
                     getUserRoleDisplay,
                     getCurrentViewTitle,
@@ -2559,11 +2805,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     isStatusExpired,
                     showCreateStatusModal,
                     
+                    // Absence Functions (Updated)
+                    loadAbsences,
+                    loadCurrentAbsences,
+                    loadUpcomingAbsences,
+                    showAddAbsenceModal,
+                    editAbsence,
+                    saveAbsence,
+                    markAsReturned,
+                    deleteAbsence,
+                    
                     // Delete Functions
                     deleteMedicalStaff,
                     deleteRotation,
                     deleteOnCallSchedule,
-                    deleteAbsence,
                     deleteAnnouncement,
                     deleteClinicalStatus,
                     
@@ -2594,7 +2849,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     showAddTrainingUnitModal,
                     showAddRotationModal,
                     showAddOnCallModal,
-                    showAddAbsenceModal,
                     showCommunicationsModal,
                     showUserProfileModal,
                     
@@ -2605,7 +2859,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     editTrainingUnit,
                     editRotation,
                     editOnCallSchedule,
-                    editAbsence,
                     
                     // Action Functions
                     contactPhysician,
@@ -2619,7 +2872,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     saveTrainingUnit,
                     saveRotation,
                     saveOnCallSchedule,
-                    saveAbsence,
                     saveCommunication,
                     saveUserProfile,
                     
@@ -2645,10 +2897,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // ============ 23. MOUNT APP ============
+        // ============ 24. MOUNT APP ============
         app.mount('#app');
         
-        console.log('✅ NeumoCare v8.0 mounted successfully - 100% COMPLETE VERSION!');
+        console.log('✅ NeumoCare v8.0 mounted successfully - WITH UPDATED ABSENCE SYSTEM!');
         
     } catch (error) {
         console.error('💥 FATAL ERROR mounting app:', error);
