@@ -1468,6 +1468,93 @@
             flex-direction: column;
             height: 100%;
         }
+        /* Reason Selection Styles */
+.reason-option {
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: white;
+}
+
+.reason-option:hover {
+    border-color: var(--medical-blue);
+    background: var(--medical-light-blue);
+}
+
+.reason-selected {
+    border-color: var(--medical-blue);
+    background: var(--medical-light-blue);
+    box-shadow: 0 0 0 1px var(--medical-blue);
+}
+
+/* Preview Card Styles */
+.preview-card {
+    border-left: 4px solid;
+    animation: fadeIn 0.3s ease;
+}
+
+.preview-card.planned {
+    border-left-color: var(--medical-blue);
+    background: linear-gradient(135deg, rgba(0, 119, 190, 0.05), rgba(0, 119, 190, 0.1));
+}
+
+.preview-card.unplanned {
+    border-left-color: var(--medical-red);
+    background: linear-gradient(135deg, rgba(198, 40, 40, 0.05), rgba(198, 40, 40, 0.1));
+}
+
+.preview-card.active {
+    border-left-color: var(--medical-orange);
+    background: linear-gradient(135deg, rgba(245, 124, 0, 0.05), rgba(245, 124, 0, 0.1));
+}
+
+/* Toggle Button Styles */
+.toggle-button {
+    padding: 10px 16px;
+    border: 2px solid transparent;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-weight: 500;
+}
+
+.toggle-button.active {
+    border-color: var(--medical-blue);
+    background: var(--medical-light-blue);
+    color: var(--medical-blue);
+}
+
+/* Status Indicator Colors */
+.status-planned {
+    background: rgba(0, 119, 190, 0.1);
+    color: var(--medical-blue);
+    border: 1px solid rgba(0, 119, 190, 0.2);
+}
+
+.status-unplanned {
+    background: rgba(198, 40, 40, 0.1);
+    color: var(--medical-red);
+    border: 1px solid rgba(198, 40, 40, 0.2);
+}
+
+.status-active {
+    background: rgba(245, 124, 0, 0.1);
+    color: var(--medical-orange);
+    border: 1px solid rgba(245, 124, 0, 0.2);
+}
+
+.status-covered {
+    background: rgba(46, 125, 50, 0.1);
+    color: var(--medical-green);
+    border: 1px solid rgba(46, 125, 50, 0.2);
+}
+
+.status-gap {
+    background: rgba(198, 40, 40, 0.1);
+    color: var(--medical-red);
+    border: 1px solid rgba(198, 40, 40, 0.2);
+}
 
         .department-card:hover {
             transform: translateY(-3px);
@@ -4471,93 +4558,231 @@
                 </div>
             </div>
 
-            <!-- MODAL 7: Add/Edit Absence -->
-            <div v-if="absenceModal.show" class="modal-overlay">
-                <div class="modal-container">
-                    <div class="modal-header">
-                        <div class="modal-title">
-                            <i class="fas fa-user-clock"></i>
-                            {{ absenceModal.mode === 'add' ? 'Record Absence' : 'Edit Absence' }}
-                        </div>
-                        <button class="modal-close" @click="absenceModal.show = false" aria-label="Close modal">
-                            <i class="fas fa-times"></i>
-                        </button>
+         <!-- MODAL 7: Add/Edit Absence -->
+<div v-if="absenceModal.show" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fas fa-user-clock"></i>
+                {{ absenceModal.mode === 'add' ? 'Record Absence' : 'Edit Absence' }}
+            </div>
+            <button class="modal-close" @click="absenceModal.show = false" aria-label="Close modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Smart Preview Card -->
+            <div v-if="absenceModal.form.staff_member_id && absenceModal.form.start_date" 
+                 class="preview-card mb-4 p-3 rounded-md"
+                 :class="getPreviewCardClass()">
+                <div class="flex items-center gap-2 mb-1">
+                    <i :class="getPreviewIcon()"></i>
+                    <span class="font-semibold">{{ getStaffName(absenceModal.form.staff_member_id) }}</span>
+                </div>
+                <div class="text-sm">
+                    <div>{{ getPreviewReasonText() }}</div>
+                    <div>{{ formatDate(absenceModal.form.start_date) }} 
+                        <span v-if="absenceModal.form.end_date && absenceModal.form.end_date !== absenceModal.form.start_date">
+                            - {{ formatDate(absenceModal.form.end_date) }}
+                        </span>
                     </div>
-                    
-                    <div class="modal-body">
-                        <div class="space-y-4">
-                            <div class="form-group">
-                                <label class="form-label">Staff Member *</label>
-                                <select class="form-select" v-model="absenceModal.form.staff_id" 
-                                        required aria-required="true" aria-label="Staff member">
-                                    <option value="">Select Staff Member</option>
-                                    <option v-for="staff in medicalStaff" :key="staff.id" :value="staff.id">
-                                        {{ staff.full_name }}
-                                    </option>
-                                </select>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="form-group">
-                                    <label class="form-label">Absence Reason</label>
-                                    <select class="form-select" v-model="absenceModal.form.absence_reason" aria-label="Absence reason">
-                                        <option value="vacation">Vacation</option>
-                                        <option value="sick_leave">Sick Leave</option>
-                                        <option value="conference">Conference</option>
-                                        <option value="training">Training</option>
-                                        <option value="personal">Personal</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Status</label>
-                                    <select class="form-select" v-model="absenceModal.form.status" aria-label="Absence status">
-                                        <option value="active">Active</option>
-                                        <option value="upcoming">Upcoming</option>
-                                        <option value="completed">Completed</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="form-group">
-                                    <label class="form-label">Start Date *</label>
-                                    <input type="date" class="form-control" v-model="absenceModal.form.start_date" 
-                                           required aria-required="true" aria-label="Start date">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">End Date *</label>
-                                    <input type="date" class="form-control" v-model="absenceModal.form.end_date" 
-                                           required aria-required="true" aria-label="End date">
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Replacement Staff</label>
-                                <select class="form-select" v-model="absenceModal.form.replacement_staff_id" aria-label="Replacement staff">
-                                    <option value="">No Replacement</option>
-                                    <option v-for="staff in availableReplacementStaff" :key="staff.id" :value="staff.id">
-                                        {{ staff.full_name }}
-                                    </option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Notes</label>
-                                <textarea class="form-control" v-model="absenceModal.form.notes" rows="3" 
-                                          placeholder="Additional notes about this absence..." aria-label="Absence notes"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" @click="absenceModal.show = false">Cancel</button>
-                        <button class="btn btn-primary" @click="saveAbsence">
-                            <i class="fas fa-save"></i> {{ absenceModal.mode === 'add' ? 'Record Absence' : 'Save Changes' }}
-                        </button>
+                    <div class="mt-1">
+                        <span class="status-indicator" :class="getPreviewStatusClass()">
+                            {{ getPreviewStatusText() }}
+                        </span>
                     </div>
                 </div>
             </div>
+            
+            <div class="space-y-4">
+                <!-- Staff Selection -->
+                <div class="form-group">
+                    <label class="form-label">Staff Member *</label>
+                    <select class="form-select" v-model="absenceModal.form.staff_member_id" 
+                            required aria-required="true" aria-label="Staff member"
+                            @change="updatePreview()">
+                        <option value="">Select Staff Member</option>
+                        <option v-for="staff in medicalStaff" :key="staff.id" :value="staff.id">
+                            {{ staff.full_name }}
+                        </option>
+                    </select>
+                </div>
+                
+                <!-- Leave Type Toggle -->
+                <div class="form-group">
+                    <label class="form-label">Leave Type</label>
+                    <div class="flex border border-gray-300 rounded-md overflow-hidden">
+                        <button type="button" 
+                                class="flex-1 py-2 text-center transition"
+                                :class="absenceModal.form.leave_type === 'planned' ? 'bg-blue-100 text-blue-700 border-r border-blue-200' : 'bg-gray-50 text-gray-600'"
+                                @click="absenceModal.form.leave_type = 'planned'; updatePreview()">
+                            <i class="fas fa-calendar-alt mr-2"></i>Planned
+                        </button>
+                        <button type="button" 
+                                class="flex-1 py-2 text-center transition"
+                                :class="absenceModal.form.leave_type === 'unplanned' ? 'bg-orange-100 text-orange-700' : 'bg-gray-50 text-gray-600'"
+                                @click="absenceModal.form.leave_type = 'unplanned'; updatePreview()">
+                            <i class="fas fa-exclamation-circle mr-2"></i>Unplanned
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Dates -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">Start Date *</label>
+                        <input type="date" class="form-control" v-model="absenceModal.form.start_date" 
+                               required aria-required="true" aria-label="Start date"
+                               @change="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Date *</label>
+                        <input type="date" class="form-control" v-model="absenceModal.form.end_date" 
+                               required aria-required="true" aria-label="End date"
+                               @change="updatePreview()">
+                    </div>
+                </div>
+                
+                <!-- Auto-calculated Duration -->
+                <div v-if="absenceModal.form.start_date && absenceModal.form.end_date" 
+                     class="bg-gray-50 p-3 rounded-md">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium">Duration:</span>
+                        <span class="font-semibold">
+                            {{ calculateAbsenceDuration(absenceModal.form.start_date, absenceModal.form.end_date) }} days
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Reason Selection with Icons -->
+                <div class="form-group">
+                    <label class="form-label">Reason for Absence</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="reason-option" 
+                               :class="{ 'reason-selected': absenceModal.form.absence_reason === 'vacation' }">
+                            <input type="radio" v-model="absenceModal.form.absence_reason" value="vacation" 
+                                   class="hidden" @change="updatePreview()">
+                            <div class="flex items-center gap-2 p-3">
+                                <i class="fas fa-umbrella-beach text-blue-500"></i>
+                                <span>Vacation</span>
+                            </div>
+                        </label>
+                        
+                        <label class="reason-option" 
+                               :class="{ 'reason-selected': absenceModal.form.absence_reason === 'conference' }">
+                            <input type="radio" v-model="absenceModal.form.absence_reason" value="conference" 
+                                   class="hidden" @change="updatePreview()">
+                            <div class="flex items-center gap-2 p-3">
+                                <i class="fas fa-chalkboard-teacher text-green-500"></i>
+                                <span>Conference</span>
+                            </div>
+                        </label>
+                        
+                        <label class="reason-option" 
+                               :class="{ 'reason-selected': absenceModal.form.absence_reason === 'sick_leave' }">
+                            <input type="radio" v-model="absenceModal.form.absence_reason" value="sick_leave" 
+                                   class="hidden" @change="updatePreview()">
+                            <div class="flex items-center gap-2 p-3">
+                                <i class="fas fa-heartbeat text-red-500"></i>
+                                <span>Sick Leave</span>
+                            </div>
+                        </label>
+                        
+                        <label class="reason-option" 
+                               :class="{ 'reason-selected': absenceModal.form.absence_reason === 'training' }">
+                            <input type="radio" v-model="absenceModal.form.absence_reason" value="training" 
+                                   class="hidden" @change="updatePreview()">
+                            <div class="flex items-center gap-2 p-3">
+                                <i class="fas fa-graduation-cap text-purple-500"></i>
+                                <span>Training</span>
+                            </div>
+                        </label>
+                        
+                        <label class="reason-option" 
+                               :class="{ 'reason-selected': absenceModal.form.absence_reason === 'personal' }">
+                            <input type="radio" v-model="absenceModal.form.absence_reason" value="personal" 
+                                   class="hidden" @change="updatePreview()">
+                            <div class="flex items-center gap-2 p-3">
+                                <i class="fas fa-home text-yellow-500"></i>
+                                <span>Personal</span>
+                            </div>
+                        </label>
+                        
+                        <label class="reason-option" 
+                               :class="{ 'reason-selected': absenceModal.form.absence_reason === 'other' }">
+                            <input type="radio" v-model="absenceModal.form.absence_reason" value="other" 
+                                   class="hidden" @change="updatePreview()">
+                            <div class="flex items-center gap-2 p-3">
+                                <i class="fas fa-ellipsis-h text-gray-500"></i>
+                                <span>Other</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Coverage Section -->
+                <div class="form-group">
+                    <label class="form-label">Coverage Arranged</label>
+                    <div class="flex border border-gray-300 rounded-md overflow-hidden mb-3">
+                        <button type="button" 
+                                class="flex-1 py-2 text-center transition"
+                                :class="absenceModal.form.coverage_status === 'yes' ? 'bg-green-100 text-green-700 border-r border-green-200' : 'bg-gray-50 text-gray-600'"
+                                @click="absenceModal.form.coverage_status = 'yes'">
+                            <i class="fas fa-check-circle mr-2"></i>Yes
+                        </button>
+                        <button type="button" 
+                                class="flex-1 py-2 text-center transition"
+                                :class="absenceModal.form.coverage_status === 'no' ? 'bg-red-100 text-red-700 border-r border-red-200' : 'bg-gray-50 text-gray-600'"
+                                @click="absenceModal.form.coverage_status = 'no'">
+                            <i class="fas fa-times-circle mr-2"></i>No
+                        </button>
+                        <button type="button" 
+                                class="flex-1 py-2 text-center transition"
+                                :class="absenceModal.form.coverage_status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-50 text-gray-600'"
+                                @click="absenceModal.form.coverage_status = 'pending'">
+                            <i class="fas fa-clock mr-2"></i>Pending
+                        </button>
+                    </div>
+                    
+                    <!-- If coverage is "Yes", show staff dropdown -->
+                    <div v-if="absenceModal.form.coverage_status === 'yes'" class="mt-2">
+                        <label class="form-label">Covered by:</label>
+                        <select class="form-select" v-model="absenceModal.form.replacement_staff_id" 
+                                aria-label="Replacement staff">
+                            <option value="">Select covering staff</option>
+                            <option v-for="staff in availableReplacementStaff" :key="staff.id" :value="staff.id">
+                                {{ staff.full_name }}
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <!-- Coverage gap warning -->
+                    <div v-if="absenceModal.form.coverage_status === 'no'" 
+                         class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        This will create a coverage gap
+                    </div>
+                </div>
+                
+                <!-- Notes -->
+                <div class="form-group">
+                    <label class="form-label">Notes (Internal)</label>
+                    <textarea class="form-control" v-model="absenceModal.form.notes" rows="3" 
+                              placeholder="Optional notes about coverage, handover, etc."></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @click="absenceModal.show = false">Cancel</button>
+            <button class="btn btn-primary" @click="saveAbsence" 
+                    :disabled="!absenceModal.form.staff_member_id || !absenceModal.form.start_date">
+                <i class="fas fa-save"></i> {{ absenceModal.mode === 'add' ? 'Record Absence' : 'Save Changes' }}
+            </button>
+        </div>
+    </div>
+</div>
 
             <!-- MODAL 8: Add/Edit Department -->
             <div v-if="departmentModal.show" class="modal-overlay">
