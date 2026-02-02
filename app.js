@@ -590,20 +590,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
                 
-                const rotationModal = reactive({
-                    show: false,
-                    mode: 'add',
-                    form: {
-                        rotation_id: '',
-                        resident_id: '',
-                        training_unit_id: '',
-                        rotation_start_date: new Date().toISOString().split('T')[0],
-                        rotation_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        rotation_status: 'scheduled',
-                        rotation_category: 'clinical_rotation',
-                        supervising_attending_id: ''
-                    }
-                });
+            const rotationModal = reactive({
+  show: false,
+  mode: 'add',
+  form: {
+    rotation_id: '',
+    resident_id: '',
+    training_unit_id: '',
+    start_date: '',  // ✅ CHANGE FROM rotation_start_date
+    end_date: '',    // ✅ CHANGE FROM rotation_end_date
+    rotation_status: 'scheduled',
+    rotation_category: 'clinical_rotation',
+    supervising_attending_id: ''
+  }
+});
                 
                 const trainingUnitModal = reactive({
                     show: false,
@@ -1331,20 +1331,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     trainingUnitModal.show = true;
                 };
                 
-                const showAddRotationModal = () => {
-                    rotationModal.mode = 'add';
-                    rotationModal.form = {
-                        rotation_id: `ROT-${Date.now().toString().slice(-6)}`,
-                        resident_id: '',
-                        training_unit_id: '',
-                        rotation_start_date: new Date().toISOString().split('T')[0],
-                        rotation_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        rotation_status: 'scheduled',
-                        rotation_category: 'clinical_rotation',
-                        supervising_attending_id: ''
-                    };
-                    rotationModal.show = true;
-                };
+showAddRotationModal = () => {
+  rotationModal.mode = 'add';
+  rotationModal.form = {
+    rotation_id: `ROT-${Date.now().toString().slice(-6)}`,
+    resident_id: '',
+    training_unit_id: '',
+    start_date: new Date().toISOString().split('T')[0],  // ← CHANGED
+    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],  // ← CHANGED
+    rotation_status: 'scheduled',
+    rotation_category: 'clinical_rotation',
+    supervising_attending_id: ''
+  };
+  rotationModal.show = true;
+};
                 
 const showAddOnCallModal = () => {
   onCallModal.mode = 'add';
@@ -1554,79 +1554,79 @@ const saveMedicalStaff = async () => {
                     }
                 };
                 
-                const saveRotation = async () => {
-                    if (!rotationModal.form.resident_id) {
-                        showToast('Error', 'Please select a resident', 'error');
-                        return;
-                    }
-                    
-                    if (!rotationModal.form.training_unit_id) {
-                        showToast('Error', 'Please select a training unit', 'error');
-                        return;
-                    }
-                    
-                    if (!rotationModal.form.rotation_start_date) {
-                        showToast('Error', 'Please enter a start date', 'error');
-                        return;
-                    }
-                    
-                    if (!rotationModal.form.rotation_end_date) {
-                        showToast('Error', 'Please enter an end date', 'error');
-                        return;
-                    }
-                    
-                    const start = new Date(rotationModal.form.rotation_start_date);
-                    const end = new Date(rotationModal.form.rotation_end_date);
-                    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                        showToast('Error', 'Invalid date format. Please use YYYY-MM-DD', 'error');
-                        return;
-                    }
-                    
-                    if (end <= start) {
-                        showToast('Error', 'End date must be after start date', 'error');
-                        return;
-                    }
-                    
-                    saving.value = true;
-                    
-                    try {
-                        // FIXED: Send data with correct field names that server expects
-                        const rotationData = {
-                            rotation_id: rotationModal.form.rotation_id || EnhancedUtils.generateId('ROT'),
-                            resident_id: rotationModal.form.resident_id,
-                            training_unit_id: rotationModal.form.training_unit_id,
-                            supervising_attending_id: rotationModal.form.supervising_attending_id || null,
-                            // FIXED: Use exact field names from server schema
-                            start_date: rotationModal.form.rotation_start_date,  // ✅
-                            end_date: rotationModal.form.rotation_end_date,      // ✅
-                            rotation_category: rotationModal.form.rotation_category.toLowerCase(),
-                            rotation_status: rotationModal.form.rotation_status.toLowerCase()
-                        };
-                        
-                        console.log('📤 Sending rotation data to server:', rotationData);
-                        
-                        if (rotationModal.mode === 'add') {
-                            const result = await API.createRotation(rotationData);
-                            rotations.value.unshift(result);
-                            showToast('Success', 'Rotation scheduled successfully', 'success');
-                        } else {
-                            const result = await API.updateRotation(rotationModal.form.id, rotationData);
-                            const index = rotations.value.findIndex(r => r.id === result.id);
-                            if (index !== -1) rotations.value[index] = result;
-                            showToast('Success', 'Rotation updated successfully', 'success');
-                        }
-                        
-                        rotationModal.show = false;
-                        await loadRotations();
-                        updateDashboardStats();
-                        
-                    } catch (error) {
-                        console.error('❌ Rotation save error:', error);
-                        showToast('Error', error.message || 'Failed to save rotation', 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
+const saveRotation = async () => {
+    if (!rotationModal.form.resident_id) {
+        showToast('Error', 'Please select a resident', 'error');
+        return;
+    }
+    
+    if (!rotationModal.form.training_unit_id) {
+        showToast('Error', 'Please select a training unit', 'error');
+        return;
+    }
+    
+    if (!rotationModal.form.start_date) {
+        showToast('Error', 'Please enter a start date', 'error');
+        return;
+    }
+    
+    if (!rotationModal.form.end_date) {
+        showToast('Error', 'Please enter an end date', 'error');
+        return;
+    }
+    
+    // FIXED: Add time to dates for proper comparison
+    const start = new Date(rotationModal.form.start_date + 'T00:00:00');
+    const end = new Date(rotationModal.form.end_date + 'T23:59:59');
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        showToast('Error', 'Invalid date format. Please use YYYY-MM-DD', 'error');
+        return;
+    }
+    
+    if (end <= start) {
+        showToast('Error', 'End date must be after start date', 'error');
+        return;
+    }
+    
+    saving.value = true;
+    
+    try {
+        // FIXED: Use correct field names matching server schema
+        const rotationData = {
+            rotation_id: rotationModal.form.rotation_id || EnhancedUtils.generateId('ROT'),
+            resident_id: rotationModal.form.resident_id,
+            training_unit_id: rotationModal.form.training_unit_id,
+            supervising_attending_id: rotationModal.form.supervising_attending_id || null,
+            start_date: rotationModal.form.start_date,  // ✅ Fixed field name
+            end_date: rotationModal.form.end_date,      // ✅ Fixed field name
+            rotation_category: rotationModal.form.rotation_category.toLowerCase(),
+            rotation_status: rotationModal.form.rotation_status.toLowerCase()
+        };
+        
+        console.log('📤 Sending rotation data to server:', rotationData);
+        
+        if (rotationModal.mode === 'add') {
+            const result = await API.createRotation(rotationData);
+            rotations.value.unshift(result);
+            showToast('Success', 'Rotation scheduled successfully', 'success');
+        } else {
+            const result = await API.updateRotation(rotationModal.form.id, rotationData);
+            const index = rotations.value.findIndex(r => r.id === result.id);
+            if (index !== -1) rotations.value[index] = result;
+            showToast('Success', 'Rotation updated successfully', 'success');
+        }
+        
+        rotationModal.show = false;
+        await loadRotations();
+        updateDashboardStats();
+        
+    } catch (error) {
+        console.error('❌ Rotation save error:', error);
+        showToast('Error', error.message || 'Failed to save rotation', 'error');
+    } finally {
+        saving.value = false;
+    }
+};
     const saveOnCallSchedule = async () => {
     saving.value = true;
     try {
