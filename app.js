@@ -1348,16 +1348,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const showAddOnCallModal = () => {
                     onCallModal.mode = 'add';
-                   onCallModal.form = {
+                    onCallModal.form = {
   duty_date: new Date().toISOString().split('T')[0],
-  shift_type: 'primary',
-  start_time: '08:00',
-  end_time: '17:00',
+  shift_type: 'primary_call',  // ✅ Change from 'primary' to 'primary_call'
+  start_time: '15:00',
+  end_time: '8:00',
   primary_physician_id: '',
   backup_physician_id: '',
-  coverage_notes: 'emergency',  // ✅ Change from coverage_area to coverage_notes
-  schedule_id: `SCH-${Date.now().toString().slice(-6)}`  // ✅ Add schedule_id
+  coverage_notes: 'emergency',
+  schedule_id: `SCH-${Date.now().toString().slice(-6)}`
 };
+      
+
                     onCallModal.show = true;
                 };
                 
