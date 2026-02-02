@@ -1351,8 +1351,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     onCallModal.form = {
   duty_date: new Date().toISOString().split('T')[0],
   shift_type: 'primary_call',  // ✅ Change from 'primary' to 'primary_call'
-  start_time: '8:00',
-  end_time: '17:00',
+  start_time: '15:00',
+  end_time: '8:00',
   primary_physician_id: '',
   backup_physician_id: '',
   coverage_notes: 'emergency',
@@ -1622,30 +1622,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         saving.value = false;
                     }
                 };
-    const saveOnCallSchedule = async () => {
-    saving.value = true;
-    try {
-        // ADD THIS DEBUG LINE:
-        console.log('🔍 DEBUG - Sending on-call data:', onCallModal.form);
-        
-        if (onCallModal.mode === 'add') {
-            const result = await API.createOnCall(onCallModal.form);
-            onCallSchedule.value.unshift(result);
-            showToast('Success', 'On-call scheduled successfully', 'success');
-        } else {
-            const result = await API.updateOnCall(onCallModal.form.id, onCallModal.form);
-            const index = onCallSchedule.value.findIndex(s => s.id === result.id);
-            if (index !== -1) onCallSchedule.value[index] = result;
-            showToast('Success', 'On-call updated successfully', 'success');
-        }
-        onCallModal.show = false;
-        loadTodaysOnCall();
-    } catch (error) {
-        showToast('Error', error.message, 'error');
-    } finally {
-        saving.value = false;
-    }
-};
+                
+                const saveOnCallSchedule = async () => {
+                    saving.value = true;
+                    try {
+                        if (onCallModal.mode === 'add') {
+                            const result = await API.createOnCall(onCallModal.form);
+                            onCallSchedule.value.unshift(result);
+                            showToast('Success', 'On-call scheduled successfully', 'success');
+                        } else {
+                            const result = await API.updateOnCall(onCallModal.form.id, onCallModal.form);
+                            const index = onCallSchedule.value.findIndex(s => s.id === result.id);
+                            if (index !== -1) onCallSchedule.value[index] = result;
+                            showToast('Success', 'On-call updated successfully', 'success');
+                        }
+                        onCallModal.show = false;
+                        loadTodaysOnCall();
+                    } catch (error) {
+                        showToast('Error', error.message, 'error');
+                    } finally {
+                        saving.value = false;
+                    }
+                };
                 
                 const saveAbsence = async () => {
                     saving.value = true;
