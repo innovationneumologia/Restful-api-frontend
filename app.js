@@ -888,6 +888,21 @@ document.addEventListener('DOMContentLoaded', function() {
     );
     return rotation ? getTrainingUnitName(rotation.training_unit_id) : 'Not assigned';
 };
+                const getCurrentWard = (staffId) => {
+    const rotation = rotations.value.find(r => 
+        r.resident_id === staffId && r.rotation_status === 'active'
+    );
+    
+    if (rotation && rotation.training_unit_id) {
+        const unit = trainingUnits.value.find(u => u.id === rotation.training_unit_id);
+        if (unit) {
+            return unit.unit_name;
+        }
+    }
+    
+    return 'Not assigned';
+};
+
                 
                 const getStaffName = (staffId) => {
                     if (!staffId) return 'Not assigned';
@@ -2007,6 +2022,7 @@ const saveMedicalStaff = async () => {
                     rotations,
                     absences,
                     onCallSchedule,
+                    getCurrentWard,
                     announcements,
                     
                     // Live Status Data
