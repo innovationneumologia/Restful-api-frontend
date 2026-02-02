@@ -1,3 +1,4 @@
+
 // ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM v8.0 ============
 // COMPLETELY FIXED VERSION - 100% SERVER COMPATIBLE
 // ===================================================================
@@ -1346,19 +1347,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     rotationModal.show = true;
                 };
                 
-                const showAddOnCallModal = () => {
-                    onCallModal.mode = 'add';
-                    onCallModal.form = {
-                        duty_date: new Date().toISOString().split('T')[0],
-                        shift_type: 'primary',
-                        start_time: '08:00',
-                        end_time: '17:00',
-                        primary_physician_id: '',
-                        backup_physician_id: '',
-                        coverage_area: 'emergency'
-                    };
-                    onCallModal.show = true;
-                };
+const showAddOnCallModal = () => {
+  onCallModal.mode = 'add';
+  onCallModal.form = {
+    duty_date: new Date().toISOString().split('T')[0],
+    shift_type: 'primary_call',  // ← CONFIRM THIS IS SET
+    start_time: '08:00',
+    end_time: '17:00',
+    primary_physician_id: '',
+    backup_physician_id: '',
+    coverage_notes: 'emergency',
+    schedule_id: `SCH-${Date.now().toString().slice(-6)}`
+  };
+  
+  // ADD DEBUG:
+  console.log('🔍 Modal opened with shift_type:', onCallModal.form.shift_type);
+  
+  onCallModal.show = true;
+};
+      
+
                 
                 const showAddAbsenceModal = () => {
                     absenceModal.mode = 'add';
@@ -1464,44 +1472,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // ============ 14. FIXED SAVE FUNCTIONS ============
                 
-                const saveMedicalStaff = async () => {
-                    saving.value = true;
-                    try {
-                        // Prepare data with correct field names for server
-                        const staffData = {
-                            full_name: medicalStaffModal.form.full_name,
-                            staff_type: medicalStaffModal.form.staff_type,
-                            staff_id: medicalStaffModal.form.staff_id || EnhancedUtils.generateId('MD'),
-                            employment_status: medicalStaffModal.form.employment_status || 'active',
-                            professional_email: medicalStaffModal.form.professional_email,
-                            department_id: medicalStaffModal.form.department_id || null,
-                            academic_degree: medicalStaffModal.form.academic_degree || null,
-                            specialization: medicalStaffModal.form.specialization || null,
-                            // FIXED: Map resident_year to training_year (server expects training_year)
-                            training_year: medicalStaffModal.form.resident_year || null,
-                            clinical_certificate: medicalStaffModal.form.clinical_certificate || null,
-                            certificate_status: medicalStaffModal.form.certificate_status || null
-                        };
-                        
-                        if (medicalStaffModal.mode === 'add') {
-                            const result = await API.createMedicalStaff(staffData);
-                            medicalStaff.value.unshift(result);
-                            showToast('Success', 'Medical staff added successfully', 'success');
-                        } else {
-                            const result = await API.updateMedicalStaff(medicalStaffModal.form.id, staffData);
-                            const index = medicalStaff.value.findIndex(s => s.id === result.id);
-                            if (index !== -1) medicalStaff.value[index] = result;
-                            showToast('Success', 'Medical staff updated successfully', 'success');
-                        }
-                        medicalStaffModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        console.error('Save medical staff error:', error);
-                        showToast('Error', error.message || 'Failed to save medical staff', 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
+const saveMedicalStaff = async () => {
+    saving.value = true;
+    try {
+        // Prepare data with correct field names for server
+        const staffData = {
+            full_name: medicalStaffModal.form.full_name,
+            staff_type: medicalStaffModal.form.staff_type,
+            staff_id: medicalStaffModal.form.staff_id || EnhancedUtils.generateId('MD'),
+            employment_status: medicalStaffModal.form.employment_status || 'active',
+            professional_email: medicalStaffModal.form.professional_email,
+            department_id: medicalStaffModal.form.department_id || null,
+            academic_degree: medicalStaffModal.form.academic_degree || null,
+            specialization: medicalStaffModal.form.specialization || null,
+            // FIXED: Convert string to integer for database
+            training_year: medicalStaffModal.form.resident_year ? 
+                parseInt(medicalStaffModal.form.resident_year, 10) : null,
+            clinical_certificate: medicalStaffModal.form.clinical_certificate || null,
+            certificate_status: medicalStaffModal.form.certificate_status || null
+        };
+        
+        if (medicalStaffModal.mode === 'add') {
+            const result = await API.createMedicalStaff(staffData);
+            medicalStaff.value.unshift(result);
+            showToast('Success', 'Medical staff added successfully', 'success');
+        } else {
+            const result = await API.updateMedicalStaff(medicalStaffModal.form.id, staffData);
+            const index = medicalStaff.value.findIndex(s => s.id === result.id);
+            if (index !== -1) medicalStaff.value[index] = result;
+            showToast('Success', 'Medical staff updated successfully', 'success');
+        }
+        medicalStaffModal.show = false;
+        updateDashboardStats();
+    } catch (error) {
+        console.error('Save medical staff error:', error);
+        showToast('Error', error.message || 'Failed to save medical staff', 'error');
+    } finally {
+        saving.value = false;
+    }
+};
                 
                 const saveDepartment = async () => {
                     saving.value = true;
@@ -1619,28 +1628,30 @@ document.addEventListener('DOMContentLoaded', function() {
                         saving.value = false;
                     }
                 };
-                
-                const saveOnCallSchedule = async () => {
-                    saving.value = true;
-                    try {
-                        if (onCallModal.mode === 'add') {
-                            const result = await API.createOnCall(onCallModal.form);
-                            onCallSchedule.value.unshift(result);
-                            showToast('Success', 'On-call scheduled successfully', 'success');
-                        } else {
-                            const result = await API.updateOnCall(onCallModal.form.id, onCallModal.form);
-                            const index = onCallSchedule.value.findIndex(s => s.id === result.id);
-                            if (index !== -1) onCallSchedule.value[index] = result;
-                            showToast('Success', 'On-call updated successfully', 'success');
-                        }
-                        onCallModal.show = false;
-                        loadTodaysOnCall();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
+    const saveOnCallSchedule = async () => {
+    saving.value = true;
+    try {
+        // ADD THIS DEBUG LINE:
+        console.log('🔍 DEBUG - Sending on-call data:', onCallModal.form);
+        
+        if (onCallModal.mode === 'add') {
+            const result = await API.createOnCall(onCallModal.form);
+            onCallSchedule.value.unshift(result);
+            showToast('Success', 'On-call scheduled successfully', 'success');
+        } else {
+            const result = await API.updateOnCall(onCallModal.form.id, onCallModal.form);
+            const index = onCallSchedule.value.findIndex(s => s.id === result.id);
+            if (index !== -1) onCallSchedule.value[index] = result;
+            showToast('Success', 'On-call updated successfully', 'success');
+        }
+        onCallModal.show = false;
+        loadTodaysOnCall();
+    } catch (error) {
+        showToast('Error', error.message, 'error');
+    } finally {
+        saving.value = false;
+    }
+};
                 
                 const saveAbsence = async () => {
                     saving.value = true;
