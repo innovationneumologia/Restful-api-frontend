@@ -1978,6 +1978,9 @@ const saveMedicalStaff = async () => {
                     }, 
                     { deep: true }
                 );
+                const formatTimeAgo = (dateString) => {
+    return EnhancedUtils.formatRelativeTime(dateString);
+};
                 
                 // ============ 19. RETURN EXPOSED DATA/METHODS ============
                 return {
@@ -2040,6 +2043,7 @@ const saveMedicalStaff = async () => {
                     departmentModal,
                     userProfileModal,
                     confirmationModal,
+                     formatTimeAgo,
                     
                     // Core Functions
                     formatDate: EnhancedUtils.formatDate,
@@ -2133,7 +2137,6 @@ const saveMedicalStaff = async () => {
                     saveAbsence,
                     saveCommunication,
                     saveUserProfile,
-                    formatTimeAgo,
 
                     
                     // Permission Functions
