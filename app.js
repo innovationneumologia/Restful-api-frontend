@@ -2133,6 +2133,8 @@ const saveMedicalStaff = async () => {
                     saveAbsence,
                     saveCommunication,
                     saveUserProfile,
+                    formatTimeAgo,
+
                     
                     // Permission Functions
                     hasPermission,
