@@ -1589,8 +1589,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             training_unit_id: rotationModal.form.training_unit_id,
                             supervising_attending_id: rotationModal.form.supervising_attending_id || null,
                             // FIXED: Use exact field names from server schema
-                            rotation_start_date: rotationModal.form.rotation_start_date,
-                            rotation_end_date: rotationModal.form.rotation_end_date,
+                            start_date: rotationModal.form.rotation_start_date,  // ✅
+                            end_date: rotationModal.form.rotation_end_date,      // ✅
                             rotation_category: rotationModal.form.rotation_category.toLowerCase(),
                             rotation_status: rotationModal.form.rotation_status.toLowerCase()
                         };
