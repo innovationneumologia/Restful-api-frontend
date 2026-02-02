@@ -4248,11 +4248,10 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Shift Type *</label>
-                                <select class="form-select" v-model="onCallModal.form.shift_type" 
-                                        required aria-required="true" aria-label="Shift type">
-                                    <option value="primary">Primary Call</option>
-                                    <option value="backup">Backup Call</option>
-                                </select>
+                               <select v-model="onCallModal.form.shift_type">
+    <option value="primary_call">Primary Call</option>  <!-- ✅ -->
+    <option value="backup_call">Backup Call</option>    <!-- ✅ -->
+</select>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Primary Physician *</label>
