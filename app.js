@@ -1562,26 +1562,39 @@ const saveMedicalStaff = async () => {
                 };
                 
                 const saveTrainingUnit = async () => {
-                    saving.value = true;
-                    try {
-                        if (trainingUnitModal.mode === 'add') {
-                            const result = await API.createTrainingUnit(trainingUnitModal.form);
-                            trainingUnits.value.unshift(result);
-                            showToast('Success', 'Training unit created successfully', 'success');
-                        } else {
-                            const result = await API.updateTrainingUnit(trainingUnitModal.form.id, trainingUnitModal.form);
-                            const index = trainingUnits.value.findIndex(u => u.id === result.id);
-                            if (index !== -1) trainingUnits.value[index] = result;
-                            showToast('Success', 'Training unit updated successfully', 'success');
-                        }
-                        trainingUnitModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
+  saving.value = true;
+  try {
+    // Prepare data with correct field names
+    const unitData = {
+      unit_name: trainingUnitModal.form.unit_name,
+      unit_code: trainingUnitModal.form.unit_code,
+      department_id: trainingUnitModal.form.department_id,
+      supervisor_id: trainingUnitModal.form.supervising_attending_id || null,
+      maximum_residents: trainingUnitModal.form.maximum_residents,  // ✅ Correct
+      unit_status: trainingUnitModal.form.unit_status,
+      description: trainingUnitModal.form.specialty || ''
+    };
+    
+    if (trainingUnitModal.mode === 'add') {
+      const result = await API.createTrainingUnit(unitData);
+      trainingUnits.value.unshift(result);
+      showToast('Success', 'Training unit created successfully', 'success');
+    } else {
+      const result = await API.updateTrainingUnit(trainingUnitModal.form.id, unitData);
+      const index = trainingUnits.value.findIndex(u => u.id === result.id);
+      if (index !== -1) trainingUnits.value[index] = result;
+      showToast('Success', 'Training unit updated successfully', 'success');
+    }
+    
+    trainingUnitModal.show = false;
+    updateDashboardStats();
+    
+  } catch (error) {
+    showToast('Error', error.message, 'error');
+  } finally {
+    saving.value = false;
+  }
+};
                 
                 const saveRotation = async () => {
                     if (!rotationModal.form.resident_id) {
