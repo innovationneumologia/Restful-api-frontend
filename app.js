@@ -882,6 +882,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     const dept = departments.value.find(d => d.id === departmentId);
                     return dept ? dept.name : 'Unknown Department';
                 };
+                const getCurrentUnit = (staffId) => {
+    const rotation = rotations.value.find(r => 
+        r.resident_id === staffId && r.rotation_status === 'active'
+    );
+    return rotation ? getTrainingUnitName(rotation.training_unit_id) : 'Not assigned';
+};
                 
                 const getStaffName = (staffId) => {
                     if (!staffId) return 'Not assigned';
