@@ -212,12 +212,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 } catch { return []; }
             }
             
-            async getEnhancedMedicalStaff() {
-                try {
-                    const data = await this.request('/api/medical-staff/enhanced');
-                    return EnhancedUtils.ensureArray(data.data || data);
-                } catch { return []; }
-            }
+       async getEnhancedMedicalStaff() {
+    try {
+        // Try the enhanced endpoint, fall back to regular
+        const data = await this.request('/api/medical-staff');
+        return EnhancedUtils.ensureArray(data);
+    } catch { 
+        // Fallback to regular endpoint
+        const data = await this.request('/api/medical-staff');
+        return EnhancedUtils.ensureArray(data);
+    }
+}
             
             async getMedicalStaffById(id) {
                 try {
