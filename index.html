@@ -2568,205 +2568,276 @@
             </button>
             
             <!-- Live Statistics Sidebar -->
-            <div class="live-stats-sidebar" :class="{ open: statsSidebarOpen }" role="complementary" aria-label="Live department statistics">
-                <div class="live-stats-header">
-                    <div class="live-stats-title">
-                        <i class="fas fa-chart-line"></i>
-                        Live Clinical Status
-                        <span class="badge badge-primary ml-2" v-if="clinicalStatus && !isStatusExpired(clinicalStatus.expires_at)">LIVE</span>
-                        <span class="badge badge-warning ml-2" v-if="clinicalStatus && isStatusExpired(clinicalStatus.expires_at)">EXPIRED</span>
-                    </div>
-                    <button class="live-stats-close" @click="statsSidebarOpen = false" aria-label="Close statistics sidebar">
-                        <i class="fas fa-times"></i>
-                    </button>
+            <!-- Live Statistics Sidebar - ENHANCED VISUALLY -->
+<div class="live-stats-sidebar" :class="{ open: statsSidebarOpen }" role="complementary" aria-label="Live clinical status">
+    <div class="live-stats-header">
+        <div class="header-title">
+            <i class="fas fa-heartbeat"></i>
+            <div class="title-content">
+                <h3>Clinical Status</h3>
+                <p class="header-subtitle">Real-time department updates</p>
+            </div>
+        </div>
+        <button class="header-close" @click="statsSidebarOpen = false" aria-label="Close panel">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Status Timeline -->
+    <div class="status-timeline">
+        <div class="timeline-header">
+            <h4><i class="fas fa-history"></i> Recent Updates</h4>
+            <button class="timeline-refresh" @click="refreshStatus" aria-label="Refresh status">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+        
+        <div class="timeline-items">
+            <div v-if="isLoadingStatus" class="timeline-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading status...</span>
+            </div>
+            
+            <div v-else-if="clinicalStatus" class="timeline-item current-status">
+                <div class="timeline-marker">
+                    <div class="marker-dot dot-active"></div>
+                    <div class="marker-line"></div>
                 </div>
-                
-                <!-- EDIT MODE - For authorized staff -->
-                <div v-if="hasPermission('communications', 'create') && liveStatsEditMode" class="live-stats-edit-mode">
-                    <div v-if="isLoadingStatus" class="p-4 text-center">
-                        <i class="fas fa-spinner fa-spin fa-lg text-blue-600"></i>
-                        <p class="mt-2 text-sm text-gray-600">Saving status update...</p>
-                    </div>
-                    
-                    <div v-else>
-                        <div class="form-group">
-                            <label class="form-label">Clinical Status Update *</label>
-                            <textarea 
-                                v-model="newStatusText" 
-                                class="form-control form-textarea" 
-                                rows="4" 
-                                placeholder="Enter current clinical status"
-                                maxlength="500"
-                                required
-                                :disabled="isLoadingStatus"></textarea>
-                            <small class="text-muted">Maximum 500 characters</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Updated By *</label>
-                            <select 
-                                v-model="selectedAuthorId" 
-                                class="form-select" 
-                                :disabled="isLoadingStatus || activeMedicalStaff.length === 0"
-                                required>
-                                <option value="">Select Staff Member</option>
-                                <option 
-                                    v-for="staff in activeMedicalStaff" 
-                                    :key="staff.id" 
-                                    :value="staff.id">
-                                    {{ staff.full_name }} ({{ formatStaffType(staff.staff_type) }})
-                                </option>
-                            </select>
-                            <small v-if="activeMedicalStaff.length === 0" class="text-danger">
-                                No active medical staff found
-                            </small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Visible For (Hours) *</label>
-                            <select 
-                                v-model="expiryHours" 
-                                class="form-select" 
-                                :disabled="isLoadingStatus"
-                                required>
-                                <option value="2">2 hours</option>
-                                <option value="4">4 hours</option>
-                                <option value="8" selected>8 hours</option>
-                                <option value="12">12 hours</option>
-                                <option value="24">24 hours</option>
-                            </select>
-                            <small class="text-muted">Status will automatically expire</small>
-                        </div>
-                        
-                        <div class="flex gap-2 mt-4">
-                            <button 
-                                class="btn btn-outline flex-1" 
-                                @click="liveStatsEditMode = false"
-                                :disabled="isLoadingStatus">
-                                <i class="fas fa-times"></i> Cancel
-                            </button>
-                            <button 
-                                class="btn btn-primary flex-1" 
-                                @click="saveClinicalStatus" 
-                                :disabled="!newStatusText.trim() || !selectedAuthorId || isLoadingStatus">
-                                <i class="fas fa-paper-plane"></i> 
-                                {{ isLoadingStatus ? 'Saving...' : 'Publish Status' }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- VIEW MODE - All Staff -->
-                <div v-else>
-                    <!-- Edit Button -->
-                    <div v-if="hasPermission('communications', 'create')" class="mb-4">
-                        <button v-if="clinicalStatus" 
-                                class="btn btn-outline w-100" 
-                                @click="showCreateStatusModal"
-                                :disabled="isLoadingStatus">
-                            <i class="fas fa-edit"></i> Update Status
-                        </button>
-                        <button v-else 
-                                class="btn btn-primary w-100" 
-                                @click="showCreateStatusModal"
-                                :disabled="isLoadingStatus">
-                            <i class="fas fa-plus"></i> Add Status
-                        </button>
-                    </div>
-                    
-                    <!-- Status Display -->
-                    <div class="space-y-4">
-                        <div v-if="isLoadingStatus" class="text-center py-4">
-                            <i class="fas fa-spinner fa-spin text-blue-600"></i>
-                            <p class="text-sm text-gray-600 mt-2">Loading...</p>
-                        </div>
-                        
-                        <div v-else-if="clinicalStatus" class="bg-white rounded-lg border p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-semibold">Current Status</h4>
-                                <span class="text-xs text-gray-500">{{ formatRelativeTime(clinicalStatus.created_at) }}</span>
+                <div class="timeline-content">
+                    <div class="status-card current">
+                        <div class="status-header">
+                            <div class="status-title">Current Status</div>
+                            <div class="status-badge" :class="getStatusBadgeClass(clinicalStatus)">
+                                {{ isStatusExpired(clinicalStatus.expires_at) ? 'EXPIRED' : 'ACTIVE' }}
                             </div>
-                            <p class="text-sm text-gray-700 mb-3">{{ clinicalStatus.status_text }}</p>
-                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                        </div>
+                        <div class="status-text">{{ clinicalStatus.status_text }}</div>
+                        <div class="status-footer">
+                            <div class="status-author">
                                 <i class="fas fa-user-md"></i>
                                 <span>{{ clinicalStatus.author_name }}</span>
-                                <span class="mx-1">•</span>
+                            </div>
+                            <div class="status-time">
                                 <i class="fas fa-clock"></i>
+                                <span>{{ formatRelativeTime(clinicalStatus.created_at) }}</span>
+                                <span class="time-divider">•</span>
                                 <span>Expires {{ formatTime(clinicalStatus.expires_at) }}</span>
                             </div>
-                            <div v-if="isStatusExpired(clinicalStatus.expires_at)" 
-                                 class="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>
-                                Status expired
-                            </div>
                         </div>
-                        
-                        <div v-else class="text-center py-6 bg-gray-50 rounded-lg">
-                            <i class="fas fa-stethoscope text-gray-300 text-xl mb-2"></i>
-                            <p class="text-sm text-gray-600 mb-3">No clinical status</p>
-                        </div>
-                    </div>
-                </div>
-                    
-                <!-- Active Clinicians Count -->
-                <div class="active-clinicians-card">
-                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Active Clinicians</h4>
-                    <div class="clinician-count-grid">
-                        <div class="clinician-count-item">
-                            <div class="clinician-count-value">{{ systemStats.activeAttending || 0 }}</div>
-                            <div class="clinician-count-label">Attending</div>
-                        </div>
-                        <div class="clinician-count-item">
-                            <div class="clinician-count-value">{{ systemStats.activeResidents || 0 }}</div>
-                            <div class="clinician-count-label">Residents</div>
-                        </div>
-                        <div class="clinician-count-item">
-                            <div class="clinician-count-value">{{ systemStats.onCallNow || 0 }}</div>
-                            <div class="clinician-count-label">On-call</div>
-                        </div>
-                        <div class="clinician-count-item">
-                            <div class="clinician-count-value">{{ systemStats.inSurgery || 0 }}</div>
-                            <div class="clinician-count-label">In Surgery</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- System Information -->
-                <div class="bg-gray-50 rounded-md p-4">
-                    <h4 class="text-sm font-semibold text-gray-700 mb-3">System Information</h4>
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs text-gray-600">Next Shift Change:</span>
-                            <span class="text-xs font-medium">{{ systemStats.nextShiftChange ? formatTime(systemStats.nextShiftChange) : 'N/A' }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs text-gray-600">Pending Approvals:</span>
-                            <span class="text-xs font-medium">{{ systemStats.pendingApprovals || 0 }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs text-gray-600">Unread Announcements:</span>
-                            <span class="text-xs font-medium">{{ unreadAnnouncements || 0 }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs text-gray-600">Status Updates Today:</span>
-                            <span class="text-xs font-medium">{{ systemStats.statusUpdatesToday || 0 }}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Quick Actions -->
-                <div v-if="hasPermission('communications', 'create')" class="mt-4">
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Quick Actions</h4>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button class="btn btn-sm btn-outline" @click="liveStatsEditMode = true">
-                            <i class="fas fa-edit"></i> Update Status
-                        </button>
-                        <button class="btn btn-sm btn-outline" @click="showCommunicationsModal">
-                            <i class="fas fa-bullhorn"></i> Announcement
-                        </button>
                     </div>
                 </div>
             </div>
+            
+            <div v-else class="timeline-item empty-status">
+                <div class="timeline-marker">
+                    <div class="marker-dot dot-inactive"></div>
+                </div>
+                <div class="timeline-content">
+                    <div class="empty-state-card">
+                        <i class="fas fa-stethoscope"></i>
+                        <h5>No Status Available</h5>
+                        <p>No clinical status has been set</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Metrics Dashboard -->
+    <div class="metrics-dashboard">
+        <div class="dashboard-header">
+            <h4><i class="fas fa-chart-bar"></i> Key Metrics</h4>
+            <div class="dashboard-time">Last updated: {{ formatTime(currentTime) }}</div>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon">
+                        <i class="fas fa-procedures"></i>
+                    </div>
+                    <div class="metric-title">Patient Load</div>
+                </div>
+                <div class="metric-value">{{ systemStats.activePatients || 0 }}</div>
+                <div class="metric-details">
+                    <div class="detail-item">
+                        <span class="detail-label">ICU:</span>
+                        <span class="detail-value">{{ systemStats.icuPatients || 0 }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Ward:</span>
+                        <span class="detail-value">{{ systemStats.wardPatients || 0 }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <div class="metric-title">Staff Coverage</div>
+                </div>
+                <div class="metric-value">{{ systemStats.activeStaff || 0 }}</div>
+                <div class="metric-details">
+                    <div class="detail-item">
+                        <span class="detail-label">On Call:</span>
+                        <span class="detail-value">{{ systemStats.onCallNow || 0 }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">In Surgery:</span>
+                        <span class="detail-value">{{ systemStats.inSurgery || 0 }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <div class="metric-title">Bed Status</div>
+                </div>
+                <div class="metric-value">{{ systemStats.availableBeds || 0 }}</div>
+                <div class="metric-details">
+                    <div class="detail-item">
+                        <span class="detail-label">ICU %:</span>
+                        <span class="detail-value">{{ systemStats.icuOccupancy || '0' }}%</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Ward %:</span>
+                        <span class="detail-value">{{ systemStats.wardOccupancy || '0' }}%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="metric-title">Alerts</div>
+                </div>
+                <div class="metric-value">{{ systemAlerts.length }}</div>
+                <div class="metric-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Active:</span>
+                        <span class="detail-value">{{ activeAlertsCount }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Pending:</span>
+                        <span class="detail-value">{{ systemStats.pendingApprovals || 0 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Availability -->
+    <div class="staff-availability">
+        <div class="availability-header">
+            <h4><i class="fas fa-users"></i> Team Status</h4>
+            <div class="availability-total">{{ systemStats.totalStaff || 0 }} total</div>
+        </div>
+        
+        <div class="availability-grid">
+            <div class="availability-card">
+                <div class="availability-icon attending">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <div class="availability-content">
+                    <div class="availability-role">Attending</div>
+                    <div class="availability-count">{{ systemStats.activeAttending || 0 }}</div>
+                    <div class="availability-status">active</div>
+                </div>
+            </div>
+            
+            <div class="availability-card">
+                <div class="availability-icon resident">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div class="availability-content">
+                    <div class="availability-role">Residents</div>
+                    <div class="availability-count">{{ systemStats.activeResidents || 0 }}</div>
+                    <div class="availability-status">active</div>
+                </div>
+            </div>
+            
+            <div class="availability-card">
+                <div class="availability-icon oncall">
+                    <i class="fas fa-phone-alt"></i>
+                </div>
+                <div class="availability-content">
+                    <div class="availability-role">On Call</div>
+                    <div class="availability-count">{{ systemStats.onCallNow || 0 }}</div>
+                    <div class="availability-status">available</div>
+                </div>
+            </div>
+            
+            <div class="availability-card">
+                <div class="availability-icon unavailable">
+                    <i class="fas fa-user-slash"></i>
+                </div>
+                <div class="availability-content">
+                    <div class="availability-role">Unavailable</div>
+                    <div class="availability-count">{{ systemStats.onLeaveStaff || 0 }}</div>
+                    <div class="availability-status">off-duty</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Actions -->
+    <div class="status-actions">
+        <div v-if="hasPermission('communications', 'create')" class="actions-section">
+            <div class="actions-header">
+                <h4><i class="fas fa-edit"></i> Update Status</h4>
+            </div>
+            
+            <div class="action-buttons">
+                <button v-if="clinicalStatus" 
+                        class="btn btn-outline btn-action"
+                        @click="showCreateStatusModal"
+                        :disabled="isLoadingStatus">
+                    <i class="fas fa-edit"></i>
+                    <span>Update</span>
+                </button>
+                <button v-else 
+                        class="btn btn-primary btn-action"
+                        @click="showCreateStatusModal"
+                        :disabled="isLoadingStatus">
+                    <i class="fas fa-plus"></i>
+                    <span>Create Status</span>
+                </button>
+                
+                <button class="btn btn-ghost btn-action"
+                        @click="showCommunicationsModal"
+                        :disabled="isLoadingStatus">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Announce</span>
+                </button>
+            </div>
+            
+            <div v-if="clinicalStatus && !isStatusExpired(clinicalStatus.expires_at)" 
+                 class="status-expiry">
+                <div class="expiry-header">
+                    <i class="fas fa-clock"></i>
+                    <span>Expires in</span>
+                </div>
+                <div class="expiry-timer">
+                    {{ calculateTimeRemaining(clinicalStatus.expires_at) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Toggle Button -->
+<button class="stats-toggle-btn" @click="toggleStatsSidebar" 
+        :aria-label="statsSidebarOpen ? 'Close clinical status' : 'Open clinical status'">
+    <i class="fas" :class="statsSidebarOpen ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+    <span class="toggle-label">Status</span>
+</button>
 
             <!-- Main Content Area -->
             <main class="main-content" :class="{ 'main-content-expanded': sidebarCollapsed }">
@@ -4106,212 +4177,322 @@
             </div>
 
             <!-- MODAL 3: Communications with Stats Update Tab -->
-            <div v-if="communicationsModal.show" class="modal-overlay">
-                <div class="modal-container">
-                    <div class="modal-header">
-                        <div class="modal-title">
-                            <i class="fas fa-bullhorn"></i>
-                            Department Communications
-                        </div>
-                        <button class="modal-close" @click="communicationsModal.show = false" aria-label="Close modal">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="modal-body">
-                        <div class="modal-tabs">
-                            <button class="modal-tab" :class="{ active: communicationsModal.activeTab === 'announcement' }" 
-                                    @click="communicationsModal.activeTab = 'announcement'">
-                                <i class="fas fa-bullhorn"></i> Announcement
-                            </button>
-                            <button class="modal-tab" :class="{ active: communicationsModal.activeTab === 'stats_update' }" 
-                                    @click="communicationsModal.activeTab = 'stats_update'" v-if="hasPermission('communications', 'create')">
-                                <i class="fas fa-chart-line"></i> Live Stats Update
-                            </button>
-                        </div>
+            <!-- MODAL 3: Communications - ENHANCED VISUALLY -->
+<div v-if="communicationsModal.show" class="modal-overlay">
+    <div class="modal-container modal-wide">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fas fa-bullhorn"></i>
+                <div class="title-content">
+                    <h3>Department Communications</h3>
+                    <p class="modal-subtitle">Share updates and announcements</p>
+                </div>
+            </div>
+            <button class="modal-close" @click="communicationsModal.show = false" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Tab Navigation -->
+            <div class="comms-tabs">
+                <button class="comms-tab" :class="{ active: communicationsModal.activeTab === 'announcement' }" 
+                        @click="communicationsModal.activeTab = 'announcement'">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Announcement</span>
+                </button>
+                <button class="comms-tab" :class="{ active: communicationsModal.activeTab === 'stats_update' }" 
+                        @click="communicationsModal.activeTab = 'stats_update'" 
+                        v-if="hasPermission('communications', 'create')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Clinical Update</span>
+                </button>
+            </div>
 
-                        <!-- Announcement Tab -->
-                        <div v-if="communicationsModal.activeTab === 'announcement'" class="mt-6">
-                            <div class="space-y-4">
-                                <div class="form-group">
-                                    <label class="form-label">Title *</label>
-                                    <input type="text" class="form-control" v-model="communicationsModal.form.title" 
-                                           required aria-required="true" aria-label="Announcement title">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Content *</label>
-                                    <textarea class="form-control form-textarea" v-model="communicationsModal.form.content" 
-                                              rows="4" required aria-required="true" aria-label="Announcement content"></textarea>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="form-group">
-                                        <label class="form-label">Priority Level</label>
-                                        <select class="form-select" v-model="communicationsModal.form.priority" aria-label="Priority level">
-                                            <option value="normal">Normal</option>
-                                            <option value="high">High</option>
-                                            <option value="urgent">Urgent</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Target Audience</label>
-                                        <select class="form-select" v-model="communicationsModal.form.target_audience" 
-                                                aria-label="Target audience">
-                                            <option value="all_staff">All Staff</option>
-                                            <option value="medical_staff">Medical Staff Only</option>
-                                            <option value="residents">Residents Only</option>
-                                            <option value="attendings">Attending Physicians Only</option>
-                                        </select>
-                                    </div>
-                                </div>
+            <!-- Announcement Tab -->
+            <div v-if="communicationsModal.activeTab === 'announcement'" class="comms-content">
+                <div class="form-preview">
+                    <div class="preview-card" v-if="communicationsModal.form.title || communicationsModal.form.content">
+                        <div class="preview-header">
+                            <div class="preview-badge" :class="'badge-' + (communicationsModal.form.priority || 'normal')">
+                                {{ (communicationsModal.form.priority || 'normal') | capitalize }}
                             </div>
+                            <div class="preview-time">Now</div>
                         </div>
-
-                        <!-- Stats Update Tab -->
-                        <div v-if="communicationsModal.activeTab === 'stats_update'" class="mt-6">
-                            <div class="stats-update-section">
-                                <div class="update-type-buttons">
-                                    <button class="update-type-btn" :class="{ active: communicationsModal.form.updateType === 'daily' }"
-                                            @click="communicationsModal.form.updateType = 'daily'">
-                                        <i class="fas fa-sun"></i>
-                                        Daily Status
-                                    </button>
-                                    <button class="update-type-btn" :class="{ active: communicationsModal.form.updateType === 'metric' }"
-                                            @click="communicationsModal.form.updateType = 'metric'">
-                                        <i class="fas fa-chart-bar"></i>
-                                        Metric Update
-                                    </button>
-                                    <button class="update-type-btn" :class="{ active: communicationsModal.form.updateType === 'alert' }"
-                                            @click="communicationsModal.form.updateType = 'alert'">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                        Alert Status
-                                    </button>
-                                </div>
-
-                                <!-- Daily Status Update -->
-                                <div v-if="communicationsModal.form.updateType === 'daily'" class="space-y-4">
-                                    <div class="form-group">
-                                        <label class="form-label">Daily Status Summary *</label>
-                                        <textarea class="form-control form-textarea" v-model="communicationsModal.form.dailySummary" 
-                                                  rows="3" placeholder="Brief summary of department status..." 
-                                                  required aria-required="true" aria-label="Daily status summary"></textarea>
-                                        <small class="text-muted">This will appear in the Live Statistics panel</small>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label class="form-label">Key Highlights</label>
-                                        <div class="space-y-2">
-                                            <input type="text" class="form-control" v-model="communicationsModal.form.highlight1" 
-                                                   placeholder="Highlight 1" aria-label="Highlight 1">
-                                            <input type="text" class="form-control" v-model="communicationsModal.form.highlight2" 
-                                                   placeholder="Highlight 2" aria-label="Highlight 2">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label class="form-label">Set Alert Status</label>
-                                        <div class="alert-options-grid">
-                                            <label class="alert-option">
-                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.alerts.erBusy">
-                                                <span>ER Busy</span>
-                                            </label>
-                                            <label class="alert-option">
-                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.alerts.icuFull">
-                                                <span>ICU at Capacity</span>
-                                            </label>
-                                            <label class="alert-option">
-                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.alerts.wardFull">
-                                                <span>Ward Full</span>
-                                            </label>
-                                            <label class="alert-option">
-                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.alerts.staffShortage">
-                                                <span>Staff Shortage</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Metric Update -->
-                                <div v-if="communicationsModal.form.updateType === 'metric'" class="space-y-4">
-                                    <div class="form-group">
-                                        <label class="form-label">Metric Information</label>
-                                        <div class="metric-inputs-grid">
-                                            <div class="space-y-2">
-                                                <input type="text" class="form-control" v-model="communicationsModal.form.metricName" 
-                                                       placeholder="Metric name" aria-label="Metric name">
-                                                <input type="text" class="form-control" v-model="communicationsModal.form.metricValue" 
-                                                       placeholder="Current value" aria-label="Metric value">
-                                            </div>
-                                            <div class="space-y-2">
-                                                <select class="form-select" v-model="communicationsModal.form.metricTrend" aria-label="Metric trend">
-                                                    <option value="improved">Improved ↑</option>
-                                                    <option value="worsened">Worsened ↓</option>
-                                                    <option value="stable">Stable →</option>
-                                                </select>
-                                                <input type="text" class="form-control" v-model="communicationsModal.form.metricChange" 
-                                                       placeholder="Change amount" aria-label="Change amount">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label class="form-label">Context Note</label>
-                                        <textarea class="form-control" v-model="communicationsModal.form.metricNote" 
-                                                  rows="2" placeholder="Brief context about this metric..." aria-label="Metric context"></textarea>
-                                    </div>
-                                </div>
-
-                                <!-- Alert Status -->
-                                <div v-if="communicationsModal.form.updateType === 'alert'" class="space-y-4">
-                                    <div class="form-group">
-                                        <label class="form-label">Alert Level</label>
-                                        <select class="form-select" v-model="communicationsModal.form.alertLevel" aria-label="Alert level">
-                                            <option value="low">Low - Informational</option>
-                                            <option value="medium">Medium - Attention Required</option>
-                                            <option value="high">High - Immediate Action</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label class="form-label">Alert Message *</label>
-                                        <textarea class="form-control form-textarea" v-model="communicationsModal.form.alertMessage" 
-                                                  rows="3" placeholder="Describe the alert situation..." 
-                                                  required aria-required="true" aria-label="Alert message"></textarea>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label class="form-label">Affected Areas</label>
-                                        <div class="alert-options-grid">
-                                            <label class="alert-option">
-                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.affectedAreas.er">
-                                                <span>Emergency Room</span>
-                                            </label>
-                                            <label class="alert-option">
-                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.affectedAreas.icu">
-                                                <span>ICU</span>
-                                            </label>
-                                            <label class="alert-option">
-                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.affectedAreas.ward">
-                                                <span>Ward</span>
-                                            </label>
-                                            <label class="alert-option">
-                                                <input type="checkbox" class="form-check-input" v-model="communicationsModal.form.affectedAreas.surgery">
-                                                <span>Surgery</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
+                        <h4 class="preview-title">{{ communicationsModal.form.title || 'Announcement Title' }}</h4>
+                        <p class="preview-text">{{ communicationsModal.form.content || 'Announcement content...' }}</p>
+                        <div class="preview-footer">
+                            <div class="preview-audience">
+                                <i class="fas fa-users"></i>
+                                {{ formatAudience(communicationsModal.form.target_audience) || 'All Staff' }}
+                            </div>
+                            <div class="preview-author">
+                                <i class="fas fa-user"></i>
+                                {{ currentUser.full_name }}
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <div class="form-section">
+                    <h4><i class="fas fa-edit"></i> Compose</h4>
                     
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" @click="communicationsModal.show = false">Cancel</button>
-                        <button class="btn btn-primary" @click="saveCommunication">
-                            <i class="fas fa-paper-plane"></i> Publish Communication
-                        </button>
+                    <div class="form-group">
+                        <label>Title <span class="required">*</span></label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-heading"></i>
+                            <input type="text" v-model="communicationsModal.form.title" 
+                                   placeholder="Enter title" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Content <span class="required">*</span></label>
+                        <div class="textarea-with-icon">
+                            <i class="fas fa-align-left"></i>
+                            <textarea v-model="communicationsModal.form.content" 
+                                      rows="4" placeholder="Write your message..."></textarea>
+                        </div>
+                        <div class="char-count">
+                            {{ communicationsModal.form.content ? communicationsModal.form.content.length : 0 }}/500
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <div class="priority-selector">
+                                <button type="button" 
+                                        class="priority-option" 
+                                        :class="{ active: communicationsModal.form.priority === 'normal' }"
+                                        @click="communicationsModal.form.priority = 'normal'">
+                                    <div class="priority-dot normal"></div>
+                                    <span>Normal</span>
+                                </button>
+                                <button type="button" 
+                                        class="priority-option" 
+                                        :class="{ active: communicationsModal.form.priority === 'high' }"
+                                        @click="communicationsModal.form.priority = 'high'">
+                                    <div class="priority-dot high"></div>
+                                    <span>High</span>
+                                </button>
+                                <button type="button" 
+                                        class="priority-option" 
+                                        :class="{ active: communicationsModal.form.priority === 'urgent' }"
+                                        @click="communicationsModal.form.priority = 'urgent'">
+                                    <div class="priority-dot urgent"></div>
+                                    <span>Urgent</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Audience</label>
+                            <div class="select-with-icon">
+                                <i class="fas fa-users"></i>
+                                <select v-model="communicationsModal.form.target_audience">
+                                    <option value="all_staff">All Staff</option>
+                                    <option value="medical_staff">Medical Staff</option>
+                                    <option value="residents">Residents</option>
+                                    <option value="attendings">Attendings</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Clinical Update Tab -->
+            <div v-if="communicationsModal.activeTab === 'stats_update'" class="comms-content">
+                <div class="quick-status">
+                    <h4><i class="fas fa-bolt"></i> Quick Status</h4>
+                    <div class="status-grid">
+                        <div class="status-option" 
+                             :class="{ active: quickStatus === 'normal' }"
+                             @click="setQuickStatus('normal')">
+                            <div class="status-icon normal">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="status-desc">All Normal</div>
+                        </div>
+                        <div class="status-option" 
+                             :class="{ active: quickStatus === 'busy' }"
+                             @click="setQuickStatus('busy')">
+                            <div class="status-icon busy">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="status-desc">ICU Busy</div>
+                        </div>
+                        <div class="status-option" 
+                             :class="{ active: quickStatus === 'shortage' }"
+                             @click="setQuickStatus('shortage')">
+                            <div class="status-icon shortage">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                            <div class="status-desc">Staff Shortage</div>
+                        </div>
+                        <div class="status-option" 
+                             :class="{ active: quickStatus === 'equipment' }"
+                             @click="setQuickStatus('equipment')">
+                            <div class="status-icon equipment">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                            <div class="status-desc">Equipment Issue</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="update-form">
+                    <h4><i class="fas fa-sliders-h"></i> Custom Update</h4>
+                    
+                    <div class="update-type">
+                        <div class="type-selector">
+                            <button class="type-option" 
+                                    :class="{ active: communicationsModal.form.updateType === 'daily' }"
+                                    @click="communicationsModal.form.updateType = 'daily'">
+                                <i class="fas fa-sun"></i>
+                                <span>Daily</span>
+                            </button>
+                            <button class="type-option" 
+                                    :class="{ active: communicationsModal.form.updateType === 'metric' }"
+                                    @click="communicationsModal.form.updateType = 'metric'">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Metric</span>
+                            </button>
+                            <button class="type-option" 
+                                    :class="{ active: communicationsModal.form.updateType === 'alert' }"
+                                    @click="communicationsModal.form.updateType = 'alert'">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Alert</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Daily Update -->
+                    <div v-if="communicationsModal.form.updateType === 'daily'" class="update-content">
+                        <div class="form-group">
+                            <label>Status Summary <span class="required">*</span></label>
+                            <textarea v-model="communicationsModal.form.dailySummary" 
+                                      rows="3" placeholder="Brief department status..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Highlights</label>
+                            <div class="highlight-inputs">
+                                <input type="text" v-model="communicationsModal.form.highlight1" 
+                                       placeholder="Highlight 1">
+                                <input type="text" v-model="communicationsModal.form.highlight2" 
+                                       placeholder="Highlight 2">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Alerts</label>
+                            <div class="alert-options">
+                                <label class="alert-option">
+                                    <input type="checkbox" v-model="communicationsModal.form.alerts.erBusy">
+                                    <span>ER Busy</span>
+                                </label>
+                                <label class="alert-option">
+                                    <input type="checkbox" v-model="communicationsModal.form.alerts.icuFull">
+                                    <span>ICU Full</span>
+                                </label>
+                                <label class="alert-option">
+                                    <input type="checkbox" v-model="communicationsModal.form.alerts.wardFull">
+                                    <span>Ward Full</span>
+                                </label>
+                                <label class="alert-option">
+                                    <input type="checkbox" v-model="communicationsModal.form.alerts.staffShortage">
+                                    <span>Staff Shortage</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Metric Update -->
+                    <div v-if="communicationsModal.form.updateType === 'metric'" class="update-content">
+                        <div class="form-group">
+                            <label>Metric</label>
+                            <div class="metric-inputs">
+                                <input type="text" v-model="communicationsModal.form.metricName" 
+                                       placeholder="Metric name">
+                                <input type="text" v-model="communicationsModal.form.metricValue" 
+                                       placeholder="Value">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Trend</label>
+                            <div class="trend-selector">
+                                <select v-model="communicationsModal.form.metricTrend">
+                                    <option value="improved">Improved ↑</option>
+                                    <option value="worsened">Worsened ↓</option>
+                                    <option value="stable">Stable →</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Notes</label>
+                            <textarea v-model="communicationsModal.form.metricNote" 
+                                      rows="2" placeholder="Additional context..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Alert Update -->
+                    <div v-if="communicationsModal.form.updateType === 'alert'" class="update-content">
+                        <div class="form-group">
+                            <label>Alert Level</label>
+                            <select v-model="communicationsModal.form.alertLevel">
+                                <option value="low">Low - Informational</option>
+                                <option value="medium">Medium - Attention</option>
+                                <option value="high">High - Critical</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Message <span class="required">*</span></label>
+                            <textarea v-model="communicationsModal.form.alertMessage" 
+                                      rows="3" placeholder="Describe the alert..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Affected Areas</label>
+                            <div class="area-options">
+                                <label class="area-option">
+                                    <input type="checkbox" v-model="communicationsModal.form.affectedAreas.er">
+                                    <span>Emergency</span>
+                                </label>
+                                <label class="area-option">
+                                    <input type="checkbox" v-model="communicationsModal.form.affectedAreas.icu">
+                                    <span>ICU</span>
+                                </label>
+                                <label class="area-option">
+                                    <input type="checkbox" v-model="communicationsModal.form.affectedAreas.ward">
+                                    <span>Ward</span>
+                                </label>
+                                <label class="area-option">
+                                    <input type="checkbox" v-model="communicationsModal.form.affectedAreas.surgery">
+                                    <span>Surgery</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @click="communicationsModal.show = false">
+                Cancel
+            </button>
+            <button class="btn btn-primary" @click="saveCommunication">
+                <i class="fas fa-paper-plane"></i>
+                {{ communicationsModal.activeTab === 'announcement' ? 'Publish' : 'Update' }}
+            </button>
+        </div>
+    </div>
+</div>
 
             <!-- MODAL 4: Add/Edit On-call Schedule -->
             <div v-if="onCallModal.show" class="modal-overlay">
