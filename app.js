@@ -725,6 +725,48 @@ document.addEventListener('DOMContentLoaded', function() {
                         covering_staff_id: ''
                     }
                 });
+                // Inside setup(), after other formatting functions:
+const getUserRoleDisplay = (role) => {
+    const map = {
+        'system_admin': 'System Administrator',
+        'department_head': 'Department Head',
+        'attending_physician': 'Attending Physician',
+        'medical_resident': 'Medical Resident'
+    };
+    return map[role] || role;
+};
+
+const getCurrentViewSubtitle = () => {
+    const map = {
+        'dashboard': 'Real-time department overview and analytics',
+        'medical_staff': 'Manage physicians, residents, and clinical staff',
+        'clinical_units': 'Clinical training units and resident assignments',
+        'research_lines': 'Research interests and participation tracking',
+        'rotations': 'Track and manage resident training rotations',
+        'oncall_schedule': 'View and manage on-call physician schedules',
+        'staff_absence': 'Track staff absences and coverage assignments',
+        'announcements': 'Department announcements and updates',
+        'departments': 'Organizational structure and clinical units',
+        'reports': 'System analytics and reporting'
+    };
+    return map[currentView.value] || 'Hospital Management System';
+};
+
+const getSearchPlaceholder = () => {
+    const map = {
+        'dashboard': 'Search staff, units, rotations...',
+        'medical_staff': 'Search by name, ID, or email...',
+        'clinical_units': 'Search clinical units...',
+        'research_lines': 'Search research lines...',
+        'rotations': 'Search rotations by resident or unit...',
+        'oncall_schedule': 'Search on-call schedules...',
+        'staff_absence': 'Search absences by staff member...',
+        'announcements': 'Search announcements...',
+        'departments': 'Search departments...',
+        'reports': 'Search reports...'
+    };
+    return map[currentView.value] || 'Search across system...';
+};
                 
                 const announcementModal = reactive({
                     show: false,
@@ -2164,6 +2206,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     editDepartment,
                     saveDepartment,
                     showReportsModal,
+                    getUserRoleDisplay,
+    getCurrentViewSubtitle,
+    getSearchPlaceholder,
                     
                     // Live Status Functions
                     saveClinicalStatus,
