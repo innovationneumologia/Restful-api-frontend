@@ -1,9 +1,9 @@
-// ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM v10.0 ============
-// 100% COMPLETE WITH RESEARCH LINES & CLINICAL UNITS INTEGRATION
+// ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM v10.0 COMPLETE ============
+// 100% COMPLETE VERSION - ALL API ENDPOINTS INTEGRATED
 // ===================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 NeumoCare Hospital Management System v10.0 Loading...');
+    console.log('🚀 NeumoCare Hospital Management System v10.0 Complete loading...');
     
     try {
         // ============ 1. VUE VALIDATION ============
@@ -81,6 +81,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return text.substring(0, maxLength) + '...';
             }
             
+            static formatTime(dateString) {
+                if (!dateString) return '';
+                try {
+                    const date = new Date(dateString);
+                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } catch { return dateString; }
+            }
+            
             static generateId(prefix) {
                 return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 9)}`;
             }
@@ -96,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // ============ 4. COMPLETE API SERVICE WITH NEW ENDPOINTS ============
+        // ============ 4. COMPLETE API SERVICE ============
         class ApiService {
             constructor() {
                 this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
@@ -168,18 +176,22 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // ===== AUTHENTICATION =====
             async login(email, password) {
-                const data = await this.request('/api/auth/login', {
-                    method: 'POST',
-                    body: { email, password }
-                });
-                
-                if (data.token) {
-                    this.token = data.token;
-                    localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
-                    localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
+                try {
+                    const data = await this.request('/api/auth/login', {
+                        method: 'POST',
+                        body: { email, password }
+                    });
+                    
+                    if (data.token) {
+                        this.token = data.token;
+                        localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
+                        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
+                    }
+                    
+                    return data;
+                } catch (error) {
+                    throw new Error('Login failed: ' + error.message);
                 }
-                
-                return data;
             }
             
             async logout() {
@@ -192,17 +204,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // ===== MEDICAL STAFF - ENHANCED =====
+            // ===== MEDICAL STAFF =====
             async getMedicalStaff() {
                 try {
-                    const data = await this.request('/api/medical-staff/enhanced');
-                    return EnhancedUtils.ensureArray(data.data || data);
+                    const data = await this.request('/api/medical-staff');
+                    return EnhancedUtils.ensureArray(data);
                 } catch { return []; }
             }
             
-            async getMedicalStaffBasic() {
+            async getEnhancedMedicalStaff() {
                 try {
-                    const data = await this.request('/api/medical-staff');
+                    const data = await this.request('/api/medical-staff/enhanced');
                     return EnhancedUtils.ensureArray(data.data || data);
                 } catch { return []; }
             }
@@ -254,10 +266,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
-            // ===== CLINICAL UNITS (formerly Training Units) =====
+            // ===== CLINICAL UNITS =====
             async getClinicalUnits() {
                 try {
-                    // Using training-units endpoint for backward compatibility
                     const data = await this.request('/api/training-units');
                     return EnhancedUtils.ensureArray(data);
                 } catch { return []; }
@@ -291,7 +302,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             async createClinicalUnit(unitData) {
-                // Map to training-units endpoint
                 return await this.request('/api/training-units', {
                     method: 'POST',
                     body: unitData
@@ -313,7 +323,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 } catch { return []; }
             }
             
-            // ===== ROTATIONS - UPDATED FOR CLINICAL UNITS =====
+            async createDepartment(departmentData) {
+                return await this.request('/api/departments', {
+                    method: 'POST',
+                    body: departmentData
+                });
+            }
+            
+            async updateDepartment(id, departmentData) {
+                return await this.request(`/api/departments/${id}`, {
+                    method: 'PUT',
+                    body: departmentData
+                });
+            }
+            
+            // ===== ROTATIONS =====
             async getRotations() {
                 try {
                     const data = await this.request('/api/rotations');
@@ -322,14 +346,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             async createRotation(rotationData) {
-                // Map training_unit_id to clinical_unit_id if needed
-                const dataToSend = {
-                    ...rotationData,
-                    clinical_unit_id: rotationData.training_unit_id || rotationData.clinical_unit_id
-                };
                 return await this.request('/api/rotations', {
                     method: 'POST',
-                    body: dataToSend
+                    body: rotationData
                 });
             }
             
@@ -344,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
             }
             
-            // ===== ON-CALL SCHEDULE =====
+            // ===== ON-CALL =====
             async getOnCallSchedule() {
                 try {
                     const data = await this.request('/api/oncall');
@@ -418,6 +437,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
+            async updateAnnouncement(id, announcementData) {
+                return await this.request(`/api/announcements/${id}`, {
+                    method: 'PUT',
+                    body: announcementData
+                });
+            }
+            
             async deleteAnnouncement(id) {
                 return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
             }
@@ -441,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/live-status/${id}`, { method: 'DELETE' });
             }
             
-            // ===== DASHBOARD & STATS =====
+            // ===== SYSTEM STATS =====
             async getSystemStats() {
                 try {
                     const data = await this.request('/api/system-stats');
@@ -453,14 +479,45 @@ document.addEventListener('DOMContentLoaded', function() {
                         activeResidents: 0,
                         onCallNow: 0,
                         clinicalUnits: 0,
-                        researchLines: 0
+                        researchLines: 0,
+                        currentlyAbsent: 0
                     };
                 }
             }
             
+            // ===== AVAILABLE DATA =====
             async getAvailableData() {
                 try {
                     const data = await this.request('/api/available-data');
+                    return data.data || data;
+                } catch { return {}; }
+            }
+            
+            // ===== REPORTS =====
+            async getStaffDistributionReport() {
+                try {
+                    const data = await this.request('/api/reports/staff-distribution');
+                    return data;
+                } catch { return {}; }
+            }
+            
+            async getRotationSummaryReport() {
+                try {
+                    const data = await this.request('/api/reports/rotation-summary');
+                    return data;
+                } catch { return {}; }
+            }
+            
+            async getResearchParticipationReport() {
+                try {
+                    const data = await this.request('/api/reports/research-participation');
+                    return data.data || data;
+                } catch { return {}; }
+            }
+            
+            async getStaffByClinicalUnitReport() {
+                try {
+                    const data = await this.request('/api/reports/staff-by-clinical-unit');
                     return data.data || data;
                 } catch { return {}; }
             }
@@ -476,7 +533,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // 6.1 User State
                 const currentUser = ref(null);
-                const loginForm = reactive({ email: '', password: '' });
+                const loginForm = reactive({
+                    email: '',
+                    password: '',
+                    remember_me: false
+                });
                 const loginLoading = ref(false);
                 
                 // 6.2 UI State
@@ -490,9 +551,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 6.3 Loading States
                 const loading = ref(false);
                 const saving = ref(false);
+                const isLoadingStatus = ref(false);
                 
-                // 6.4 Data Stores - ENHANCED
+                // 6.4 Data Stores
                 const medicalStaff = ref([]);
+                const enhancedMedicalStaff = ref([]);
                 const researchLines = ref([]);
                 const clinicalUnits = ref([]);
                 const clinicalUnitsWithStaff = ref([]);
@@ -501,11 +564,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const absences = ref([]);
                 const onCallSchedule = ref([]);
                 const announcements = ref([]);
-                
-                // 6.5 Live Status Data
                 const clinicalStatus = ref(null);
+                const availableData = ref({});
+                
+                // 6.5 Modal Data
+                const selectedStaffId = ref('');
+                const selectedResearchLines = ref([]);
                 const newStatusText = ref('');
                 const selectedAuthorId = ref('');
+                const expiryHours = ref(8);
+                const activeMedicalStaff = ref([]);
                 
                 // 6.6 Dashboard Data
                 const systemStats = ref({
@@ -515,20 +583,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     onCallNow: 0,
                     clinicalUnits: 0,
                     researchLines: 0,
-                    currentlyAbsent: 0
+                    currentlyAbsent: 0,
+                    activeRotations: 0,
+                    departmentStatus: 'normal'
                 });
                 
                 const todaysOnCall = ref([]);
-                const availableData = ref({
-                    departments: [],
-                    residents: [],
-                    attendings: [],
-                    clinicalUnits: [],
-                    researchLines: []
-                });
+                const todaysOnCallCount = computed(() => todaysOnCall.value.length);
                 
                 // 6.7 UI Components
                 const toasts = ref([]);
+                const systemAlerts = ref([]);
                 
                 // 6.8 Filter States
                 const staffFilters = reactive({
@@ -536,13 +601,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     staffType: '',
                     department: '',
                     clinicalUnit: '',
-                    status: ''
+                    status: '',
+                    hasResearchLines: ''
                 });
                 
                 const clinicalUnitFilters = reactive({
                     department: '',
                     status: 'active',
-                    capacity: ''
+                    capacity: '',
+                    search: ''
+                });
+                
+                const rotationFilters = reactive({
+                    resident: '',
+                    status: '',
+                    clinicalUnit: '',
+                    supervisor: ''
+                });
+                
+                const absenceFilters = reactive({
+                    staff: '',
+                    status: '',
+                    reason: '',
+                    startDate: ''
                 });
                 
                 // 6.9 Modal States
@@ -645,13 +726,47 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
                 
+                const announcementModal = reactive({
+                    show: false,
+                    mode: 'add',
+                    form: {
+                        title: '',
+                        content: '',
+                        priority_level: 'normal',
+                        target_audience: 'all_staff',
+                        publish_start_date: new Date().toISOString().split('T')[0]
+                    }
+                });
+                
+                const departmentModal = reactive({
+                    show: false,
+                    mode: 'add',
+                    form: {
+                        name: '',
+                        code: '',
+                        status: 'active',
+                        head_of_department_id: '',
+                        contact_email: '',
+                        contact_phone: ''
+                    }
+                });
+                
+                const reportsModal = reactive({
+                    show: false,
+                    activeReport: 'staff_distribution',
+                    data: null
+                });
+                
                 const confirmationModal = reactive({
                     show: false,
                     title: '',
                     message: '',
+                    icon: 'fa-question-circle',
                     confirmButtonText: 'Confirm',
                     confirmButtonClass: 'btn-primary',
-                    onConfirm: null
+                    cancelButtonText: 'Cancel',
+                    onConfirm: null,
+                    details: ''
                 });
                 
                 // 6.10 Permission Matrix
@@ -660,33 +775,45 @@ document.addEventListener('DOMContentLoaded', function() {
                         medical_staff: ['create', 'read', 'update', 'delete'],
                         clinical_units: ['create', 'read', 'update', 'delete'],
                         research_lines: ['create', 'read', 'update', 'delete'],
+                        departments: ['create', 'read', 'update', 'delete'],
                         rotations: ['create', 'read', 'update', 'delete'],
-                        oncall: ['create', 'read', 'update', 'delete'],
-                        absences: ['create', 'read', 'update', 'delete']
+                        oncall_schedule: ['create', 'read', 'update', 'delete'],
+                        staff_absence: ['create', 'read', 'update', 'delete'],
+                        announcements: ['create', 'read', 'update', 'delete'],
+                        communications: ['create', 'read', 'update', 'delete']
                     },
                     department_head: {
                         medical_staff: ['read', 'update'],
                         clinical_units: ['read', 'update'],
                         research_lines: ['read', 'update'],
+                        departments: ['read'],
                         rotations: ['create', 'read', 'update'],
-                        oncall: ['create', 'read', 'update'],
-                        absences: ['create', 'read', 'update']
+                        oncall_schedule: ['create', 'read', 'update'],
+                        staff_absence: ['create', 'read', 'update'],
+                        announcements: ['create', 'read'],
+                        communications: ['create', 'read']
                     },
                     attending_physician: {
                         medical_staff: ['read'],
                         clinical_units: ['read'],
                         research_lines: ['read'],
+                        departments: ['read'],
                         rotations: ['read'],
-                        oncall: ['read'],
-                        absences: ['read']
+                        oncall_schedule: ['read'],
+                        staff_absence: ['read'],
+                        announcements: ['read'],
+                        communications: ['read']
                     },
                     medical_resident: {
                         medical_staff: ['read'],
                         clinical_units: ['read'],
                         research_lines: ['read'],
+                        departments: ['read'],
                         rotations: ['read'],
-                        oncall: ['read'],
-                        absences: ['read']
+                        oncall_schedule: ['read'],
+                        staff_absence: ['read'],
+                        announcements: ['read'],
+                        communications: ['read']
                     }
                 };
                 
@@ -694,11 +821,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // 7.1 Toast System
                 const showToast = (title, message, type = 'info', duration = 5000) => {
+                    const icons = {
+                        info: 'fas fa-info-circle',
+                        success: 'fas fa-check-circle',
+                        error: 'fas fa-exclamation-circle',
+                        warning: 'fas fa-exclamation-triangle'
+                    };
+                    
                     const toast = {
                         id: Date.now(),
                         title,
                         message,
                         type,
+                        icon: icons[type],
                         duration
                     };
                     
@@ -748,6 +883,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     return map[type] || type;
                 };
                 
+                const getStaffTypeClass = (type) => {
+                    const map = {
+                        'medical_resident': 'badge-primary',
+                        'attending_physician': 'badge-success',
+                        'fellow': 'badge-info',
+                        'nurse_practitioner': 'badge-warning'
+                    };
+                    return map[type] || 'badge-secondary';
+                };
+                
                 const formatEmploymentStatus = (status) => {
                     const map = {
                         'active': 'Active',
@@ -769,6 +914,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     return map[reason] || reason;
                 };
                 
+                const formatRotationStatus = (status) => {
+                    const map = {
+                        'scheduled': 'Scheduled',
+                        'active': 'Active',
+                        'completed': 'Completed',
+                        'cancelled': 'Cancelled'
+                    };
+                    return map[status] || status;
+                };
+                
+                const formatAudience = (audience) => {
+                    const map = {
+                        'all_staff': 'All Staff',
+                        'medical_staff': 'Medical Staff',
+                        'attending_only': 'Attending Physicians',
+                        'residents_only': 'Residents Only'
+                    };
+                    return map[audience] || audience;
+                };
+                
                 const getCurrentViewTitle = () => {
                     const map = {
                         'dashboard': 'Dashboard Overview',
@@ -777,29 +942,35 @@ document.addEventListener('DOMContentLoaded', function() {
                         'research_lines': 'Research Lines',
                         'rotations': 'Resident Rotations',
                         'oncall_schedule': 'On-call Schedule',
-                        'staff_absence': 'Staff Absence',
-                        'announcements': 'Announcements'
+                        'staff_absence': 'Staff Absence Management',
+                        'announcements': 'Announcements',
+                        'departments': 'Department Management',
+                        'reports': 'Reports & Analytics'
                     };
                     return map[currentView.value] || 'NeumoCare Dashboard';
                 };
                 
                 // 7.4 Data Helper Functions
                 const getDepartmentName = (departmentId) => {
+                    if (!departmentId) return 'Not assigned';
                     const dept = departments.value.find(d => d.id === departmentId);
-                    return dept ? dept.name : 'Not assigned';
+                    return dept ? dept.name : 'Unknown Department';
                 };
                 
                 const getStaffName = (staffId) => {
+                    if (!staffId) return 'Not assigned';
                     const staff = medicalStaff.value.find(s => s.id === staffId);
                     return staff ? staff.full_name : 'Unknown Staff';
                 };
                 
                 const getClinicalUnitName = (unitId) => {
+                    if (!unitId) return 'Not assigned';
                     const unit = clinicalUnits.value.find(u => u.id === unitId);
                     return unit ? unit.unit_name : 'Unknown Unit';
                 };
                 
                 const getResearchLineNames = (lineIds) => {
+                    if (!lineIds || !Array.isArray(lineIds)) return 'None';
                     return lineIds.map(id => {
                         const line = researchLines.value.find(r => r.id === id);
                         return line ? line.name : 'Unknown';
@@ -815,6 +986,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (error) {
                         console.error('Failed to load medical staff:', error);
                         showToast('Error', 'Failed to load medical staff', 'error');
+                    }
+                };
+                
+                const loadEnhancedMedicalStaff = async () => {
+                    try {
+                        const data = await API.getEnhancedMedicalStaff();
+                        enhancedMedicalStaff.value = data;
+                    } catch (error) {
+                        console.error('Failed to load enhanced medical staff:', error);
                     }
                 };
                 
@@ -902,11 +1082,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 
                 const loadClinicalStatus = async () => {
+                    isLoadingStatus.value = true;
                     try {
-                        const data = await API.getClinicalStatus();
-                        clinicalStatus.value = data?.data || null;
+                        const response = await API.getClinicalStatus();
+                        clinicalStatus.value = response?.data || null;
                     } catch (error) {
                         console.error('Failed to load clinical status:', error);
+                        clinicalStatus.value = null;
+                    } finally {
+                        isLoadingStatus.value = false;
                     }
                 };
                 
@@ -930,11 +1114,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
+                const loadActiveMedicalStaff = async () => {
+                    try {
+                        const data = await API.getMedicalStaff();
+                        activeMedicalStaff.value = data.filter(staff => 
+                            staff.employment_status === 'active'
+                        );
+                    } catch (error) {
+                        console.error('Failed to load active medical staff:', error);
+                        activeMedicalStaff.value = [];
+                    }
+                };
+                
                 const loadAllData = async () => {
                     loading.value = true;
                     try {
                         await Promise.all([
                             loadMedicalStaff(),
+                            loadEnhancedMedicalStaff(),
                             loadResearchLines(),
                             loadClinicalUnits(),
                             loadClinicalUnitsWithStaff(),
@@ -946,7 +1143,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             loadAnnouncements(),
                             loadClinicalStatus(),
                             loadSystemStats(),
-                            loadAvailableData()
+                            loadAvailableData(),
+                            loadActiveMedicalStaff()
                         ]);
                         
                         showToast('Success', 'System data loaded successfully', 'success');
@@ -989,6 +1187,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     showConfirmation({
                         title: 'Logout',
                         message: 'Are you sure you want to logout?',
+                        icon: 'fa-sign-out-alt',
                         confirmButtonText: 'Logout',
                         confirmButtonClass: 'btn-danger',
                         onConfirm: async () => {
@@ -1039,15 +1238,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (medicalStaffModal.mode === 'add') {
                             const result = await API.createMedicalStaff(medicalStaffModal.form);
                             medicalStaff.value.unshift(result);
+                            enhancedMedicalStaff.value.unshift(result);
                             showToast('Success', 'Medical staff added successfully', 'success');
                         } else {
                             const result = await API.updateMedicalStaff(medicalStaffModal.form.id, medicalStaffModal.form);
                             const index = medicalStaff.value.findIndex(s => s.id === result.id);
                             if (index !== -1) medicalStaff.value[index] = result;
+                            
+                            const enhancedIndex = enhancedMedicalStaff.value.findIndex(s => s.id === result.id);
+                            if (enhancedIndex !== -1) enhancedMedicalStaff.value[enhancedIndex] = result;
+                            
                             showToast('Success', 'Medical staff updated successfully', 'success');
                         }
                         medicalStaffModal.show = false;
-                        await loadMedicalStaff();
+                        await loadSystemStats();
                     } catch (error) {
                         showToast('Error', error.message, 'error');
                     } finally {
@@ -1058,7 +1262,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Research Lines Modal
                 const showResearchLinesModal = (staff) => {
                     researchLinesModal.staff = staff;
-                    researchLinesModal.selectedLines = staff.research_lines?.map(r => r.id) || [];
+                    researchLinesModal.selectedLines = staff.research_line_ids || [];
                     researchLinesModal.show = true;
                 };
                 
@@ -1075,9 +1279,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Update local staff data
                         const staffIndex = medicalStaff.value.findIndex(s => s.id === researchLinesModal.staff.id);
                         if (staffIndex !== -1) {
-                            medicalStaff.value[staffIndex].research_lines = researchLinesModal.selectedLines
-                                .map(id => researchLines.value.find(r => r.id === id))
-                                .filter(Boolean);
+                            medicalStaff.value[staffIndex].research_line_ids = researchLinesModal.selectedLines;
+                        }
+                        
+                        const enhancedIndex = enhancedMedicalStaff.value.findIndex(s => s.id === researchLinesModal.staff.id);
+                        if (enhancedIndex !== -1) {
+                            enhancedMedicalStaff.value[enhancedIndex].research_line_ids = researchLinesModal.selectedLines;
                         }
                         
                         researchLinesModal.show = false;
@@ -1089,7 +1296,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                // Clinical Units Modal
+                // Clinical Unit Modal
                 const showAddClinicalUnitModal = () => {
                     clinicalUnitModal.mode = 'add';
                     clinicalUnitModal.form = {
@@ -1124,8 +1331,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             showToast('Success', 'Clinical unit updated successfully', 'success');
                         }
                         clinicalUnitModal.show = false;
-                        await loadClinicalUnits();
                         await loadClinicalUnitsWithStaff();
+                        await loadSystemStats();
                     } catch (error) {
                         showToast('Error', error.message, 'error');
                     } finally {
@@ -1158,7 +1365,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         staffAssignmentModal.show = false;
                         showToast('Success', 'Staff assigned to clinical unit successfully', 'success');
                         await loadClinicalUnitsWithStaff();
-                        await loadMedicalStaff();
+                        await loadEnhancedMedicalStaff();
                     } catch (error) {
                         showToast('Error', error.message, 'error');
                     } finally {
@@ -1177,7 +1384,295 @@ document.addEventListener('DOMContentLoaded', function() {
                                 await API.removeStaffFromClinicalUnit(unitId, staffId);
                                 showToast('Success', 'Staff removed from clinical unit', 'success');
                                 await loadClinicalUnitsWithStaff();
-                                await loadMedicalStaff();
+                                await loadEnhancedMedicalStaff();
+                            } catch (error) {
+                                showToast('Error', error.message, 'error');
+                            }
+                        }
+                    });
+                };
+                
+                // Rotation Modal
+                const showAddRotationModal = () => {
+                    rotationModal.mode = 'add';
+                    rotationModal.form = {
+                        resident_id: '',
+                        clinical_unit_id: '',
+                        start_date: new Date().toISOString().split('T')[0],
+                        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        rotation_status: 'scheduled',
+                        rotation_category: 'clinical_rotation',
+                        supervising_attending_id: ''
+                    };
+                    rotationModal.show = true;
+                };
+                
+                const editRotation = (rotation) => {
+                    rotationModal.mode = 'edit';
+                    rotationModal.form = { ...rotation };
+                    rotationModal.show = true;
+                };
+                
+                const saveRotation = async () => {
+                    saving.value = true;
+                    try {
+                        if (rotationModal.mode === 'add') {
+                            const result = await API.createRotation(rotationModal.form);
+                            rotations.value.unshift(result);
+                            showToast('Success', 'Rotation created successfully', 'success');
+                        } else {
+                            const result = await API.updateRotation(rotationModal.form.id, rotationModal.form);
+                            const index = rotations.value.findIndex(r => r.id === result.id);
+                            if (index !== -1) rotations.value[index] = result;
+                            showToast('Success', 'Rotation updated successfully', 'success');
+                        }
+                        rotationModal.show = false;
+                        await loadSystemStats();
+                    } catch (error) {
+                        showToast('Error', error.message, 'error');
+                    } finally {
+                        saving.value = false;
+                    }
+                };
+                
+                // On-call Modal
+                const showAddOnCallModal = () => {
+                    onCallModal.mode = 'add';
+                    onCallModal.form = {
+                        duty_date: new Date().toISOString().split('T')[0],
+                        shift_type: 'primary_call',
+                        start_time: '08:00',
+                        end_time: '17:00',
+                        primary_physician_id: '',
+                        backup_physician_id: '',
+                        coverage_notes: ''
+                    };
+                    onCallModal.show = true;
+                };
+                
+                const editOnCallSchedule = (schedule) => {
+                    onCallModal.mode = 'edit';
+                    onCallModal.form = { ...schedule };
+                    onCallModal.show = true;
+                };
+                
+                const saveOnCallSchedule = async () => {
+                    saving.value = true;
+                    try {
+                        if (onCallModal.mode === 'add') {
+                            const result = await API.createOnCall(onCallModal.form);
+                            onCallSchedule.value.unshift(result);
+                            showToast('Success', 'On-call scheduled successfully', 'success');
+                        } else {
+                            const result = await API.updateOnCall(onCallModal.form.id, onCallModal.form);
+                            const index = onCallSchedule.value.findIndex(s => s.id === result.id);
+                            if (index !== -1) onCallSchedule.value[index] = result;
+                            showToast('Success', 'On-call updated successfully', 'success');
+                        }
+                        onCallModal.show = false;
+                        await loadTodaysOnCall();
+                    } catch (error) {
+                        showToast('Error', error.message, 'error');
+                    } finally {
+                        saving.value = false;
+                    }
+                };
+                
+                // Absence Modal
+                const showAddAbsenceModal = () => {
+                    absenceModal.mode = 'add';
+                    absenceModal.form = {
+                        staff_member_id: '',
+                        absence_type: 'planned',
+                        absence_reason: 'vacation',
+                        start_date: new Date().toISOString().split('T')[0],
+                        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        coverage_arranged: false,
+                        covering_staff_id: ''
+                    };
+                    absenceModal.show = true;
+                };
+                
+                const editAbsence = (absence) => {
+                    absenceModal.mode = 'edit';
+                    absenceModal.form = { ...absence };
+                    absenceModal.show = true;
+                };
+                
+                const saveAbsence = async () => {
+                    saving.value = true;
+                    try {
+                        if (absenceModal.mode === 'add') {
+                            const result = await API.createAbsence(absenceModal.form);
+                            absences.value.unshift(result);
+                            showToast('Success', 'Absence recorded successfully', 'success');
+                        } else {
+                            const result = await API.updateAbsence(absenceModal.form.id, absenceModal.form);
+                            const index = absences.value.findIndex(a => a.id === result.id);
+                            if (index !== -1) absences.value[index] = result;
+                            showToast('Success', 'Absence updated successfully', 'success');
+                        }
+                        absenceModal.show = false;
+                        await loadSystemStats();
+                    } catch (error) {
+                        showToast('Error', error.message, 'error');
+                    } finally {
+                        saving.value = false;
+                    }
+                };
+                
+                // Announcement Modal
+                const showAddAnnouncementModal = () => {
+                    announcementModal.mode = 'add';
+                    announcementModal.form = {
+                        title: '',
+                        content: '',
+                        priority_level: 'normal',
+                        target_audience: 'all_staff',
+                        publish_start_date: new Date().toISOString().split('T')[0]
+                    };
+                    announcementModal.show = true;
+                };
+                
+                const editAnnouncement = (announcement) => {
+                    announcementModal.mode = 'edit';
+                    announcementModal.form = { ...announcement };
+                    announcementModal.show = true;
+                };
+                
+                const saveAnnouncement = async () => {
+                    saving.value = true;
+                    try {
+                        if (announcementModal.mode === 'add') {
+                            const result = await API.createAnnouncement(announcementModal.form);
+                            announcements.value.unshift(result);
+                            showToast('Success', 'Announcement posted successfully', 'success');
+                        } else {
+                            const result = await API.updateAnnouncement(announcementModal.form.id, announcementModal.form);
+                            const index = announcements.value.findIndex(a => a.id === result.id);
+                            if (index !== -1) announcements.value[index] = result;
+                            showToast('Success', 'Announcement updated successfully', 'success');
+                        }
+                        announcementModal.show = false;
+                    } catch (error) {
+                        showToast('Error', error.message, 'error');
+                    } finally {
+                        saving.value = false;
+                    }
+                };
+                
+                // Department Modal
+                const showAddDepartmentModal = () => {
+                    departmentModal.mode = 'add';
+                    departmentModal.form = {
+                        name: '',
+                        code: '',
+                        status: 'active',
+                        head_of_department_id: '',
+                        contact_email: '',
+                        contact_phone: ''
+                    };
+                    departmentModal.show = true;
+                };
+                
+                const editDepartment = (department) => {
+                    departmentModal.mode = 'edit';
+                    departmentModal.form = { ...department };
+                    departmentModal.show = true;
+                };
+                
+                const saveDepartment = async () => {
+                    saving.value = true;
+                    try {
+                        if (departmentModal.mode === 'add') {
+                            const result = await API.createDepartment(departmentModal.form);
+                            departments.value.unshift(result);
+                            showToast('Success', 'Department created successfully', 'success');
+                        } else {
+                            const result = await API.updateDepartment(departmentModal.form.id, departmentModal.form);
+                            const index = departments.value.findIndex(d => d.id === result.id);
+                            if (index !== -1) departments.value[index] = result;
+                            showToast('Success', 'Department updated successfully', 'success');
+                        }
+                        departmentModal.show = false;
+                    } catch (error) {
+                        showToast('Error', error.message, 'error');
+                    } finally {
+                        saving.value = false;
+                    }
+                };
+                
+                // Reports Modal
+                const showReportsModal = async (reportType) => {
+                    reportsModal.activeReport = reportType;
+                    reportsModal.data = null;
+                    reportsModal.show = true;
+                    
+                    try {
+                        switch (reportType) {
+                            case 'staff_distribution':
+                                reportsModal.data = await API.getStaffDistributionReport();
+                                break;
+                            case 'rotation_summary':
+                                reportsModal.data = await API.getRotationSummaryReport();
+                                break;
+                            case 'research_participation':
+                                reportsModal.data = await API.getResearchParticipationReport();
+                                break;
+                            case 'staff_by_clinical_unit':
+                                reportsModal.data = await API.getStaffByClinicalUnitReport();
+                                break;
+                        }
+                    } catch (error) {
+                        showToast('Error', 'Failed to load report data', 'error');
+                    }
+                };
+                
+                // Live Status Functions
+                const saveClinicalStatus = async () => {
+                    if (!newStatusText.value.trim() || !selectedAuthorId.value) {
+                        showToast('Error', 'Please fill all required fields', 'error');
+                        return;
+                    }
+                    
+                    isLoadingStatus.value = true;
+                    try {
+                        const response = await API.createClinicalStatus({
+                            status_text: newStatusText.value.trim(),
+                            author_id: selectedAuthorId.value,
+                            expires_in_hours: expiryHours.value
+                        });
+                        
+                        if (response && response.success && response.data) {
+                            clinicalStatus.value = response.data;
+                            newStatusText.value = '';
+                            selectedAuthorId.value = '';
+                            
+                            showToast('Success', 'Live status has been updated for all staff', 'success');
+                        } else {
+                            throw new Error(response?.error || 'Failed to save status');
+                        }
+                    } catch (error) {
+                        console.error('Failed to save clinical status:', error);
+                        showToast('Error', error.message || 'Could not update status. Please try again.', 'error');
+                    } finally {
+                        isLoadingStatus.value = false;
+                    }
+                };
+                
+                const deleteClinicalStatus = async () => {
+                    if (!clinicalStatus.value) return;
+                    
+                    showConfirmation({
+                        title: 'Clear Live Status',
+                        message: 'Are you sure you want to clear the current live status?',
+                        confirmButtonText: 'Clear',
+                        confirmButtonClass: 'btn-danger',
+                        onConfirm: async () => {
+                            try {
+                                await API.deleteClinicalStatus(clinicalStatus.value.id);
+                                clinicalStatus.value = null;
+                                showToast('Success', 'Live status cleared', 'success');
                             } catch (error) {
                                 showToast('Error', error.message, 'error');
                             }
@@ -1198,6 +1693,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 await API.deleteMedicalStaff(staff.id);
                                 const index = medicalStaff.value.findIndex(s => s.id === staff.id);
                                 if (index > -1) medicalStaff.value.splice(index, 1);
+                                
+                                const enhancedIndex = enhancedMedicalStaff.value.findIndex(s => s.id === staff.id);
+                                if (enhancedIndex > -1) enhancedMedicalStaff.value.splice(enhancedIndex, 1);
+                                
                                 showToast('Success', 'Medical staff deleted successfully', 'success');
                                 await loadSystemStats();
                             } catch (error) {
@@ -1219,6 +1718,66 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const index = rotations.value.findIndex(r => r.id === rotation.id);
                                 if (index > -1) rotations.value.splice(index, 1);
                                 showToast('Success', 'Rotation deleted successfully', 'success');
+                                await loadSystemStats();
+                            } catch (error) {
+                                showToast('Error', error.message, 'error');
+                            }
+                        }
+                    });
+                };
+                
+                const deleteOnCallSchedule = async (schedule) => {
+                    showConfirmation({
+                        title: 'Delete On-Call Schedule',
+                        message: 'Are you sure you want to delete this on-call schedule?',
+                        confirmButtonText: 'Delete',
+                        confirmButtonClass: 'btn-danger',
+                        onConfirm: async () => {
+                            try {
+                                await API.deleteOnCall(schedule.id);
+                                const index = onCallSchedule.value.findIndex(s => s.id === schedule.id);
+                                if (index > -1) onCallSchedule.value.splice(index, 1);
+                                showToast('Success', 'On-call schedule deleted successfully', 'success');
+                                await loadTodaysOnCall();
+                            } catch (error) {
+                                showToast('Error', error.message, 'error');
+                            }
+                        }
+                    });
+                };
+                
+                const deleteAbsence = async (absence) => {
+                    showConfirmation({
+                        title: 'Delete Absence',
+                        message: 'Are you sure you want to delete this absence record?',
+                        confirmButtonText: 'Delete',
+                        confirmButtonClass: 'btn-danger',
+                        onConfirm: async () => {
+                            try {
+                                await API.deleteAbsence(absence.id);
+                                const index = absences.value.findIndex(a => a.id === absence.id);
+                                if (index > -1) absences.value.splice(index, 1);
+                                showToast('Success', 'Absence deleted successfully', 'success');
+                                await loadSystemStats();
+                            } catch (error) {
+                                showToast('Error', error.message, 'error');
+                            }
+                        }
+                    });
+                };
+                
+                const deleteAnnouncement = async (announcement) => {
+                    showConfirmation({
+                        title: 'Delete Announcement',
+                        message: `Are you sure you want to delete "${announcement.title}"?`,
+                        confirmButtonText: 'Delete',
+                        confirmButtonClass: 'btn-danger',
+                        onConfirm: async () => {
+                            try {
+                                await API.deleteAnnouncement(announcement.id);
+                                const index = announcements.value.findIndex(a => a.id === announcement.id);
+                                if (index > -1) announcements.value.splice(index, 1);
+                                showToast('Success', 'Announcement deleted successfully', 'success');
                             } catch (error) {
                                 showToast('Error', error.message, 'error');
                             }
@@ -1267,14 +1826,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 // ============ 15. COMPUTED PROPERTIES ============
                 
                 const filteredMedicalStaff = computed(() => {
-                    let filtered = medicalStaff.value;
+                    let filtered = enhancedMedicalStaff.value;
                     
                     if (staffFilters.search) {
                         const search = staffFilters.search.toLowerCase();
                         filtered = filtered.filter(staff =>
                             staff.full_name?.toLowerCase().includes(search) ||
                             staff.staff_id?.toLowerCase().includes(search) ||
-                            staff.professional_email?.toLowerCase().includes(search)
+                            staff.professional_email?.toLowerCase().includes(search) ||
+                            staff.specialization?.toLowerCase().includes(search)
                         );
                     }
                     
@@ -1294,6 +1854,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         filtered = filtered.filter(staff => staff.employment_status === staffFilters.status);
                     }
                     
+                    if (staffFilters.hasResearchLines === 'yes') {
+                        filtered = filtered.filter(staff => staff.research_line_ids && staff.research_line_ids.length > 0);
+                    } else if (staffFilters.hasResearchLines === 'no') {
+                        filtered = filtered.filter(staff => !staff.research_line_ids || staff.research_line_ids.length === 0);
+                    }
+                    
                     return filtered;
                 });
                 
@@ -1308,16 +1874,67 @@ document.addEventListener('DOMContentLoaded', function() {
                         filtered = filtered.filter(unit => unit.unit_status === clinicalUnitFilters.status);
                     }
                     
-                    if (clinicalUnitFilters.capacity) {
-                        if (clinicalUnitFilters.capacity === 'full') {
-                            filtered = filtered.filter(unit => 
-                                unit.staff_count?.residents >= unit.maximum_residents
-                            );
-                        } else if (clinicalUnitFilters.capacity === 'available') {
-                            filtered = filtered.filter(unit => 
-                                unit.staff_count?.residents < unit.maximum_residents
-                            );
-                        }
+                    if (clinicalUnitFilters.capacity === 'full') {
+                        filtered = filtered.filter(unit => 
+                            unit.staff_count?.residents >= unit.maximum_residents
+                        );
+                    } else if (clinicalUnitFilters.capacity === 'available') {
+                        filtered = filtered.filter(unit => 
+                            unit.staff_count?.residents < unit.maximum_residents
+                        );
+                    }
+                    
+                    if (clinicalUnitFilters.search) {
+                        const search = clinicalUnitFilters.search.toLowerCase();
+                        filtered = filtered.filter(unit =>
+                            unit.unit_name?.toLowerCase().includes(search) ||
+                            unit.unit_code?.toLowerCase().includes(search) ||
+                            unit.specialty?.toLowerCase().includes(search)
+                        );
+                    }
+                    
+                    return filtered;
+                });
+                
+                const filteredRotations = computed(() => {
+                    let filtered = rotations.value;
+                    
+                    if (rotationFilters.resident) {
+                        filtered = filtered.filter(rotation => rotation.resident_id === rotationFilters.resident);
+                    }
+                    
+                    if (rotationFilters.status) {
+                        filtered = filtered.filter(rotation => rotation.rotation_status === rotationFilters.status);
+                    }
+                    
+                    if (rotationFilters.clinicalUnit) {
+                        filtered = filtered.filter(rotation => rotation.clinical_unit_id === rotationFilters.clinicalUnit);
+                    }
+                    
+                    if (rotationFilters.supervisor) {
+                        filtered = filtered.filter(rotation => rotation.supervising_attending_id === rotationFilters.supervisor);
+                    }
+                    
+                    return filtered;
+                });
+                
+                const filteredAbsences = computed(() => {
+                    let filtered = absences.value;
+                    
+                    if (absenceFilters.staff) {
+                        filtered = filtered.filter(absence => absence.staff_member_id === absenceFilters.staff);
+                    }
+                    
+                    if (absenceFilters.status) {
+                        filtered = filtered.filter(absence => absence.current_status === absenceFilters.status);
+                    }
+                    
+                    if (absenceFilters.reason) {
+                        filtered = filtered.filter(absence => absence.absence_reason === absenceFilters.reason);
+                    }
+                    
+                    if (absenceFilters.startDate) {
+                        filtered = filtered.filter(absence => absence.start_date >= absenceFilters.startDate);
                     }
                     
                     return filtered;
@@ -1328,19 +1945,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 const clinicalUnitCapacity = computed(() => {
-                    return clinicalUnits.value.map(unit => ({
+                    return clinicalUnitsWithStaff.value.map(unit => ({
                         id: unit.id,
                         name: unit.unit_name,
-                        capacity: unit.maximum_residents,
+                        capacity: unit.maximum_residents || 10,
                         current: unit.staff_count?.residents || 0,
-                        available: unit.maximum_residents - (unit.staff_count?.residents || 0)
+                        available: (unit.maximum_residents || 10) - (unit.staff_count?.residents || 0),
+                        percentage: Math.round(((unit.staff_count?.residents || 0) / (unit.maximum_residents || 10)) * 100)
                     }));
+                });
+                
+                const availablePhysicians = computed(() => {
+                    return medicalStaff.value.filter(staff => 
+                        (staff.staff_type === 'attending_physician' || 
+                         staff.staff_type === 'fellow' || 
+                         staff.staff_type === 'nurse_practitioner') && 
+                        staff.employment_status === 'active'
+                    );
+                });
+                
+                const availableResidents = computed(() => {
+                    return medicalStaff.value.filter(staff => 
+                        staff.staff_type === 'medical_resident' && 
+                        staff.employment_status === 'active'
+                    );
+                });
+                
+                const unreadAnnouncements = computed(() => {
+                    return announcements.value.filter(a => !a.read).length;
                 });
                 
                 // ============ 16. LIFECYCLE ============
                 
                 onMounted(() => {
-                    console.log('🚀 Vue app v10.0 mounted');
+                    console.log('🚀 Vue app v10.0 Complete mounted');
                     
                     const token = localStorage.getItem(CONFIG.TOKEN_KEY);
                     const user = localStorage.getItem(CONFIG.USER_KEY);
@@ -1357,11 +1995,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         currentView.value = 'login';
                     }
                     
-                    // Auto-refresh every 5 minutes
+                    // Auto-refresh data
                     const refreshInterval = setInterval(() => {
                         if (currentUser.value) {
                             loadSystemStats();
                             loadClinicalStatus();
+                            loadTodaysOnCall();
                         }
                     }, 5 * 60 * 1000);
                     
@@ -1369,6 +2008,29 @@ document.addEventListener('DOMContentLoaded', function() {
                         clearInterval(refreshInterval);
                     });
                 });
+                
+                // Watch for data changes to update stats
+                watch([medicalStaff, rotations, clinicalUnits, absences], 
+                    () => {
+                        // Update stats when data changes
+                        systemStats.value.totalStaff = medicalStaff.value.length;
+                        systemStats.value.activeResidents = medicalStaff.value.filter(s => 
+                            s.staff_type === 'medical_resident' && s.employment_status === 'active'
+                        ).length;
+                        systemStats.value.activeAttending = medicalStaff.value.filter(s => 
+                            s.staff_type === 'attending_physician' && s.employment_status === 'active'
+                        ).length;
+                        systemStats.value.clinicalUnits = clinicalUnits.value.length;
+                        systemStats.value.researchLines = researchLines.value.length;
+                        systemStats.value.activeRotations = rotations.value.filter(r => 
+                            r.rotation_status === 'active'
+                        ).length;
+                        systemStats.value.currentlyAbsent = absences.value.filter(a => 
+                            a.current_status === 'currently_absent'
+                        ).length;
+                    }, 
+                    { deep: true }
+                );
                 
                 // ============ 17. RETURN EXPOSED DATA/METHODS ============
                 return {
@@ -1378,6 +2040,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     loginLoading,
                     loading,
                     saving,
+                    isLoadingStatus,
                     
                     currentView,
                     sidebarCollapsed,
@@ -1388,6 +2051,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Data
                     medicalStaff,
+                    enhancedMedicalStaff,
                     researchLines,
                     clinicalUnits,
                     clinicalUnitsWithStaff,
@@ -1397,18 +2061,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     onCallSchedule,
                     announcements,
                     clinicalStatus,
+                    availableData,
+                    
+                    // Modal Data
+                    selectedStaffId,
+                    selectedResearchLines,
+                    newStatusText,
+                    selectedAuthorId,
+                    expiryHours,
+                    activeMedicalStaff,
                     
                     // Dashboard
                     systemStats,
                     todaysOnCall,
-                    availableData,
+                    todaysOnCallCount,
                     
                     // UI
                     toasts,
+                    systemAlerts,
                     
                     // Filters
                     staffFilters,
                     clinicalUnitFilters,
+                    rotationFilters,
+                    absenceFilters,
                     
                     // Modals
                     staffProfileModal,
@@ -1419,15 +2095,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     rotationModal,
                     onCallModal,
                     absenceModal,
+                    announcementModal,
+                    departmentModal,
+                    reportsModal,
                     confirmationModal,
                     
-                    // Formatting Functions
+                    // Core Functions
                     formatDate: EnhancedUtils.formatDate,
                     formatDateTime: EnhancedUtils.formatDateTime,
+                    formatTime: EnhancedUtils.formatTime,
+                    getInitials: EnhancedUtils.getInitials,
+                    truncateText: EnhancedUtils.truncateText,
                     formatStaffType,
+                    getStaffTypeClass,
                     formatEmploymentStatus,
                     formatAbsenceReason,
-                    getInitials: EnhancedUtils.getInitials,
+                    formatRotationStatus,
+                    formatAudience,
+                    getCurrentViewTitle,
                     
                     // Helper Functions
                     getDepartmentName,
@@ -1463,10 +2148,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     removeStaffAssignment,
                     showResearchLinesModal,
                     saveResearchLines,
+                    showAddRotationModal,
+                    editRotation,
+                    saveRotation,
+                    showAddOnCallModal,
+                    editOnCallSchedule,
+                    saveOnCallSchedule,
+                    showAddAbsenceModal,
+                    editAbsence,
+                    saveAbsence,
+                    showAddAnnouncementModal,
+                    editAnnouncement,
+                    saveAnnouncement,
+                    showAddDepartmentModal,
+                    editDepartment,
+                    saveDepartment,
+                    showReportsModal,
+                    
+                    // Live Status Functions
+                    saveClinicalStatus,
+                    deleteClinicalStatus,
                     
                     // Delete Functions
                     deleteMedicalStaff,
                     deleteRotation,
+                    deleteOnCallSchedule,
+                    deleteAbsence,
+                    deleteAnnouncement,
                     
                     // View Functions
                     viewStaffDetails,
@@ -1478,11 +2186,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Computed Properties
                     filteredMedicalStaff,
                     filteredClinicalUnits,
+                    filteredRotations,
+                    filteredAbsences,
                     activeResearchLines,
                     clinicalUnitCapacity,
-                    
-                    // View Title
-                    getCurrentViewTitle
+                    availablePhysicians,
+                    availableResidents,
+                    unreadAnnouncements
                 };
             }
         });
@@ -1490,15 +2200,21 @@ document.addEventListener('DOMContentLoaded', function() {
         // ============ 18. MOUNT APP ============
         app.mount('#app');
         
-        console.log('✅ NeumoCare v10.0 COMPLETE WITH RESEARCH LINES & CLINICAL UNITS mounted successfully!');
-        console.log('📋 NEW FEATURES INTEGRATED:');
-        console.log('   ✓ Research Lines Management');
-        console.log('   ✓ Clinical Units with Staff');
-        console.log('   ✓ Enhanced Medical Staff endpoints');
-        console.log('   ✓ Staff Assignment to Clinical Units');
-        console.log('   ✓ Research Participation Tracking');
-        console.log('   ✓ Clinical Unit Capacity Monitoring');
-        console.log('   ✓ Updated API Integration');
+        console.log('✅ NeumoCare v10.0 100% COMPLETE mounted successfully!');
+        console.log('📋 ALL FEATURES INTEGRATED:');
+        console.log('   ✅ Medical Staff Management (Enhanced)');
+        console.log('   ✅ Clinical Units with Staff Assignment');
+        console.log('   ✅ Research Lines Management');
+        console.log('   ✅ Resident Rotations');
+        console.log('   ✅ On-call Schedule Management');
+        console.log('   ✅ Staff Absence Tracking');
+        console.log('   ✅ Announcements System');
+        console.log('   ✅ Department Management');
+        console.log('   ✅ Reports & Analytics');
+        console.log('   ✅ Live Status Updates');
+        console.log('   ✅ Permission System');
+        console.log('   ✅ Advanced Filtering');
+        console.log('   ✅ Real-time Dashboard');
         
     } catch (error) {
         console.error('💥 FATAL ERROR mounting app:', error);
@@ -1507,7 +2223,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div style="padding: 40px; text-align: center; margin-top: 100px; color: #333; font-family: Arial, sans-serif;">
                 <h2 style="color: #dc3545;">⚠️ Application Error</h2>
                 <p style="margin: 20px 0; color: #666;">
-                    ${error.message}
+                    The application failed to load properly. Please try refreshing the page.
                 </p>
                 <button onclick="window.location.reload()" 
                         style="padding: 12px 24px; background: #007bff; color: white; 
