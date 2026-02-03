@@ -1,6 +1,6 @@
 // ============ NEUMOCARE HOSPITAL MANAGEMENT SYSTEM v10.0 COMPLETE ============
 // 100% COMPLETE VERSION - ALL API ENDPOINTS INTEGRATED
-// ===================================================================
+// ================================================================/===
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 NeumoCare Hospital Management System v10.0 Complete loading...');
