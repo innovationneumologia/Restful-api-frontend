@@ -4322,8 +4322,8 @@ body { text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "lig
                             <div class="search-box">
                                 <i class="fas fa-search search-icon"></i>
                                 <input type="text" class="search-input" :placeholder="getSearchPlaceholder()" 
-                                       v-model="globalSearchQuery" @keyup.enter="handleGlobalSearch"
-                                       aria-label="Search across system">
+       v-model="globalSearchQuery" @keyup="onSearchKeyUp"
+       aria-label="Search across system">
                             </div>
                         </div>
                         
