@@ -3,7 +3,7 @@
 // ===================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 NeumoCare Hospital Management System v8.0 Complete loadingdda...');
+    console.log('🚀 NeumoCare Hospital Management System v8.0 Complete loading...');
     
     try {
         // ============ 1. VUE VALIDATION ============
@@ -348,53 +348,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
             }
             
-// ===== ABSENCE ENDPOINTS =====
-async getAbsences() {
-    try {
-        const data = await this.request('/api/absence-records');
-        return EnhancedUtils.ensureArray(data);
-    } catch (error) {
-        console.warn('Failed to load absence records:', error);
-        return [];
-    }
-},
-
-async createAbsence(absenceData) {
-    return await this.request('/api/absence-records', {
-        method: 'POST',
-        body: absenceData
-    });
-},
-
-async updateAbsence(id, absenceData) {
-    return await this.request(`/api/absence-records/${id}`, {
-        method: 'PUT',
-        body: absenceData
-    });
-},
-
-async deleteAbsence(id) {
-    return await this.request(`/api/absence-records/${id}`, {
-        method: 'DELETE'
-    });
-},
-
-// Get absence dashboard statistics
-async getAbsenceDashboardStats() {
-    try {
-        const data = await this.request('/api/absence-records/dashboard/stats');
-        return data || {};
-    } catch (error) {
-        console.warn('Failed to load absence dashboard stats:', error);
-        return {
-            totalAbsences: 0,
-            activeAbsences: 0,
-            upcomingAbsences: 0
-        };
-    }
-},
-// ===== END ABSENCE ENDPOINTS =====
-
+            // ===== ABSENCE ENDPOINTS =====
+            async getAbsences() {
+                try {
+                    const data = await this.request('/api/absences');
+                    return EnhancedUtils.ensureArray(data);
+                } catch { return []; }
+            }
+            
+            async createAbsence(absenceData) {
+                return await this.request('/api/absences', {
+                    method: 'POST',
+                    body: absenceData
+                });
+            }
+            
+            async updateAbsence(id, absenceData) {
+                return await this.request(`/api/absences/${id}`, {
+                    method: 'PUT',
+                    body: absenceData
+                });
+            }
+            
+            async deleteAbsence(id) {
+                return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
+            }
+            
             // ===== ANNOUNCEMENT ENDPOINTS =====
             async getAnnouncements() {
                 try {
@@ -1457,53 +1436,13 @@ async getAbsenceDashboardStats() {
                         return true;
                     }
                 };
+                
                 const showCreateStatusModal = () => {
-    // Open communications modal with clinical status tab
-    communicationsModal.show = true;
-    communicationsModal.activeTab = 'stats_update';
-    
-    // Pre-fill form
-    communicationsModal.form = {
-        title: 'Clinical Status Update',
-        content: '',
-        priority: 'normal',
-        target_audience: 'all_staff',
-        updateType: 'daily',
-        dailySummary: clinicalStatus.value?.status_text || '',
-        highlight1: '',
-        highlight2: '',
-        alerts: {
-            erBusy: false,
-            icuFull: false,
-            wardFull: false,
-            staffShortage: false
-        },
-        metricName: '',
-        metricValue: '',
-        metricTrend: 'stable',
-        metricChange: '',
-        metricNote: '',
-        alertLevel: 'low',
-        alertMessage: '',
-        affectedAreas: {
-            er: false,
-            icu: false,
-            ward: false,
-            surgery: false
-        }
-    };
-    
-    // Auto-select current user as author
-    if (currentUser.value && medicalStaff.value.length > 0) {
-        const currentStaff = medicalStaff.value.find(staff => 
-            staff.professional_email === currentUser.value.email
-        );
-        if (currentStaff) {
-            selectedAuthorId.value = currentStaff.id;
-        }
-    }
-};
-
+                    liveStatsEditMode.value = true;
+                    newStatusText.value = '';
+                    selectedAuthorId.value = '';
+                    expiryHours.value = 8;
+                };
                 
                 // ============ 12. DELETE FUNCTIONS ============
                 
