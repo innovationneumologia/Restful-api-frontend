@@ -3,7 +3,7 @@
 // ===================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 NeumoCare Hospital Management System v8.0 Complete loading...');
+    console.log('🚀 NeumoCare Hospital Management System v8.0 Complete loadingdda...');
     
     try {
         // ============ 1. VUE VALIDATION ============
