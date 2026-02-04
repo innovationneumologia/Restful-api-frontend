@@ -370,15 +370,44 @@ async updateAbsence(id, absenceData) {
     });
 },
 
-async deleteAbsence(id) {
-    return await this.request(`/api/absence-records/${id}`, { method: 'DELETE' });
+// ===== ABSENCE ENDPOINTS =====
+async getAbsences() {
+    try {
+        const data = await this.request('/api/absence-records');
+        return EnhancedUtils.ensureArray(data);
+    } catch (error) {
+        console.warn('Failed to load absence records:', error);
+        return [];
+    }
 },
-            // ADD THIS RIGHT HERE ▼▼▼
+
+async createAbsence(absenceData) {
+    return await this.request('/api/absence-records', {
+        method: 'POST',
+        body: absenceData
+    });
+},
+
+async updateAbsence(id, absenceData) {
+    return await this.request(`/api/absence-records/${id}`, {
+        method: 'PUT',
+        body: absenceData
+    });
+},
+
+async deleteAbsence(id) {
+    return await this.request(`/api/absence-records/${id}`, {
+        method: 'DELETE'
+    });
+},
+
+// Get absence dashboard statistics
 async getAbsenceDashboardStats() {
     try {
         const data = await this.request('/api/absence-records/dashboard/stats');
         return data || {};
-    } catch {
+    } catch (error) {
+        console.warn('Failed to load absence dashboard stats:', error);
         return {
             totalAbsences: 0,
             activeAbsences: 0,
@@ -386,7 +415,8 @@ async getAbsenceDashboardStats() {
         };
     }
 },
-            
+// ===== END ABSENCE ENDPOINTS =====
+
             // ===== ANNOUNCEMENT ENDPOINTS =====
             async getAnnouncements() {
                 try {
