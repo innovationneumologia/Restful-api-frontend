@@ -373,6 +373,19 @@ async updateAbsence(id, absenceData) {
 async deleteAbsence(id) {
     return await this.request(`/api/absence-records/${id}`, { method: 'DELETE' });
 },
+            // ADD THIS RIGHT HERE ▼▼▼
+async getAbsenceDashboardStats() {
+    try {
+        const data = await this.request('/api/absence-records/dashboard/stats');
+        return data || {};
+    } catch {
+        return {
+            totalAbsences: 0,
+            activeAbsences: 0,
+            upcomingAbsences: 0
+        };
+    }
+},
             
             // ===== ANNOUNCEMENT ENDPOINTS =====
             async getAnnouncements() {
