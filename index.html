@@ -4021,15 +4021,13 @@ body { text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "lig
                     </div>
                 </div>
             </aside>
+<!-- Live Stats Sidebar Toggle -->
+<button class="stats-toggle-btn" @click="toggleStatsSidebar" 
+        :aria-label="statsSidebarOpen ? 'Close live statistics sidebar' : 'Open live statistics sidebar'">
+    <i class="fas" :class="statsSidebarOpen ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+</button>
 
-            <!-- Live Stats Sidebar Toggle -->
-            <button class="stats-toggle-btn" @click="toggleStatsSidebar" 
-                    :aria-label="statsSidebarOpen ? 'Close live statistics sidebar' : 'Open live statistics sidebar'">
-                <i class="fas" :class="statsSidebarOpen ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
-            </button>
-            
-            <!-- Live Statistics Sidebar -->
-            <!-- Live Statistics Sidebar - ENHANCED VISUALLY -->
+<!-- Live Statistics Sidebar - ENHANCED VISUALLY -->
 <div class="live-stats-sidebar" :class="{ open: statsSidebarOpen }" role="complementary" aria-label="Live clinical status">
     <div class="live-stats-header">
         <div class="header-title">
@@ -4288,6 +4286,63 @@ body { text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "lig
                 <div class="expiry-timer">
                     {{ calculateTimeRemaining(clinicalStatus.expires_at) }}
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE STATUS CREATION FORM - ADDED HERE -->
+    <div v-if="liveStatsEditMode" class="status-form-section p-4 bg-gray-50 border-t border-gray-200 mt-4">
+        <div class="form-header flex items-center justify-between mb-3">
+            <h4 class="font-semibold text-gray-700">
+                <i class="fas fa-edit mr-2"></i>Create Clinical Status
+            </h4>
+            <button @click="liveStatsEditMode = false" 
+                    class="text-gray-500 hover:text-gray-700" 
+                    aria-label="Close form">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="form-content">
+            <textarea v-model="newStatusText" 
+                      class="w-full p-3 border border-gray-300 rounded-lg mb-3 text-sm" 
+                      placeholder="Describe the current clinical status (e.g., 'ICU at capacity, staffing normal, equipment all functional')"
+                      rows="3"></textarea>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Author</label>
+                    <select v-model="selectedAuthorId" 
+                            class="w-full p-2 border border-gray-300 rounded text-sm">
+                        <option value="">Select author</option>
+                        <option v-for="staff in activeMedicalStaff" :key="staff.id" :value="staff.id">
+                            {{ staff.full_name }}
+                        </option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Expires in</label>
+                    <select v-model="expiryHours" 
+                            class="w-full p-2 border border-gray-300 rounded text-sm">
+                        <option value="2">2 hours</option>
+                        <option value="4">4 hours</option>
+                        <option value="8" selected>8 hours</option>
+                        <option value="12">12 hours</option>
+                        <option value="24">24 hours</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <button @click="saveClinicalStatus" 
+                        class="btn btn-primary flex-1 btn-sm"
+                        :disabled="!newStatusText.trim() || !selectedAuthorId">
+                    <i class="fas fa-paper-plane mr-2"></i>Publish Status
+                </button>
+                <button @click="liveStatsEditMode = false" 
+                        class="btn btn-secondary btn-sm">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
