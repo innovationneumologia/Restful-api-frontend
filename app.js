@@ -414,7 +414,7 @@ async getAbsenceDashboardStats() {
             upcomingAbsences: 0
         };
     }
-},
+}
 // ===== END ABSENCE ENDPOINTS =====
 
             // ===== ANNOUNCEMENT ENDPOINTS =====
