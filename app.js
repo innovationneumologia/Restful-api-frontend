@@ -1436,13 +1436,53 @@ document.addEventListener('DOMContentLoaded', function() {
                         return true;
                     }
                 };
-                
                 const showCreateStatusModal = () => {
-                    liveStatsEditMode.value = true;
-                    newStatusText.value = '';
-                    selectedAuthorId.value = '';
-                    expiryHours.value = 8;
-                };
+    // Open communications modal with clinical status tab
+    communicationsModal.show = true;
+    communicationsModal.activeTab = 'stats_update';
+    
+    // Pre-fill form
+    communicationsModal.form = {
+        title: 'Clinical Status Update',
+        content: '',
+        priority: 'normal',
+        target_audience: 'all_staff',
+        updateType: 'daily',
+        dailySummary: clinicalStatus.value?.status_text || '',
+        highlight1: '',
+        highlight2: '',
+        alerts: {
+            erBusy: false,
+            icuFull: false,
+            wardFull: false,
+            staffShortage: false
+        },
+        metricName: '',
+        metricValue: '',
+        metricTrend: 'stable',
+        metricChange: '',
+        metricNote: '',
+        alertLevel: 'low',
+        alertMessage: '',
+        affectedAreas: {
+            er: false,
+            icu: false,
+            ward: false,
+            surgery: false
+        }
+    };
+    
+    // Auto-select current user as author
+    if (currentUser.value && medicalStaff.value.length > 0) {
+        const currentStaff = medicalStaff.value.find(staff => 
+            staff.professional_email === currentUser.value.email
+        );
+        if (currentStaff) {
+            selectedAuthorId.value = currentStaff.id;
+        }
+    }
+};
+
                 
                 // ============ 12. DELETE FUNCTIONS ============
                 
