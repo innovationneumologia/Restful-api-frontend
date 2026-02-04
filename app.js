@@ -348,28 +348,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
             }
             
-            // ===== ABSENCE ENDPOINTS =====
-async getAbsences() {
-    try {
-        const data = await this.request('/api/absence-records');
-        return EnhancedUtils.ensureArray(data);
-    } catch { return []; }
-},
-
-async createAbsence(absenceData) {
-    return await this.request('/api/absence-records', {
-        method: 'POST',
-        body: absenceData
-    });
-},
-
-async updateAbsence(id, absenceData) {
-    return await this.request(`/api/absence-records/${id}`, {
-        method: 'PUT',
-        body: absenceData
-    });
-},
-
 // ===== ABSENCE ENDPOINTS =====
 async getAbsences() {
     try {
