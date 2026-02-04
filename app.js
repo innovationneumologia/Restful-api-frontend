@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             async deleteOnCall(id) {
                 return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
-            }
+            },
             
 // ===== ABSENCE ENDPOINTS =====
 async getAbsences() {
