@@ -349,30 +349,30 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // ===== ABSENCE ENDPOINTS =====
-            async getAbsences() {
-                try {
-                    const data = await this.request('/api/absences');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createAbsence(absenceData) {
-                return await this.request('/api/absences', {
-                    method: 'POST',
-                    body: absenceData
-                });
-            }
-            
-            async updateAbsence(id, absenceData) {
-                return await this.request(`/api/absences/${id}`, {
-                    method: 'PUT',
-                    body: absenceData
-                });
-            }
-            
-            async deleteAbsence(id) {
-                return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
-            }
+async getAbsences() {
+    try {
+        const data = await this.request('/api/absence-records');
+        return EnhancedUtils.ensureArray(data);
+    } catch { return []; }
+},
+
+async createAbsence(absenceData) {
+    return await this.request('/api/absence-records', {
+        method: 'POST',
+        body: absenceData
+    });
+},
+
+async updateAbsence(id, absenceData) {
+    return await this.request(`/api/absence-records/${id}`, {
+        method: 'PUT',
+        body: absenceData
+    });
+},
+
+async deleteAbsence(id) {
+    return await this.request(`/api/absence-records/${id}`, { method: 'DELETE' });
+},
             
             // ===== ANNOUNCEMENT ENDPOINTS =====
             async getAnnouncements() {
