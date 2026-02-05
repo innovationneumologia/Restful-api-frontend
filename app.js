@@ -1750,23 +1750,29 @@ const API = new ApiService();
         s.staff_type === 'medical_resident' && s.employment_status === 'active'
     ).length;
     
-    // ✅ FIXED: Check for correct absence status values from your database
+    // ✅ FIXED: Calculate staff currently on leave correctly
     const today = new Date().toISOString().split('T')[0];
+    
     systemStats.value.onLeaveStaff = absences.value.filter(absence => {
-        // Check if absence status indicates staff is currently absent
-        // Your database has 'currently_absent' status, not 'active'
-        const isCurrentlyAbsent = absence.current_status === 'currently_absent';
-        
-        // Check if today is within the absence date range
+        // Check if the absence is currently active
         const startDate = absence.start_date;
         const endDate = absence.end_date;
         
-        // Make sure dates exist and today is between start and end dates
         if (!startDate || !endDate) return false;
         
-        const isDateOverlap = startDate <= today && endDate >= today;
+        // Check if today is within the absence date range
+        const isCurrentlyAbsent = startDate <= today && today <= endDate;
         
-        return isCurrentlyAbsent && isDateOverlap;
+        if (!isCurrentlyAbsent) return false;
+        
+        // Check current_status if available
+        if (absence.current_status) {
+            // Check all possible status values that indicate active absence
+            const activeStatuses = ['currently_absent', 'active', 'on_leave', 'approved'];
+            return activeStatuses.includes(absence.current_status.toLowerCase());
+        }
+        
+        return true; // If no status field, assume active based on date range
     }).length;
     
     // Calculate active rotations
@@ -1827,10 +1833,15 @@ const API = new ApiService();
         onCallNow: systemStats.value.onCallNow,
         activeRotations: systemStats.value.activeRotations,
         endingThisWeek: systemStats.value.endingThisWeek,
-        startingNextWeek: systemStats.value.startingNextWeek
+        startingNextWeek: systemStats.value.startingNextWeek,
+        'total absences in array': absences.value.length,
+        'absences checked': absences.value.filter(a => {
+            const start = a.start_date;
+            const end = a.end_date;
+            return start && end && start <= today && today <= end;
+        }).length
     });
 };
-                
                 const loadAllData = async () => {
                     loading.value = true;
                     try {
