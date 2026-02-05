@@ -349,30 +349,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // ===== ABSENCE ENDPOINTS =====
-            async getAbsences() {
-                try {
-                    const data = await this.request('/api/absences');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createAbsence(absenceData) {
-                return await this.request('/api/absences', {
-                    method: 'POST',
-                    body: absenceData
-                });
-            }
-            
-            async updateAbsence(id, absenceData) {
-                return await this.request(`/api/absences/${id}`, {
-                    method: 'PUT',
-                    body: absenceData
-                });
-            }
-            
-            async deleteAbsence(id) {
-                return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
-            }
+          // ===== ABSENCE ENDPOINTS =====
+async getAbsences() {
+    try {
+        const data = await this.request('/api/absence-records');  // ✅ CORRECT ENDPOINT
+        return EnhancedUtils.ensureArray(data);
+    } catch (error) {
+        console.error('Failed to load absences:', error);
+        return [];
+    }
+}
+
+async createAbsence(absenceData) {
+    return await this.request('/api/absence-records', {  // ✅ CORRECT ENDPOINT
+        method: 'POST',
+        body: absenceData
+    });
+}
+
+async updateAbsence(id, absenceData) {
+    return await this.request(`/api/absence-records/${id}`, {  // ✅ CORRECT ENDPOINT
+        method: 'PUT',
+        body: absenceData
+    });
+}
+
+async deleteAbsence(id) {
+    return await this.request(`/api/absence-records/${id}`, {  // ✅ CORRECT ENDPOINT
+        method: 'DELETE' 
+    });
+}
             
             // ===== ANNOUNCEMENT ENDPOINTS =====
             async getAnnouncements() {
@@ -1918,20 +1924,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     onCallModal.show = true;
                 };
                 
-                const showAddAbsenceModal = () => {
-                    absenceModal.mode = 'add';
-                    absenceModal.form = {
-                        staff_member_id: '',
-                        absence_reason: 'vacation',
-                        start_date: new Date().toISOString().split('T')[0],
-                        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        status: 'active',
-                        replacement_staff_id: '',
-                        notes: '',
-                        leave_type: 'planned'
-                    };
-                    absenceModal.show = true;
-                };
+   const showAddAbsenceModal = () => {
+    absenceModal.mode = 'add';
+    absenceModal.form = {
+        staff_member_id: '',
+        absence_type: 'planned',  // ✅ Changed
+        absence_reason: 'vacation',
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        current_status: 'pending',
+        covering_staff_id: '',  // ✅ Changed
+        coverage_notes: '',  // ✅ Changed
+        coverage_arranged: false,  // ✅ New
+        hod_notes: ''  // ✅ New
+    };
+    absenceModal.show = true;
+};
                 
                 const showCommunicationsModal = () => {
                     communicationsModal.show = true;
@@ -2218,38 +2226,44 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                const saveAbsence = async () => {
-                    saving.value = true;
-                    try {
-                        const absenceData = {
-                            staff_member_id: absenceModal.form.staff_member_id,
-                            absence_reason: absenceModal.form.absence_reason,
-                            start_date: absenceModal.form.start_date,
-                            end_date: absenceModal.form.end_date,
-                            status: absenceModal.form.status || 'pending',
-                            replacement_staff_id: absenceModal.form.replacement_staff_id || null,
-                            notes: absenceModal.form.notes || '',
-                            leave_type: absenceModal.form.leave_type || 'planned'
-                        };
-                        
-                        if (absenceModal.mode === 'add') {
-                            const result = await API.createAbsence(absenceData);
-                            absences.value.unshift(result);
-                            showToast('Success', 'Absence recorded successfully', 'success');
-                        } else {
-                            const result = await API.updateAbsence(absenceModal.form.id, absenceData);
-                            const index = absences.value.findIndex(a => a.id === result.id);
-                            if (index !== -1) absences.value[index] = result;
-                            showToast('Success', 'Absence updated successfully', 'success');
-                        }
-                        absenceModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
+               const saveAbsence = async () => {
+    saving.value = true;
+    try {
+        // Transform data to match backend schema
+        const absenceData = {
+            staff_member_id: absenceModal.form.staff_member_id,
+            absence_type: absenceModal.form.leave_type || 'planned',  // ✅ 'absence_type' not 'leave_type'
+            absence_reason: absenceModal.form.absence_reason,
+            start_date: absenceModal.form.start_date,
+            end_date: absenceModal.form.end_date,
+            coverage_arranged: !!absenceModal.form.replacement_staff_id,  // ✅ boolean
+            covering_staff_id: absenceModal.form.replacement_staff_id || null,  // ✅ 'covering_staff_id'
+            coverage_notes: absenceModal.form.notes || '',
+            hod_notes: '',
+            current_status: absenceModal.form.status || 'pending'  // ✅ 'current_status'
+        };
+        
+        console.log('📤 Sending absence data:', absenceData);
+        
+        if (absenceModal.mode === 'add') {
+            const result = await API.createAbsence(absenceData);
+            absences.value.unshift(result);
+            showToast('Success', 'Absence recorded successfully', 'success');
+        } else {
+            const result = await API.updateAbsence(absenceModal.form.id, absenceData);
+            const index = absences.value.findIndex(a => a.id === result.id);
+            if (index !== -1) absences.value[index] = result;
+            showToast('Success', 'Absence updated successfully', 'success');
+        }
+        absenceModal.show = false;
+        updateDashboardStats();
+    } catch (error) {
+        console.error('Save absence error:', error);
+        showToast('Error', error.message || 'Failed to save absence record', 'error');
+    } finally {
+        saving.value = false;
+    }
+};
                 
                 const saveCommunication = async () => {
                     saving.value = true;
