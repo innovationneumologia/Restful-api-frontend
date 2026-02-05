@@ -15,8 +15,8 @@
     
     <!-- Vue.js 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <style>
-  /* ============ COMPLETE IMPROVED NEUMOCARE CSS - PART 1 OF 2 ============ */
+   <style>
+/* ============ COMPLETE IMPROVED NEUMOCARE CSS WITH MOBILE FIXES ============ */
 
 /* ============ MEDICAL BLUE THEME ============ */
 :root {
@@ -597,12 +597,7 @@ p { margin-bottom: 1rem; line-height: var(--line-height-relaxed); }
 .invisible { visibility: hidden; }
 .collapse { visibility: collapse; }
 
-/* ============ END OF PART 1 ============ */
-/* Continue with PART 2 for components, tables, sidebar, etc. */
-    /* ============ COMPLETE IMPROVED NEUMOCARE CSS - PART 2 OF 2 ============ */
-/* This file continues from PART 1 */
-
-/* ============ IMPROVED BUTTONS - REDUCED HOVER ============ */
+/* ============ IMPROVED BUTTONS WITH MOBILE TOUCH TARGETS ============ */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -901,7 +896,7 @@ p { margin-bottom: 1rem; line-height: var(--line-height-relaxed); }
     50% { opacity: 0.7; }
 }
 
-/* ============ IMPROVED CARDS - REDUCED HOVER ============ */
+/* ============ IMPROVED CARDS ============ */
 .card {
     background: white;
     border-radius: var(--border-radius-lg);
@@ -948,7 +943,7 @@ p { margin-bottom: 1rem; line-height: var(--line-height-relaxed); }
     font-weight: 400;
 }
 
-/* ============ PROFESSIONAL TABLES WITH HIERARCHY ============ */
+/* ============ PROFESSIONAL TABLES WITH MOBILE RESPONSIVENESS ============ */
 .table-responsive {
     overflow-x: auto;
     border-radius: var(--border-radius-lg);
@@ -1223,7 +1218,7 @@ p { margin-bottom: 1rem; line-height: var(--line-height-relaxed); }
     background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
 }
 
-/* ============ IMPROVED SIDEBAR - MOBILE FIX ============ */
+/* ============ IMPROVED SIDEBAR WITH MOBILE FIXES ============ */
 .sidebar {
     width: var(--sidebar-width);
     background: linear-gradient(180deg, #0c4160 0%, var(--medical-dark-blue) 100%);
@@ -1492,7 +1487,7 @@ p { margin-bottom: 1rem; line-height: var(--line-height-relaxed); }
     margin-left: var(--sidebar-collapsed);
 }
 
-/* ============ TOP NAVBAR ============ */
+/* ============ TOP NAVBAR WITH MOBILE FIXES ============ */
 .top-navbar {
     background: white;
     padding: 16px 28px;
@@ -1763,11 +1758,7 @@ p { margin-bottom: 1rem; line-height: var(--line-height-relaxed); }
     font-size: 13px;
 }
 
-/* ============ Continue in next message with Live Stats, Modals, Forms, etc. ============ */
-    /* ============ COMPLETE IMPROVED NEUMOCARE CSS - PART 3 OF 3 ============ */
-/* This file continues from PART 2 */
-
-/* ============ LIVE STATS SIDEBAR ============ */
+/* ============ LIVE STATS SIDEBAR WITH MOBILE FIXES ============ */
 .live-stats-sidebar {
     position: fixed;
     right: 0;
@@ -1787,46 +1778,6 @@ p { margin-bottom: 1rem; line-height: var(--line-height-relaxed); }
 
 .live-stats-sidebar.open {
     transform: translateX(0);
-}
-
-/* Mobile responsive fixes */
-@media (max-width: 1024px) {
-    .live-stats-sidebar { 
-        width: 100vw;
-        height: 85vh;
-        top: 15vh;
-        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
-        padding: 24px 20px 40px;
-    }
-    
-    .stats-toggle-btn { 
-        display: none;
-    }
-    
-    @supports (padding: max(0px)) {
-        .live-stats-sidebar {
-            padding-bottom: max(40px, env(safe-area-inset-bottom));
-        }
-    }
-}
-
-/* Small mobile */
-@media (max-width: 480px) {
-    .live-stats-sidebar {
-        padding: 20px 16px 36px;
-        height: 90vh;
-        top: 10vh;
-    }
-    
-    .metrics-grid,
-    .availability-grid {
-        gap: 12px;
-    }
-    
-    .metric-card,
-    .availability-card {
-        padding: 16px;
-    }
 }
 
 .stats-toggle-btn {
@@ -1917,6 +1868,46 @@ p { margin-bottom: 1rem; line-height: var(--line-height-relaxed); }
     background: var(--medical-blue);
     color: white;
     transform: rotate(90deg);
+}
+
+/* Mobile responsive fixes for live stats */
+@media (max-width: 1024px) {
+    .live-stats-sidebar { 
+        width: 100vw;
+        height: 85vh;
+        top: 15vh;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        padding: 24px 20px 40px;
+    }
+    
+    .stats-toggle-btn { 
+        display: none;
+    }
+    
+    @supports (padding: max(0px)) {
+        .live-stats-sidebar {
+            padding-bottom: max(40px, env(safe-area-inset-bottom));
+        }
+    }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+    .live-stats-sidebar {
+        padding: 20px 16px 36px;
+        height: 90vh;
+        top: 10vh;
+    }
+    
+    .metrics-grid,
+    .availability-grid {
+        gap: 12px;
+    }
+    
+    .metric-card,
+    .availability-card {
+        padding: 16px;
+    }
 }
 
 .status-timeline {
@@ -3626,7 +3617,7 @@ p { margin-bottom: 1rem; line-height: var(--line-height-relaxed); }
     font-weight: 400;
 }
 
-/* ============ RESPONSIVE DESIGN ============ */
+/* ============ RESPONSIVE DESIGN WITH GRID IMPROVEMENTS ============ */
 @media (max-width: 1200px) {
     .metrics-grid, 
     .availability-grid, 
@@ -3635,64 +3626,6 @@ p { margin-bottom: 1rem; line-height: var(--line-height-relaxed); }
     .training-units-grid,
     .departments-grid {
         grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .metrics-grid, 
-    .availability-grid, 
-    .stats-grid,
-    .dynamic-status-grid,
-    .training-units-grid,
-    .departments-grid,
-    .assignments-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    
-    .form-row,
-    .highlight-inputs,
-    .metric-inputs,
-    .alert-options,
-    .area-options,
-    .status-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    
-    .action-buttons {
-        grid-template-columns: 1fr;
-    }
-    
-    .card {
-        padding: 20px;
-    }
-    
-    .modal-container {
-        width: 95vw;
-        margin: 10px;
-        max-height: 90vh;
-    }
-}
-
-@media (max-width: 480px) {
-    .stats-grid,
-    .training-units-grid,
-    .departments-grid {
-        gap: 12px;
-    }
-    
-    .card,
-    .stat-card,
-    .metric-card {
-        padding: 16px;
-    }
-    
-    .modal-container {
-        width: 100vw;
-        margin: 0;
-        border-radius: 0;
-        max-height: 100vh;
     }
 }
 
@@ -3729,15 +3662,37 @@ p { margin-bottom: 1rem; line-height: var(--line-height-relaxed); }
     .highlight-inputs, .alert-options, .area-options, .metric-inputs { grid-template-columns: 1fr; }
     .priority-selector { flex-direction: column; }
     .action-buttons { grid-template-columns: 1fr; }
-    .top-navbar { padding: 12px 16px; }
-    .navbar-right { flex-direction: column; align-items: flex-end; }
-    .search-container { width: 100%; max-width: 200px; }
-    .content-area { padding: 20px; }
-    .dynamic-status-grid { grid-template-columns: 1fr; }
-    .assignments-grid { grid-template-columns: 1fr; }
-    .metric-inputs-grid { grid-template-columns: 1fr; }
-    .training-units-grid { grid-template-columns: 1fr; }
-    .departments-grid { grid-template-columns: 1fr; }
+    
+    .metrics-grid, 
+    .availability-grid, 
+    .stats-grid,
+    .dynamic-status-grid,
+    .training-units-grid,
+    .departments-grid,
+    .assignments-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .form-row,
+    .highlight-inputs,
+    .metric-inputs,
+    .alert-options,
+    .area-options,
+    .status-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-container {
+        width: 95vw;
+        margin: 10px;
+        max-height: 90vh;
+    }
 }
 
 @media (max-width: 480px) {
@@ -3747,10 +3702,26 @@ p { margin-bottom: 1rem; line-height: var(--line-height-relaxed); }
     .login-card { padding: 32px 20px; }
     .modal-container { width: 100%; margin: 0; border-radius: 0; max-height: 100vh; }
     .modal-overlay { padding: 0; }
-    .top-navbar { padding: 12px 16px; }
-    .navbar-title { font-size: 16px; }
-    .profile-header { flex-direction: column; text-align: center; gap: 16px; }
-    .profile-meta-row { justify-content: center; }
+    
+    .stats-grid,
+    .training-units-grid,
+    .departments-grid {
+        gap: 12px;
+    }
+    
+    .card,
+    .stat-card,
+    .metric-card {
+        padding: 16px;
+    }
+    
+    .modal-container {
+        width: 100vw;
+        margin: 0;
+        border-radius: 0;
+        max-height: 100vh;
+    }
+    
     .table-responsive {
         border-radius: var(--border-radius-sm);
     }
@@ -3864,9 +3835,8 @@ svg { fill: currentColor; }
 body { text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "liga" 1, "calt" 1; }
 .live-stats-sidebar { scrollbar-width: thin; scrollbar-color: var(--primary-color) transparent; }
 
-/* ============ END OF COMPLETE CSS - ALL MOBILE IMPROVEMENTS APPLIED ============ */
+/* ============ COMPLETE WITH ALL MOBILE FIXES ============ */
 </style>
-    
 </head>
 <body>
     <div id="app" v-cloak>
