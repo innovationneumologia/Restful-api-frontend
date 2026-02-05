@@ -125,69 +125,89 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
             }
             
-            getHeaders() {
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                };
-                
-                const token = localStorage.getItem(CONFIG.TOKEN_KEY);
-                if (token && token.trim()) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-                
-                return headers;
+  async request(endpoint, options = {}) {
+    const url = `${CONFIG.API_BASE_URL}${endpoint}`;
+    
+    try {
+        const config = {
+            method: options.method || 'GET',
+            headers: this.getHeaders(),
+            mode: 'cors',
+            cache: 'no-cache',
+            credentials: 'include' // ✅ ADD THIS LINE - CRITICAL FIX
+        };
+        
+        if (options.body && typeof options.body === 'object') {
+            config.body = JSON.stringify(options.body);
+        }
+        
+        console.log(`📡 API Request to ${url}:`, {
+            method: config.method,
+            headers: config.headers,
+            mode: config.mode,
+            credentials: config.credentials,
+            hasBody: !!options.body
+        });
+        
+        const response = await fetch(url, config);
+        
+        // Log response headers for debugging CORS
+        console.log(`📥 Response from ${url}:`, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+        });
+        
+        if (response.status === 204) return null;
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                this.token = null;
+                localStorage.removeItem(CONFIG.TOKEN_KEY);
+                localStorage.removeItem(CONFIG.USER_KEY);
+                throw new Error('Session expired. Please login again.');
             }
             
-            async request(endpoint, options = {}) {
-                const url = `${CONFIG.API_BASE_URL}${endpoint}`;
-                
-                try {
-                    const config = {
-                        method: options.method || 'GET',
-                        headers: this.getHeaders(),
-                        mode: 'cors',
-                        cache: 'no-cache'
-                    };
-                    
-                    if (options.body && typeof options.body === 'object') {
-                        config.body = JSON.stringify(options.body);
-                    }
-                    
-                    const response = await fetch(url, config);
-                    
-                    if (response.status === 204) return null;
-                    
-                    if (!response.ok) {
-                        if (response.status === 401) {
-                            this.token = null;
-                            localStorage.removeItem(CONFIG.TOKEN_KEY);
-                            localStorage.removeItem(CONFIG.USER_KEY);
-                            throw new Error('Session expired. Please login again.');
-                        }
-                        
-                        let errorText;
-                        try {
-                            errorText = await response.text();
-                        } catch {
-                            errorText = `HTTP ${response.status}: ${response.statusText}`;
-                        }
-                        
-                        throw new Error(errorText);
-                    }
-                    
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        return await response.json();
-                    }
-                    
-                    return await response.text();
-                    
-                } catch (error) {
-                    if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error);
-                    throw error;
-                }
+            let errorText;
+            try {
+                errorText = await response.text();
+            } catch {
+                errorText = `HTTP ${response.status}: ${response.statusText}`;
             }
+            
+            // Check for CORS-specific errors
+            if (response.status === 0 || errorText.includes('CORS') || errorText.includes('origin')) {
+                throw new Error(`CORS Error: Request blocked. Make sure backend allows origin: ${window.location.origin}`);
+            }
+            
+            throw new Error(errorText);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+        }
+        
+        return await response.text();
+        
+    } catch (error) {
+        if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error);
+        
+        // Enhanced error handling for CORS
+        if (error.message.includes('CORS') || error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            console.error('🔴 CORS/NETWORK ERROR DETAILS:', {
+                endpoint,
+                url: `${CONFIG.API_BASE_URL}${endpoint}`,
+                origin: window.location.origin,
+                time: new Date().toISOString()
+            });
+            
+            throw new Error(`Cannot connect to server. Check if:\n1. Backend is running\n2. CORS is configured\n3. Network allows requests to ${CONFIG.API_BASE_URL}`);
+        }
+        
+        throw error;
+    }
+}
             
             // ===== AUTHENTICATION ENDPOINTS =====
             async login(email, password) {
