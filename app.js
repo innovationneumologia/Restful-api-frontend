@@ -1720,30 +1720,34 @@ async deleteAbsence(id) {
                     }
                 };
                 
-             const updateDashboardStats = () => {
+          const updateDashboardStats = () => {
     systemStats.value.totalStaff = medicalStaff.value.length;
+    
     systemStats.value.activeAttending = medicalStaff.value.filter(s => 
         s.staff_type === 'attending_physician' && s.employment_status === 'active'
     ).length;
+    
     systemStats.value.activeResidents = medicalStaff.value.filter(s => 
         s.staff_type === 'medical_resident' && s.employment_status === 'active'
     ).length;
     
-    // ✅ FIXED: Count staff on leave - only absences active today
+    // ✅ FIXED: Check for correct absence status values from your database
     const today = new Date().toISOString().split('T')[0];
     systemStats.value.onLeaveStaff = absences.value.filter(absence => {
-        // Check if absence status is active or approved
-        const isActiveStatus = absence.current_status === 'active' || 
-                              absence.current_status === 'approved';
+        // Check if absence status indicates staff is currently absent
+        // Your database has 'currently_absent' status, not 'active'
+        const isCurrentlyAbsent = absence.current_status === 'currently_absent';
         
         // Check if today is within the absence date range
         const startDate = absence.start_date;
         const endDate = absence.end_date;
-        const isDateOverlap = startDate && endDate && 
-                             startDate <= today && 
-                             endDate >= today;
         
-        return isActiveStatus && isDateOverlap;
+        // Make sure dates exist and today is between start and end dates
+        if (!startDate || !endDate) return false;
+        
+        const isDateOverlap = startDate <= today && endDate >= today;
+        
+        return isCurrentlyAbsent && isDateOverlap;
     }).length;
     
     // Calculate active rotations
@@ -1754,18 +1758,26 @@ async deleteAbsence(id) {
     // Calculate rotations ending this week
     const todayDate = new Date();
     const nextWeek = new Date(todayDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
     systemStats.value.endingThisWeek = rotations.value.filter(r => {
         if (r.rotation_status !== 'active') return false;
+        
         const endDate = new Date(r.rotation_end_date);
+        if (isNaN(endDate.getTime())) return false;
+        
         return endDate >= todayDate && endDate <= nextWeek;
     }).length;
     
     // Calculate rotations starting next week
     const nextWeekStart = new Date(todayDate.getTime() + 7 * 24 * 60 * 60 * 1000);
     const twoWeeks = new Date(todayDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+    
     systemStats.value.startingNextWeek = rotations.value.filter(r => {
         if (r.rotation_status !== 'scheduled') return false;
+        
         const startDate = new Date(r.rotation_start_date);
+        if (isNaN(startDate.getTime())) return false;
+        
         return startDate >= nextWeekStart && startDate <= twoWeeks;
     }).length;
     
@@ -1787,6 +1799,17 @@ async deleteAbsence(id) {
     });
     
     systemStats.value.onCallNow = uniquePhysiciansToday.size;
+    
+    console.log('📊 Dashboard Stats Updated:', {
+        totalStaff: systemStats.value.totalStaff,
+        activeAttending: systemStats.value.activeAttending,
+        activeResidents: systemStats.value.activeResidents,
+        onLeaveStaff: systemStats.value.onLeaveStaff,
+        onCallNow: systemStats.value.onCallNow,
+        activeRotations: systemStats.value.activeRotations,
+        endingThisWeek: systemStats.value.endingThisWeek,
+        startingNextWeek: systemStats.value.startingNextWeek
+    });
 };
                 
                 const loadAllData = async () => {
@@ -2067,49 +2090,69 @@ async deleteAbsence(id) {
                 
                 // ============ 18. SAVE FUNCTIONS ============
                 
-                const saveMedicalStaff = async () => {
-                    saving.value = true;
-                    
-                    if (!medicalStaffModal.form.full_name || !medicalStaffModal.form.full_name.trim()) {
-                        showToast('Error', 'Full name is required', 'error');
-                        saving.value = false;
-                        return;
-                    }
-                    
-                    try {
-                        const staffData = {
-                            full_name: medicalStaffModal.form.full_name,
-                            staff_type: medicalStaffModal.form.staff_type,
-                            staff_id: medicalStaffModal.form.staff_id || EnhancedUtils.generateId('MD'),
-                            employment_status: medicalStaffModal.form.employment_status || 'active',
-                            professional_email: medicalStaffModal.form.professional_email,
-                            department_id: medicalStaffModal.form.department_id || null,
-                            academic_degree: medicalStaffModal.form.academic_degree || null,
-                            specialization: medicalStaffModal.form.specialization || null,
-                            training_year: medicalStaffModal.form.training_year || null,
-                            clinical_certificate: medicalStaffModal.form.clinical_certificate || null,
-                            certificate_status: medicalStaffModal.form.certificate_status || null
-                        };
-                        
-                        if (medicalStaffModal.mode === 'add') {
-                            const result = await API.createMedicalStaff(staffData);
-                            medicalStaff.value.unshift(result);
-                            showToast('Success', 'Medical staff added successfully', 'success');
-                        } else {
-                            const result = await API.updateMedicalStaff(medicalStaffModal.form.id, staffData);
-                            const index = medicalStaff.value.findIndex(s => s.id === result.id);
-                            if (index !== -1) medicalStaff.value[index] = result;
-                            showToast('Success', 'Medical staff updated successfully', 'success');
-                        }
-                        medicalStaffModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        console.error('Save medical staff error:', error);
-                        showToast('Error', error.message || 'Failed to save medical staff', 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
+           const saveMedicalStaff = async () => {
+    saving.value = true;
+    
+    if (!medicalStaffModal.form.full_name || !medicalStaffModal.form.full_name.trim()) {
+        showToast('Error', 'Full name is required', 'error');
+        saving.value = false;
+        return;
+    }
+    
+    try {
+        const staffData = {
+            full_name: medicalStaffModal.form.full_name,
+            staff_type: medicalStaffModal.form.staff_type,
+            staff_id: medicalStaffModal.form.staff_id || EnhancedUtils.generateId('MD'),
+            employment_status: medicalStaffModal.form.employment_status || 'active',
+            professional_email: medicalStaffModal.form.professional_email,
+            department_id: medicalStaffModal.form.department_id || null,
+            academic_degree: medicalStaffModal.form.academic_degree || null,
+            specialization: medicalStaffModal.form.specialization || null,
+            training_year: medicalStaffModal.form.training_year || null,
+            // ✅ FIXED: Use correct column name that exists in database
+            clinical_study_certificate: medicalStaffModal.form.clinical_certificate || null,
+            certificate_status: medicalStaffModal.form.certificate_status || null,
+            resident_category: medicalStaffModal.form.resident_category || null,
+            primary_clinic: medicalStaffModal.form.primary_clinic || null,
+            work_phone: medicalStaffModal.form.work_phone || null,
+            medical_license: medicalStaffModal.form.medical_license || null,
+            can_supervise_residents: medicalStaffModal.form.can_supervise_residents || false,
+            special_notes: medicalStaffModal.form.special_notes || null,
+            resident_type: medicalStaffModal.form.resident_type || null,
+            home_department: medicalStaffModal.form.home_department || null,
+            external_institution: medicalStaffModal.form.external_institution || null,
+            years_experience: medicalStaffModal.form.years_experience || null,
+            biography: medicalStaffModal.form.biography || null,
+            date_of_birth: medicalStaffModal.form.date_of_birth || null,
+            mobile_phone: medicalStaffModal.form.mobile_phone || null,
+            office_phone: medicalStaffModal.form.office_phone || null,
+            training_level: medicalStaffModal.form.training_level || null
+        };
+        
+        console.log('📤 Saving medical staff data:', staffData);
+        
+        if (medicalStaffModal.mode === 'add') {
+            const result = await API.createMedicalStaff(staffData);
+            medicalStaff.value.unshift(result);
+            showToast('Success', 'Medical staff added successfully', 'success');
+        } else {
+            const result = await API.updateMedicalStaff(medicalStaffModal.form.id, staffData);
+            const index = medicalStaff.value.findIndex(s => s.id === result.id);
+            if (index !== -1) medicalStaff.value[index] = result;
+            showToast('Success', 'Medical staff updated successfully', 'success');
+        }
+        
+        medicalStaffModal.show = false;
+        updateDashboardStats();
+        
+    } catch (error) {
+        console.error('❌ Save medical staff error:', error);
+        showToast('Error', error.message || 'Failed to save medical staff', 'error');
+    } finally {
+        saving.value = false;
+    }
+};
                 
                 const saveDepartment = async () => {
                     saving.value = true;
@@ -2261,22 +2304,23 @@ async deleteAbsence(id) {
                         saving.value = false;
                     }
                 };
-  const saveAbsence = async () => {
+const saveAbsence = async () => {
     saving.value = true;
     try {
-        // CORRECT FIELD MAPPING: Form already has correct field names
+        // Your form already uses correct field names
         const absenceData = {
-            // Direct mappings - form uses correct field names
             staff_member_id: absenceModal.form.staff_member_id,
             absence_type: absenceModal.form.absence_type || 'planned',
             absence_reason: absenceModal.form.absence_reason,
             start_date: absenceModal.form.start_date,
             end_date: absenceModal.form.end_date,
-            current_status: absenceModal.form.current_status || 'pending',
+            // ✅ Use correct status values from your database
+            current_status: absenceModal.form.current_status || 'planned_leave',
             covering_staff_id: absenceModal.form.covering_staff_id || null,
             coverage_notes: absenceModal.form.coverage_notes || '',
             coverage_arranged: absenceModal.form.coverage_arranged || false,
-            hod_notes: absenceModal.form.hod_notes || ''
+            hod_notes: absenceModal.form.hod_notes || '',
+            recorded_by: currentUser.value?.id || null
         };
         
         console.log('📤 Sending absence data to backend:', absenceData);
@@ -2293,7 +2337,7 @@ async deleteAbsence(id) {
         }
         
         absenceModal.show = false;
-        await loadAbsences(); // Refresh data
+        await loadAbsences();
         updateDashboardStats();
         
     } catch (error) {
@@ -2520,7 +2564,7 @@ async deleteAbsence(id) {
                     
                     return filtered;
                 });
-const filteredAbsences = computed(() => {
+                const filteredAbsences = computed(() => {
     let filtered = absences.value;
     
     if (absenceFilters.staff) {
@@ -2529,7 +2573,7 @@ const filteredAbsences = computed(() => {
         );
     }
     
-    // ✅ FIXED: Use current_status not status
+    // ✅ FIXED: Use current_status field (your database field name)
     if (absenceFilters.status) {
         filtered = filtered.filter(absence => 
             absence.current_status === absenceFilters.status
@@ -2550,7 +2594,7 @@ const filteredAbsences = computed(() => {
     
     return filtered;
 });
-                
+           
                 const recentAnnouncements = computed(() => {
                     return announcements.value.slice(0, 10);
                 });
