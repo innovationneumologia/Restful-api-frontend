@@ -1728,12 +1728,10 @@ async deleteAbsence(id) {
                     systemStats.value.activeResidents = medicalStaff.value.filter(s => 
                         s.staff_type === 'medical_resident' && s.employment_status === 'active'
                     ).length;
-                    systemStats.value.onLeaveStaff = medicalStaff.value.filter(s => 
-                        s.employment_status === 'on_leave'
-                    ).length;
-                    systemStats.value.activeRotations = rotations.value.filter(r => 
-                        r.rotation_status === 'active'
-                    ).length;
+                    systemStats.value.onLeaveStaff = absences.value.filter(absence => 
+    absence.current_status === 'active' || 
+    absence.current_status === 'approved'
+).length;
                     
                     const today = new Date();
                     const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -1928,19 +1926,18 @@ async deleteAbsence(id) {
     absenceModal.mode = 'add';
     absenceModal.form = {
         staff_member_id: '',
-        absence_type: 'planned',  // ✅ Changed
+        absence_type: 'planned',  // ✅ Good
         absence_reason: 'vacation',
         start_date: new Date().toISOString().split('T')[0],
         end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        current_status: 'pending',
-        covering_staff_id: '',  // ✅ Changed
-        coverage_notes: '',  // ✅ Changed
-        coverage_arranged: false,  // ✅ New
-        hod_notes: ''  // ✅ New
+        current_status: 'pending',  // ✅ Good
+        covering_staff_id: '',  // ✅ Good
+        coverage_notes: '',  // ✅ Good
+        coverage_arranged: false,  // ✅ Good
+        hod_notes: ''  // ✅ Good
     };
     absenceModal.show = true;
 };
-                
                 const showCommunicationsModal = () => {
                     communicationsModal.show = true;
                     communicationsModal.activeTab = 'announcement';
@@ -2226,21 +2223,21 @@ async deleteAbsence(id) {
                     }
                 };
                 
-               const saveAbsence = async () => {
+            const saveAbsence = async () => {
     saving.value = true;
     try {
-        // Transform data to match backend schema
+        // Transform data to match backend schema - CORRECTED VERSION
         const absenceData = {
             staff_member_id: absenceModal.form.staff_member_id,
-            absence_type: absenceModal.form.leave_type || 'planned',  // ✅ 'absence_type' not 'leave_type'
+            absence_type: absenceModal.form.absence_type || 'planned',  // ✅ Fixed: use absence_type
             absence_reason: absenceModal.form.absence_reason,
             start_date: absenceModal.form.start_date,
             end_date: absenceModal.form.end_date,
-            coverage_arranged: !!absenceModal.form.replacement_staff_id,  // ✅ boolean
-            covering_staff_id: absenceModal.form.replacement_staff_id || null,  // ✅ 'covering_staff_id'
-            coverage_notes: absenceModal.form.notes || '',
-            hod_notes: '',
-            current_status: absenceModal.form.status || 'pending'  // ✅ 'current_status'
+            coverage_arranged: absenceModal.form.coverage_arranged || false,  // ✅ Fixed: use coverage_arranged boolean
+            covering_staff_id: absenceModal.form.covering_staff_id || null,  // ✅ Fixed: use covering_staff_id
+            coverage_notes: absenceModal.form.coverage_notes || '',
+            hod_notes: absenceModal.form.hod_notes || '',
+            current_status: absenceModal.form.current_status || 'pending'  // ✅ Fixed: use current_status
         };
         
         console.log('📤 Sending absence data:', absenceData);
@@ -2263,8 +2260,7 @@ async deleteAbsence(id) {
     } finally {
         saving.value = false;
     }
-};
-                
+}; 
                 const saveCommunication = async () => {
                     saving.value = true;
                     try {
@@ -2481,28 +2477,27 @@ async deleteAbsence(id) {
                     
                     return filtered;
                 });
-                
                 const filteredAbsences = computed(() => {
-                    let filtered = absences.value;
-                    
-                    if (absenceFilters.staff) {
-                        filtered = filtered.filter(absence => absence.staff_member_id === absenceFilters.staff);
-                    }
-                    
-                    if (absenceFilters.status) {
-                        filtered = filtered.filter(absence => absence.status === absenceFilters.status);
-                    }
-                    
-                    if (absenceFilters.reason) {
-                        filtered = filtered.filter(absence => absence.absence_reason === absenceFilters.reason);
-                    }
-                    
-                    if (absenceFilters.startDate) {
-                        filtered = filtered.filter(absence => absence.start_date >= absenceFilters.startDate);
-                    }
-                    
-                    return filtered;
-                });
+    let filtered = absences.value;
+    
+    if (absenceFilters.staff) {
+        filtered = filtered.filter(absence => absence.staff_member_id === absenceFilters.staff);
+    }
+    
+    if (absenceFilters.status) {
+        filtered = filtered.filter(absence => absence.current_status === absenceFilters.status);  // ✅ Fixed
+    }
+    
+    if (absenceFilters.reason) {
+        filtered = filtered.filter(absence => absence.absence_reason === absenceFilters.reason);
+    }
+    
+    if (absenceFilters.startDate) {
+        filtered = filtered.filter(absence => absence.start_date >= absenceFilters.startDate);
+    }
+    
+    return filtered;
+});
                 
                 const recentAnnouncements = computed(() => {
                     return announcements.value.slice(0, 10);
