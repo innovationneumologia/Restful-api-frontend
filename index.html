@@ -5060,110 +5060,153 @@ body { text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "lig
                         </div>
                     </div>
 
-                    <!-- ============ STAFF ABSENCE VIEW ============ -->
-                    <div v-if="currentView === 'staff_absence'">
-                        <div class="card mb-6">
-                            <div class="card-header">
-                                <div class="card-title">
-                                    <i class="fas fa-user-clock"></i>
-                                    Staff Absence Management
+                  <!-- ============ STAFF ABSENCE VIEW ============ -->
+<div v-if="currentView === 'staff_absence'">
+    <div class="card mb-6">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-user-clock"></i>
+                Staff Absence Management
+            </div>
+            <button class="btn btn-primary" @click="showAddAbsenceModal" v-if="hasPermission('staff_absence', 'create')">
+                <i class="fas fa-plus"></i> Record Absence
+            </button>
+        </div>
+        
+        <!-- Filters -->
+        <div class="p-4 border-b border-gray-200 bg-gray-50">
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <select class="form-select" v-model="absenceFilters.staff" aria-label="Filter by staff">
+                        <option value="">All Staff</option>
+                        <option v-for="staff in medicalStaff" :key="staff.id" :value="staff.id">
+                            {{ staff.full_name }}
+                        </option>
+                    </select>
+                </div>
+                <div>
+                    <select class="form-select" v-model="absenceFilters.reason" aria-label="Filter by reason">
+                        <option value="">All Reasons</option>
+                        <option value="vacation">Vacation</option>
+                        <option value="sick_leave">Sick Leave</option>
+                        <option value="conference">Conference</option>
+                        <option value="training">Training</option>
+                        <option value="personal">Personal</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <input type="date" class="form-control" v-model="absenceFilters.startDate" 
+                           aria-label="Filter by start date">
+                </div>
+            </div>
+        </div>
+
+        <!-- CORRECTED Absences Table -->
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Reason</th>
+                        <th>Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Duration</th>
+                        <th>Coverage</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="absence in filteredAbsences" :key="absence.id">
+                        <!-- Staff Member -->
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <div class="user-avatar">{{ getInitials(getStaffName(absence.staff_member_id)) }}</div>
+                                <div>
+                                    <div class="font-medium">{{ getStaffName(absence.staff_member_id) }}</div>
                                 </div>
-                                <button class="btn btn-primary" @click="showAddAbsenceModal" v-if="hasPermission('staff_absence', 'create')">
-                                    <i class="fas fa-plus"></i> Record Absence
+                            </div>
+                        </td>
+                        
+                        <!-- Reason -->
+                        <td>
+                            <span class="badge" :class="{
+                                'badge-primary': absence.absence_reason === 'vacation',
+                                'badge-green': absence.absence_reason === 'conference',
+                                'badge-red': absence.absence_reason === 'sick_leave',
+                                'badge-purple': absence.absence_reason === 'training',
+                                'badge-yellow': absence.absence_reason === 'personal',
+                                'badge-gray': absence.absence_reason === 'other'
+                            }">
+                                {{ formatAbsenceReason(absence.absence_reason) }}
+                            </span>
+                        </td>
+                        
+                        <!-- Type -->
+                        <td>
+                            <span class="status-indicator" :class="'status-' + (absence.absence_type || 'planned')">
+                                {{ absence.absence_type === 'planned' ? 'Planned' : 'Unplanned' }}
+                            </span>
+                        </td>
+                        
+                        <!-- Dates -->
+                        <td>{{ formatDate(absence.start_date) }}</td>
+                        <td>{{ formatDate(absence.end_date) }}</td>
+                        
+                        <!-- Duration -->
+                        <td>{{ calculateAbsenceDuration(absence.start_date, absence.end_date) }} days</td>
+                        
+                        <!-- Coverage -->
+                        <td>
+                            <div class="flex flex-col gap-1">
+                                <span v-if="absence.coverage_arranged && absence.covering_staff_id" class="text-sm text-green-600">
+                                    <i class="fas fa-user-check mr-1"></i>
+                                    {{ getStaffName(absence.covering_staff_id) }}
+                                </span>
+                                <span v-else-if="absence.coverage_arranged" class="text-sm text-blue-600">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Covered
+                                </span>
+                                <span v-else class="text-sm text-gray-500">
+                                    <i class="fas fa-times-circle mr-1"></i>
+                                    No coverage
+                                </span>
+                                <span v-if="absence.coverage_notes" class="text-xs text-gray-500 truncate max-w-[120px]">
+                                    {{ absence.coverage_notes }}
+                                </span>
+                            </div>
+                        </td>
+                        
+                        <!-- Actions -->
+                        <td>
+                            <div class="flex gap-2">
+                                <button class="btn btn-sm btn-outline" @click="editAbsence(absence)" 
+                                        v-if="hasPermission('staff_absence', 'update')"
+                                        aria-label="Edit absence">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline text-red-600 border-red-200 hover:bg-red-50" 
+                                        @click="deleteAbsence(absence)"
+                                        v-if="hasPermission('staff_absence', 'delete')"
+                                        aria-label="Delete absence">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
-                            
-                            <!-- Filters -->
-                            <div class="p-4 border-b border-gray-200 bg-gray-50">
-                                <div class="grid grid-cols-4 gap-4">
-                                    <div>
-                                        <select class="form-select" v-model="absenceFilters.staff" aria-label="Filter by staff">
-                                            <option value="">All Staff</option>
-                                            <option v-for="staff in medicalStaff" :key="staff.id" :value="staff.id">
-                                                {{ staff.full_name }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <select class="form-select" v-model="absenceFilters.status" aria-label="Filter by status">
-                                            <option value="">All Status</option>
-                                            <option value="active">Active</option>
-                                            <option value="upcoming">Upcoming</option>
-                                            <option value="completed">Completed</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <select class="form-select" v-model="absenceFilters.reason" aria-label="Filter by reason">
-                                            <option value="">All Reasons</option>
-                                            <option value="vacation">Vacation</option>
-                                            <option value="sick_leave">Sick Leave</option>
-                                            <option value="conference">Conference</option>
-                                            <option value="training">Training</option>
-                                            <option value="personal">Personal</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <input type="date" class="form-control" v-model="absenceFilters.startDate" 
-                                               aria-label="Filter by start date">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Absences Table -->
-                            <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>Staff Member</th>
-                                            <th>Reason</th>
-                                            <th>Start Date</th>
-                                            <th>End Date</th>
-                                            <th>Duration</th>
-                                            <th>Replacement</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="absence in filteredAbsences" :key="absence.id">
-                                            <td>{{ getStaffName(absence.staff_member_id) }}</td>
-                                            <td>{{ formatAbsenceReason(absence.absence_reason) }}</td>
-                                            <td>{{ formatDate(absence.start_date) }}</td>
-                                            <td>{{ formatDate(absence.end_date) }}</td>
-                                            <td>{{ calculateAbsenceDuration(absence.start_date, absence.end_date) }} days</td>
-                                            <td>
-                                                <span v-if="absence.replacement_staff_id">
-                                                    {{ getStaffName(absence.replacement_staff_id) }}
-                                                </span>
-                                                <span v-else class="text-gray-500 text-xs">No coverage</span>
-                                            </td>
-                                            <td>
-                                                <span class="status-indicator" :class="'status-' + absence.status">
-                                                    {{ formatAbsenceStatus(absence.status) }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="flex gap-2">
-                                                    <button class="btn btn-sm btn-outline" @click="editAbsence(absence)" 
-                                                            v-if="hasPermission('staff_absence', 'update')"
-                                                            aria-label="Edit absence">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr v-if="filteredAbsences.length === 0">
-                                            <td colspan="8" class="empty-state">
-                                                <i class="fas fa-user-clock empty-state-icon"></i>
-                                                <div class="empty-state-title">No absences found</div>
-                                                <div class="empty-state-description">Try adjusting your filters</div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+                        </td>
+                    </tr>
+                    <tr v-if="filteredAbsences.length === 0">
+                        <td colspan="8" class="empty-state">
+                            <i class="fas fa-user-clock empty-state-icon"></i>
+                            <div class="empty-state-title">No absences found</div>
+                            <div class="empty-state-description">Try adjusting your filters</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
                     <!-- ============ DEPARTMENT MANAGEMENT VIEW ============ -->
                     <div v-if="currentView === 'department_management'">
@@ -6255,7 +6298,7 @@ body { text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "lig
                 </div>
             </div>
 
-         <!-- MODAL 7: Add/Edit Absence -->
+     <!-- MODAL 7: Add/Edit Absence -->
 <div v-if="absenceModal.show" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
@@ -6308,18 +6351,18 @@ body { text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "lig
                 
                 <!-- Leave Type Toggle -->
                 <div class="form-group">
-                    <label class="form-label">Leave Type</label>
+                    <label class="form-label">Leave Type *</label>
                     <div class="flex border border-gray-300 rounded-md overflow-hidden">
                         <button type="button" 
                                 class="flex-1 py-2 text-center transition"
-                                :class="absenceModal.form.leave_type === 'planned' ? 'bg-blue-100 text-blue-700 border-r border-blue-200' : 'bg-gray-50 text-gray-600'"
-                                @click="absenceModal.form.leave_type = 'planned'; updatePreview()">
+                                :class="absenceModal.form.absence_type === 'planned' ? 'bg-blue-100 text-blue-700 border-r border-blue-200' : 'bg-gray-50 text-gray-600'"
+                                @click="absenceModal.form.absence_type = 'planned'; updatePreview()">
                             <i class="fas fa-calendar-alt mr-2"></i>Planned
                         </button>
                         <button type="button" 
                                 class="flex-1 py-2 text-center transition"
-                                :class="absenceModal.form.leave_type === 'unplanned' ? 'bg-orange-100 text-orange-700' : 'bg-gray-50 text-gray-600'"
-                                @click="absenceModal.form.leave_type = 'unplanned'; updatePreview()">
+                                :class="absenceModal.form.absence_type === 'unplanned' ? 'bg-orange-100 text-orange-700' : 'bg-gray-50 text-gray-600'"
+                                @click="absenceModal.form.absence_type = 'unplanned'; updatePreview()">
                             <i class="fas fa-exclamation-circle mr-2"></i>Unplanned
                         </button>
                     </div>
@@ -6354,7 +6397,7 @@ body { text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "lig
                 
                 <!-- Reason Selection with Icons -->
                 <div class="form-group">
-                    <label class="form-label">Reason for Absence</label>
+                    <label class="form-label">Reason for Absence *</label>
                     <div class="grid grid-cols-2 gap-2">
                         <label class="reason-option" 
                                :class="{ 'reason-selected': absenceModal.form.absence_reason === 'vacation' }">
@@ -6421,32 +6464,24 @@ body { text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "lig
                 <!-- Coverage Section -->
                 <div class="form-group">
                     <label class="form-label">Coverage Arranged</label>
-                    <div class="flex border border-gray-300 rounded-md overflow-hidden mb-3">
-                        <button type="button" 
-                                class="flex-1 py-2 text-center transition"
-                                :class="absenceModal.form.coverage_status === 'yes' ? 'bg-green-100 text-green-700 border-r border-green-200' : 'bg-gray-50 text-gray-600'"
-                                @click="absenceModal.form.coverage_status = 'yes'">
-                            <i class="fas fa-check-circle mr-2"></i>Yes
-                        </button>
-                        <button type="button" 
-                                class="flex-1 py-2 text-center transition"
-                                :class="absenceModal.form.coverage_status === 'no' ? 'bg-red-100 text-red-700 border-r border-red-200' : 'bg-gray-50 text-gray-600'"
-                                @click="absenceModal.form.coverage_status = 'no'">
-                            <i class="fas fa-times-circle mr-2"></i>No
-                        </button>
-                        <button type="button" 
-                                class="flex-1 py-2 text-center transition"
-                                :class="absenceModal.form.coverage_status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-50 text-gray-600'"
-                                @click="absenceModal.form.coverage_status = 'pending'">
-                            <i class="fas fa-clock mr-2"></i>Pending
-                        </button>
+                    <div class="flex items-center gap-4 mb-3">
+                        <label class="flex items-center gap-2">
+                            <input type="radio" v-model="absenceModal.form.coverage_arranged" :value="true" 
+                                   class="form-check-input" @change="updatePreview()">
+                            <span>Yes</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="radio" v-model="absenceModal.form.coverage_arranged" :value="false" 
+                                   class="form-check-input" @change="updatePreview()">
+                            <span>No</span>
+                        </label>
                     </div>
                     
-                    <!-- If coverage is "Yes", show staff dropdown -->
-                    <div v-if="absenceModal.form.coverage_status === 'yes'" class="mt-2">
+                    <!-- If coverage is arranged, show staff dropdown -->
+                    <div v-if="absenceModal.form.coverage_arranged" class="mt-2">
                         <label class="form-label">Covered by:</label>
-                        <select class="form-select" v-model="absenceModal.form.replacement_staff_id" 
-                                aria-label="Replacement staff">
+                        <select class="form-select" v-model="absenceModal.form.covering_staff_id" 
+                                aria-label="Covering staff">
                             <option value="">Select covering staff</option>
                             <option v-for="staff in availableReplacementStaff" :key="staff.id" :value="staff.id">
                                 {{ staff.full_name }}
@@ -6455,7 +6490,7 @@ body { text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "lig
                     </div>
                     
                     <!-- Coverage gap warning -->
-                    <div v-if="absenceModal.form.coverage_status === 'no'" 
+                    <div v-if="absenceModal.form.coverage_arranged === false" 
                          class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
                         <i class="fas fa-exclamation-triangle mr-1"></i>
                         This will create a coverage gap
@@ -6464,8 +6499,8 @@ body { text-rendering: optimizeLegibility; font-feature-settings: "kern" 1, "lig
                 
                 <!-- Notes -->
                 <div class="form-group">
-                    <label class="form-label">Notes (Internal)</label>
-                    <textarea class="form-control" v-model="absenceModal.form.notes" rows="3" 
+                    <label class="form-label">Coverage Notes (Optional)</label>
+                    <textarea class="form-control" v-model="absenceModal.form.coverage_notes" rows="3" 
                               placeholder="Optional notes about coverage, handover, etc."></textarea>
                 </div>
             </div>
