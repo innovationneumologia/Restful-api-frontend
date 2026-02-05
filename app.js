@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-       // ============ 4. COMPLETE API SERVICE ============
+// ============ 4. COMPLETE API SERVICE ============
 class ApiService {
     constructor() {
         this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
@@ -479,7 +479,6 @@ class ApiService {
 
 // Initialize API Service
 const API = new ApiService();
-        
         // ============ 5. CREATE VUE APP ============
         const app = createApp({
             setup() {
