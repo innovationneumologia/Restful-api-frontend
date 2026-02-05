@@ -1720,35 +1720,74 @@ async deleteAbsence(id) {
                     }
                 };
                 
-                const updateDashboardStats = () => {
-                    systemStats.value.totalStaff = medicalStaff.value.length;
-                    systemStats.value.activeAttending = medicalStaff.value.filter(s => 
-                        s.staff_type === 'attending_physician' && s.employment_status === 'active'
-                    ).length;
-                    systemStats.value.activeResidents = medicalStaff.value.filter(s => 
-                        s.staff_type === 'medical_resident' && s.employment_status === 'active'
-                    ).length;
-                    systemStats.value.onLeaveStaff = absences.value.filter(absence => 
-    absence.current_status === 'active' || 
-    absence.current_status === 'approved'
-).length;
-                    
-                    const today = new Date();
-                    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    systemStats.value.endingThisWeek = rotations.value.filter(r => {
-                        if (r.rotation_status !== 'active') return false;
-                        const endDate = new Date(r.rotation_end_date);
-                        return endDate >= today && endDate <= nextWeek;
-                    }).length;
-                    
-                    const nextWeekStart = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    const twoWeeks = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
-                    systemStats.value.startingNextWeek = rotations.value.filter(r => {
-                        if (r.rotation_status !== 'scheduled') return false;
-                        const startDate = new Date(r.rotation_start_date);
-                        return startDate >= nextWeekStart && startDate <= twoWeeks;
-                    }).length;
-                };
+             const updateDashboardStats = () => {
+    systemStats.value.totalStaff = medicalStaff.value.length;
+    systemStats.value.activeAttending = medicalStaff.value.filter(s => 
+        s.staff_type === 'attending_physician' && s.employment_status === 'active'
+    ).length;
+    systemStats.value.activeResidents = medicalStaff.value.filter(s => 
+        s.staff_type === 'medical_resident' && s.employment_status === 'active'
+    ).length;
+    
+    // ✅ FIXED: Count staff on leave - only absences active today
+    const today = new Date().toISOString().split('T')[0];
+    systemStats.value.onLeaveStaff = absences.value.filter(absence => {
+        // Check if absence status is active or approved
+        const isActiveStatus = absence.current_status === 'active' || 
+                              absence.current_status === 'approved';
+        
+        // Check if today is within the absence date range
+        const startDate = absence.start_date;
+        const endDate = absence.end_date;
+        const isDateOverlap = startDate && endDate && 
+                             startDate <= today && 
+                             endDate >= today;
+        
+        return isActiveStatus && isDateOverlap;
+    }).length;
+    
+    // Calculate active rotations
+    systemStats.value.activeRotations = rotations.value.filter(r => 
+        r.rotation_status === 'active'
+    ).length;
+    
+    // Calculate rotations ending this week
+    const todayDate = new Date();
+    const nextWeek = new Date(todayDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    systemStats.value.endingThisWeek = rotations.value.filter(r => {
+        if (r.rotation_status !== 'active') return false;
+        const endDate = new Date(r.rotation_end_date);
+        return endDate >= todayDate && endDate <= nextWeek;
+    }).length;
+    
+    // Calculate rotations starting next week
+    const nextWeekStart = new Date(todayDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const twoWeeks = new Date(todayDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+    systemStats.value.startingNextWeek = rotations.value.filter(r => {
+        if (r.rotation_status !== 'scheduled') return false;
+        const startDate = new Date(r.rotation_start_date);
+        return startDate >= nextWeekStart && startDate <= twoWeeks;
+    }).length;
+    
+    // Calculate today's on-call staff
+    const todayStr = todayDate.toISOString().split('T')[0];
+    const onCallToday = onCallSchedule.value.filter(schedule => 
+        schedule.duty_date === todayStr
+    );
+    
+    // Count unique physicians on call today
+    const uniquePhysiciansToday = new Set();
+    onCallToday.forEach(schedule => {
+        if (schedule.primary_physician_id) {
+            uniquePhysiciansToday.add(schedule.primary_physician_id);
+        }
+        if (schedule.backup_physician_id) {
+            uniquePhysiciansToday.add(schedule.backup_physician_id);
+        }
+    });
+    
+    systemStats.value.onCallNow = uniquePhysiciansToday.size;
+};
                 
                 const loadAllData = async () => {
                     loading.value = true;
@@ -2222,25 +2261,25 @@ async deleteAbsence(id) {
                         saving.value = false;
                     }
                 };
-                
-            const saveAbsence = async () => {
+  const saveAbsence = async () => {
     saving.value = true;
     try {
-        // Transform data to match backend schema - CORRECTED VERSION
+        // CORRECT FIELD MAPPING: Form already has correct field names
         const absenceData = {
+            // Direct mappings - form uses correct field names
             staff_member_id: absenceModal.form.staff_member_id,
-            absence_type: absenceModal.form.absence_type || 'planned',  // ✅ Fixed: use absence_type
+            absence_type: absenceModal.form.absence_type || 'planned',
             absence_reason: absenceModal.form.absence_reason,
             start_date: absenceModal.form.start_date,
             end_date: absenceModal.form.end_date,
-            coverage_arranged: absenceModal.form.coverage_arranged || false,  // ✅ Fixed: use coverage_arranged boolean
-            covering_staff_id: absenceModal.form.covering_staff_id || null,  // ✅ Fixed: use covering_staff_id
+            current_status: absenceModal.form.current_status || 'pending',
+            covering_staff_id: absenceModal.form.covering_staff_id || null,
             coverage_notes: absenceModal.form.coverage_notes || '',
-            hod_notes: absenceModal.form.hod_notes || '',
-            current_status: absenceModal.form.current_status || 'pending'  // ✅ Fixed: use current_status
+            coverage_arranged: absenceModal.form.coverage_arranged || false,
+            hod_notes: absenceModal.form.hod_notes || ''
         };
         
-        console.log('📤 Sending absence data:', absenceData);
+        console.log('📤 Sending absence data to backend:', absenceData);
         
         if (absenceModal.mode === 'add') {
             const result = await API.createAbsence(absenceData);
@@ -2252,15 +2291,19 @@ async deleteAbsence(id) {
             if (index !== -1) absences.value[index] = result;
             showToast('Success', 'Absence updated successfully', 'success');
         }
+        
         absenceModal.show = false;
+        await loadAbsences(); // Refresh data
         updateDashboardStats();
+        
     } catch (error) {
-        console.error('Save absence error:', error);
+        console.error('❌ Save absence error:', error);
         showToast('Error', error.message || 'Failed to save absence record', 'error');
     } finally {
         saving.value = false;
     }
-}; 
+};
+
                 const saveCommunication = async () => {
                     saving.value = true;
                     try {
@@ -2477,23 +2520,32 @@ async deleteAbsence(id) {
                     
                     return filtered;
                 });
-                const filteredAbsences = computed(() => {
+const filteredAbsences = computed(() => {
     let filtered = absences.value;
     
     if (absenceFilters.staff) {
-        filtered = filtered.filter(absence => absence.staff_member_id === absenceFilters.staff);
+        filtered = filtered.filter(absence => 
+            absence.staff_member_id === absenceFilters.staff
+        );
     }
     
+    // ✅ FIXED: Use current_status not status
     if (absenceFilters.status) {
-        filtered = filtered.filter(absence => absence.current_status === absenceFilters.status);  // ✅ Fixed
+        filtered = filtered.filter(absence => 
+            absence.current_status === absenceFilters.status
+        );
     }
     
     if (absenceFilters.reason) {
-        filtered = filtered.filter(absence => absence.absence_reason === absenceFilters.reason);
+        filtered = filtered.filter(absence => 
+            absence.absence_reason === absenceFilters.reason
+        );
     }
     
     if (absenceFilters.startDate) {
-        filtered = filtered.filter(absence => absence.start_date >= absenceFilters.startDate);
+        filtered = filtered.filter(absence => 
+            absence.start_date >= absenceFilters.startDate
+        );
     }
     
     return filtered;
