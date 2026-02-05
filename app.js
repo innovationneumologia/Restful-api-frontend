@@ -119,366 +119,366 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // ============ 4. COMPLETE API SERVICE ============
-        class ApiService {
-            constructor() {
-                this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
-            }
-            
-  async request(endpoint, options = {}) {
-    const url = `${CONFIG.API_BASE_URL}${endpoint}`;
+       // ============ 4. COMPLETE API SERVICE ============
+class ApiService {
+    constructor() {
+        this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
+    }
     
-    try {
-        const config = {
-            method: options.method || 'GET',
-            headers: this.getHeaders(),
-            mode: 'cors',
-            cache: 'no-cache',
-            credentials: 'include' // ✅ ADD THIS LINE - CRITICAL FIX
+    getHeaders() {
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         };
         
-        if (options.body && typeof options.body === 'object') {
-            config.body = JSON.stringify(options.body);
+        const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+        if (token && token.trim()) {
+            headers['Authorization'] = `Bearer ${token}`;
         }
         
-        console.log(`📡 API Request to ${url}:`, {
-            method: config.method,
-            headers: config.headers,
-            mode: config.mode,
-            credentials: config.credentials,
-            hasBody: !!options.body
-        });
+        return headers;
+    }
+    
+    async request(endpoint, options = {}) {
+        const url = `${CONFIG.API_BASE_URL}${endpoint}`;
         
-        const response = await fetch(url, config);
-        
-        // Log response headers for debugging CORS
-        console.log(`📥 Response from ${url}:`, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: Object.fromEntries(response.headers.entries())
-        });
-        
-        if (response.status === 204) return null;
-        
-        if (!response.ok) {
-            if (response.status === 401) {
-                this.token = null;
-                localStorage.removeItem(CONFIG.TOKEN_KEY);
-                localStorage.removeItem(CONFIG.USER_KEY);
-                throw new Error('Session expired. Please login again.');
+        try {
+            const config = {
+                method: options.method || 'GET',
+                headers: this.getHeaders(),
+                mode: 'cors',
+                cache: 'no-cache',
+                credentials: 'include'
+            };
+            
+            if (options.body && typeof options.body === 'object') {
+                config.body = JSON.stringify(options.body);
             }
             
-            let errorText;
-            try {
-                errorText = await response.text();
-            } catch {
-                errorText = `HTTP ${response.status}: ${response.statusText}`;
-            }
-            
-            // Check for CORS-specific errors
-            if (response.status === 0 || errorText.includes('CORS') || errorText.includes('origin')) {
-                throw new Error(`CORS Error: Request blocked. Make sure backend allows origin: ${window.location.origin}`);
-            }
-            
-            throw new Error(errorText);
-        }
-        
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            return await response.json();
-        }
-        
-        return await response.text();
-        
-    } catch (error) {
-        if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error);
-        
-        // Enhanced error handling for CORS
-        if (error.message.includes('CORS') || error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            console.error('🔴 CORS/NETWORK ERROR DETAILS:', {
-                endpoint,
-                url: `${CONFIG.API_BASE_URL}${endpoint}`,
-                origin: window.location.origin,
-                time: new Date().toISOString()
+            console.log(`📡 API Request to ${url}:`, {
+                method: config.method,
+                headers: config.headers,
+                mode: config.mode,
+                credentials: config.credentials,
+                hasBody: !!options.body
             });
             
-            throw new Error(`Cannot connect to server. Check if:\n1. Backend is running\n2. CORS is configured\n3. Network allows requests to ${CONFIG.API_BASE_URL}`);
-        }
-        
-        throw error;
-    }
-}
+            const response = await fetch(url, config);
             
-            // ===== AUTHENTICATION ENDPOINTS =====
-            async login(email, password) {
-                try {
-                    const data = await this.request('/api/auth/login', {
-                        method: 'POST',
-                        body: { email, password }
-                    });
-                    
-                    if (data.token) {
-                        this.token = data.token;
-                        localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
-                        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
-                    }
-                    
-                    return data;
-                } catch (error) {
-                    throw new Error('Login failed: ' + error.message);
-                }
+            if (CONFIG.DEBUG) {
+                console.log(`📥 Response from ${url}:`, {
+                    status: response.status,
+                    statusText: response.statusText
+                });
             }
             
-            async logout() {
-                try {
-                    await this.request('/api/auth/logout', { method: 'POST' });
-                } finally {
+            if (response.status === 204) return null;
+            
+            if (!response.ok) {
+                if (response.status === 401) {
                     this.token = null;
                     localStorage.removeItem(CONFIG.TOKEN_KEY);
                     localStorage.removeItem(CONFIG.USER_KEY);
+                    throw new Error('Session expired. Please login again.');
                 }
-            }
-            
-            // ===== MEDICAL STAFF ENDPOINTS =====
-            async getMedicalStaff() {
+                
+                let errorText;
                 try {
-                    const data = await this.request('/api/medical-staff');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
+                    errorText = await response.text();
+                } catch {
+                    errorText = `HTTP ${response.status}: ${response.statusText}`;
+                }
+                
+                throw new Error(errorText);
             }
             
-            async createMedicalStaff(staffData) {
-                return await this.request('/api/medical-staff', {
-                    method: 'POST',
-                    body: staffData
-                });
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
             }
             
-            async updateMedicalStaff(id, staffData) {
-                return await this.request(`/api/medical-staff/${id}`, {
-                    method: 'PUT',
-                    body: staffData
-                });
+            return await response.text();
+            
+        } catch (error) {
+            if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error);
+            
+            if (error.message.includes('CORS') || error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                throw new Error(`Cannot connect to server. Please check:\n1. Backend is running\n2. Network connection\n3. CORS configuration`);
             }
             
-            async deleteMedicalStaff(id) {
-                return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
+            throw error;
+        }
+    }
+    
+    // ===== AUTHENTICATION ENDPOINTS =====
+    async login(email, password) {
+        try {
+            const data = await this.request('/api/auth/login', {
+                method: 'POST',
+                body: { email, password }
+            });
+            
+            if (data.token) {
+                this.token = data.token;
+                localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
+                localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
             }
             
-            // ===== DEPARTMENT ENDPOINTS =====
-            async getDepartments() {
-                try {
-                    const data = await this.request('/api/departments');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createDepartment(departmentData) {
-                return await this.request('/api/departments', {
-                    method: 'POST',
-                    body: departmentData
-                });
-            }
-            
-            async updateDepartment(id, departmentData) {
-                return await this.request(`/api/departments/${id}`, {
-                    method: 'PUT',
-                    body: departmentData
-                });
-            }
-            
-            // ===== TRAINING UNIT ENDPOINTS =====
-            async getTrainingUnits() {
-                try {
-                    const data = await this.request('/api/training-units');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createTrainingUnit(unitData) {
-                return await this.request('/api/training-units', {
-                    method: 'POST',
-                    body: unitData
-                });
-            }
-            
-            async updateTrainingUnit(id, unitData) {
-                return await this.request(`/api/training-units/${id}`, {
-                    method: 'PUT',
-                    body: unitData
-                });
-            }
-            
-            // ===== ROTATION ENDPOINTS =====
-            async getRotations() {
-                try {
-                    const data = await this.request('/api/rotations');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createRotation(rotationData) {
-                return await this.request('/api/rotations', {
-                    method: 'POST',
-                    body: rotationData
-                });
-            }
-            
-            async updateRotation(id, rotationData) {
-                return await this.request(`/api/rotations/${id}`, {
-                    method: 'PUT',
-                    body: rotationData
-                });
-            }
-            
-            async deleteRotation(id) {
-                return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ON-CALL ENDPOINTS =====
-            async getOnCallSchedule() {
-                try {
-                    const data = await this.request('/api/oncall');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async getOnCallToday() {
-                try {
-                    const data = await this.request('/api/oncall/today');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createOnCall(scheduleData) {
-                return await this.request('/api/oncall', {
-                    method: 'POST',
-                    body: scheduleData
-                });
-            }
-            
-            async updateOnCall(id, scheduleData) {
-                return await this.request(`/api/oncall/${id}`, {
-                    method: 'PUT',
-                    body: scheduleData
-                });
-            }
-            
-            async deleteOnCall(id) {
-                return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ABSENCE ENDPOINTS =====
-          // ===== ABSENCE ENDPOINTS =====
-async getAbsences() {
-    try {
-        const data = await this.request('/api/absence-records');  // ✅ CORRECT ENDPOINT
-        return EnhancedUtils.ensureArray(data);
-    } catch (error) {
-        console.error('Failed to load absences:', error);
-        return [];
+            return data;
+        } catch (error) {
+            throw new Error('Login failed: ' + error.message);
+        }
+    }
+    
+    async logout() {
+        try {
+            await this.request('/api/auth/logout', { method: 'POST' });
+        } finally {
+            this.token = null;
+            localStorage.removeItem(CONFIG.TOKEN_KEY);
+            localStorage.removeItem(CONFIG.USER_KEY);
+        }
+    }
+    
+    // ===== MEDICAL STAFF ENDPOINTS =====
+    async getMedicalStaff() {
+        try {
+            const data = await this.request('/api/medical-staff');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createMedicalStaff(staffData) {
+        return await this.request('/api/medical-staff', {
+            method: 'POST',
+            body: staffData
+        });
+    }
+    
+    async updateMedicalStaff(id, staffData) {
+        return await this.request(`/api/medical-staff/${id}`, {
+            method: 'PUT',
+            body: staffData
+        });
+    }
+    
+    async deleteMedicalStaff(id) {
+        return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== DEPARTMENT ENDPOINTS =====
+    async getDepartments() {
+        try {
+            const data = await this.request('/api/departments');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createDepartment(departmentData) {
+        return await this.request('/api/departments', {
+            method: 'POST',
+            body: departmentData
+        });
+    }
+    
+    async updateDepartment(id, departmentData) {
+        return await this.request(`/api/departments/${id}`, {
+            method: 'PUT',
+            body: departmentData
+        });
+    }
+    
+    // ===== TRAINING UNIT ENDPOINTS =====
+    async getTrainingUnits() {
+        try {
+            const data = await this.request('/api/training-units');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createTrainingUnit(unitData) {
+        return await this.request('/api/training-units', {
+            method: 'POST',
+            body: unitData
+        });
+    }
+    
+    async updateTrainingUnit(id, unitData) {
+        return await this.request(`/api/training-units/${id}`, {
+            method: 'PUT',
+            body: unitData
+        });
+    }
+    
+    // ===== ROTATION ENDPOINTS =====
+    async getRotations() {
+        try {
+            const data = await this.request('/api/rotations');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createRotation(rotationData) {
+        return await this.request('/api/rotations', {
+            method: 'POST',
+            body: rotationData
+        });
+    }
+    
+    async updateRotation(id, rotationData) {
+        return await this.request(`/api/rotations/${id}`, {
+            method: 'PUT',
+            body: rotationData
+        });
+    }
+    
+    async deleteRotation(id) {
+        return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== ON-CALL ENDPOINTS =====
+    async getOnCallSchedule() {
+        try {
+            const data = await this.request('/api/oncall');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async getOnCallToday() {
+        try {
+            const data = await this.request('/api/oncall/today');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createOnCall(scheduleData) {
+        return await this.request('/api/oncall', {
+            method: 'POST',
+            body: scheduleData
+        });
+    }
+    
+    async updateOnCall(id, scheduleData) {
+        return await this.request(`/api/oncall/${id}`, {
+            method: 'PUT',
+            body: scheduleData
+        });
+    }
+    
+    async deleteOnCall(id) {
+        return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== ABSENCE ENDPOINTS =====
+    async getAbsences() {
+        try {
+            const data = await this.request('/api/absence-records');
+            return EnhancedUtils.ensureArray(data);
+        } catch (error) {
+            console.error('Failed to load absences:', error);
+            return [];
+        }
+    }
+    
+    async createAbsence(absenceData) {
+        return await this.request('/api/absence-records', {
+            method: 'POST',
+            body: absenceData
+        });
+    }
+    
+    async updateAbsence(id, absenceData) {
+        return await this.request(`/api/absence-records/${id}`, {
+            method: 'PUT',
+            body: absenceData
+        });
+    }
+    
+    async deleteAbsence(id) {
+        return await this.request(`/api/absence-records/${id}`, { 
+            method: 'DELETE' 
+        });
+    }
+    
+    // ===== ANNOUNCEMENT ENDPOINTS =====
+    async getAnnouncements() {
+        try {
+            const data = await this.request('/api/announcements');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createAnnouncement(announcementData) {
+        return await this.request('/api/announcements', {
+            method: 'POST',
+            body: announcementData
+        });
+    }
+    
+    async updateAnnouncement(id, announcementData) {
+        return await this.request(`/api/announcements/${id}`, {
+            method: 'PUT',
+            body: announcementData
+        });
+    }
+    
+    async deleteAnnouncement(id) {
+        return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== LIVE STATUS ENDPOINTS =====
+    async getClinicalStatus() {
+        try {
+            const data = await this.request('/api/live-status/current');
+            return data;
+        } catch (error) {
+            console.error('Clinical status API error:', error);
+            return {
+                success: false,
+                data: null,
+                error: error.message
+            };
+        }
+    }
+    
+    async createClinicalStatus(statusData) {
+        return await this.request('/api/live-status', {
+            method: 'POST',
+            body: statusData
+        });
+    }
+    
+    async updateClinicalStatus(id, statusData) {
+        return await this.request(`/api/live-status/${id}`, {
+            method: 'PUT',
+            body: statusData
+        });
+    }
+    
+    async deleteClinicalStatus(id) {
+        return await this.request(`/api/live-status/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== SYSTEM STATS ENDPOINT =====
+    async getSystemStats() {
+        try {
+            const data = await this.request('/api/system-stats');
+            return data || {};
+        } catch {
+            return {
+                activeAttending: 0,
+                activeResidents: 0,
+                onCallNow: 0,
+                inSurgery: 0,
+                nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+                pendingApprovals: 0
+            };
+        }
     }
 }
 
-async createAbsence(absenceData) {
-    return await this.request('/api/absence-records', {  // ✅ CORRECT ENDPOINT
-        method: 'POST',
-        body: absenceData
-    });
-}
-
-async updateAbsence(id, absenceData) {
-    return await this.request(`/api/absence-records/${id}`, {  // ✅ CORRECT ENDPOINT
-        method: 'PUT',
-        body: absenceData
-    });
-}
-
-async deleteAbsence(id) {
-    return await this.request(`/api/absence-records/${id}`, {  // ✅ CORRECT ENDPOINT
-        method: 'DELETE' 
-    });
-}
-            
-            // ===== ANNOUNCEMENT ENDPOINTS =====
-            async getAnnouncements() {
-                try {
-                    const data = await this.request('/api/announcements');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createAnnouncement(announcementData) {
-                return await this.request('/api/announcements', {
-                    method: 'POST',
-                    body: announcementData
-                });
-            }
-            
-            async updateAnnouncement(id, announcementData) {
-                return await this.request(`/api/announcements/${id}`, {
-                    method: 'PUT',
-                    body: announcementData
-                });
-            }
-            
-            async deleteAnnouncement(id) {
-                return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== LIVE STATUS ENDPOINTS =====
-            async getClinicalStatus() {
-                try {
-                    const data = await this.request('/api/live-status/current');
-                    return data;
-                } catch (error) {
-                    console.error('Clinical status API error:', error);
-                    return {
-                        success: false,
-                        data: null,
-                        error: error.message
-                    };
-                }
-            }
-            
-            async createClinicalStatus(statusData) {
-                return await this.request('/api/live-status', {
-                    method: 'POST',
-                    body: statusData
-                });
-            }
-            
-            async updateClinicalStatus(id, statusData) {
-                return await this.request(`/api/live-status/${id}`, {
-                    method: 'PUT',
-                    body: statusData
-                });
-            }
-            
-            async deleteClinicalStatus(id) {
-                return await this.request(`/api/live-status/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== SYSTEM STATS ENDPOINT =====
-            async getSystemStats() {
-                try {
-                    const data = await this.request('/api/system-stats');
-                    return data || {};
-                } catch {
-                    return {
-                        activeAttending: 0,
-                        activeResidents: 0,
-                        onCallNow: 0,
-                        inSurgery: 0,
-                        nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-                        pendingApprovals: 0
-                    };
-                }
-            }
-        }
-        
-        // Initialize API Service
-        const API = new ApiService();
+// Initialize API Service
+const API = new ApiService();
         
         // ============ 5. CREATE VUE APP ============
         const app = createApp({
