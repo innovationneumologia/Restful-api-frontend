@@ -2651,7 +2651,7 @@ const saveAbsence = async () => {
                     
                     return filtered;
                 });
-                const filteredAbsences = computed(() => {
+const filteredAbsences = computed(() => {
     let filtered = absences.value;
     
     if (absenceFilters.staff) {
@@ -2660,11 +2660,13 @@ const saveAbsence = async () => {
         );
     }
     
-    // ✅ FIXED: Use current_status field (your database field name)
+    // ✅ FIXED: Handle multiple possible status field names
     if (absenceFilters.status) {
-        filtered = filtered.filter(absence => 
-            absence.current_status === absenceFilters.status
-        );
+        filtered = filtered.filter(absence => {
+            // Check all possible status field names
+            const status = absence.current_status || absence.status || absence.absence_status;
+            return status === absenceFilters.status;
+        });
     }
     
     if (absenceFilters.reason) {
