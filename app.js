@@ -2090,7 +2090,7 @@ async deleteAbsence(id) {
                 
                 // ============ 18. SAVE FUNCTIONS ============
                 
-           const saveMedicalStaff = async () => {
+const saveMedicalStaff = async () => {
     saving.value = true;
     
     if (!medicalStaffModal.form.full_name || !medicalStaffModal.form.full_name.trim()) {
@@ -2100,19 +2100,23 @@ async deleteAbsence(id) {
     }
     
     try {
+        // ✅ Create cleaned data object with proper string handling
         const staffData = {
-            full_name: medicalStaffModal.form.full_name,
-            staff_type: medicalStaffModal.form.staff_type,
+            full_name: medicalStaffModal.form.full_name.trim(),
+            staff_type: medicalStaffModal.form.staff_type || 'medical_resident',
             staff_id: medicalStaffModal.form.staff_id || EnhancedUtils.generateId('MD'),
             employment_status: medicalStaffModal.form.employment_status || 'active',
-            professional_email: medicalStaffModal.form.professional_email,
+            professional_email: medicalStaffModal.form.professional_email || '',
             department_id: medicalStaffModal.form.department_id || null,
-            academic_degree: medicalStaffModal.form.academic_degree || null,
-            specialization: medicalStaffModal.form.specialization || null,
-            training_year: medicalStaffModal.form.training_year || null,
-            // ✅ FIXED: Use correct column name that exists in database
-            clinical_study_certificate: medicalStaffModal.form.clinical_certificate || null,
-            certificate_status: medicalStaffModal.form.certificate_status || null,
+            
+            // ✅ FIX: Convert null/undefined to empty string for backend validation
+            academic_degree: medicalStaffModal.form.academic_degree || '',
+            specialization: medicalStaffModal.form.specialization || '',
+            training_year: medicalStaffModal.form.training_year || '',
+            clinical_certificate: medicalStaffModal.form.clinical_certificate || '',
+            certificate_status: medicalStaffModal.form.certificate_status || '',
+            
+            // Optional fields (can be null)
             resident_category: medicalStaffModal.form.resident_category || null,
             primary_clinic: medicalStaffModal.form.primary_clinic || null,
             work_phone: medicalStaffModal.form.work_phone || null,
@@ -2148,7 +2152,13 @@ async deleteAbsence(id) {
         
     } catch (error) {
         console.error('❌ Save medical staff error:', error);
-        showToast('Error', error.message || 'Failed to save medical staff', 'error');
+        
+        // Handle the specific validation error
+        if (error.message.includes('"specialization" must be a string')) {
+            showToast('Error', 'Specialization must be a valid text value', 'error');
+        } else {
+            showToast('Error', error.message || 'Failed to save medical staff', 'error');
+        }
     } finally {
         saving.value = false;
     }
