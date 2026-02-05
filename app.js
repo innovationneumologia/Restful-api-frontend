@@ -1910,24 +1910,41 @@ async deleteAbsence(id) {
                 
                 // ============ 16. MODAL SHOW FUNCTIONS ============
                 
-                const showAddMedicalStaffModal = () => {
-                    medicalStaffModal.mode = 'add';
-                    medicalStaffModal.activeTab = 'basic';
-                    medicalStaffModal.form = {
-                        full_name: '',
-                        staff_type: 'medical_resident',
-                        staff_id: `MD-${Date.now().toString().slice(-6)}`,
-                        employment_status: 'active',
-                        professional_email: '',
-                        department_id: '',
-                        academic_degree: '',
-                        specialization: '',
-                        training_year: '',
-                        clinical_certificate: '',
-                        certificate_status: 'current'
-                    };
-                    medicalStaffModal.show = true;
-                };
+const showAddMedicalStaffModal = () => {
+    medicalStaffModal.mode = 'add';
+    medicalStaffModal.activeTab = 'basic';
+    medicalStaffModal.form = {
+        full_name: '',
+        staff_type: 'medical_resident',
+        staff_id: `MD-${Date.now().toString().slice(-6)}`,
+        employment_status: 'active',
+        professional_email: '',
+        department_id: '',
+        
+        // ✅ INITIALIZE ALL STRING FIELDS AS EMPTY STRINGS, NOT NULL
+        academic_degree: '',
+        specialization: '',
+        training_year: '',
+        clinical_certificate: '',
+        certificate_status: '',
+        resident_category: '',
+        primary_clinic: '',
+        work_phone: '',
+        medical_license: '',
+        can_supervise_residents: false,
+        special_notes: '',
+        resident_type: '',
+        home_department: '',
+        external_institution: '',
+        years_experience: null,
+        biography: '',
+        date_of_birth: null,
+        mobile_phone: '',
+        office_phone: '',
+        training_level: ''
+    };
+    medicalStaffModal.show = true;
+};
                 
                 const showAddDepartmentModal = () => {
                     departmentModal.mode = 'add';
@@ -2089,7 +2106,6 @@ async deleteAbsence(id) {
                 };
                 
                 // ============ 18. SAVE FUNCTIONS ============
-                
 const saveMedicalStaff = async () => {
     saving.value = true;
     
@@ -2100,41 +2116,62 @@ const saveMedicalStaff = async () => {
     }
     
     try {
-        // ✅ Create cleaned data object with proper string handling
+        // ✅ CLEAN DATA FUNCTION - Ensures all string fields are strings, not null
+        const cleanStringField = (value) => {
+            if (value === null || value === undefined) return '';
+            if (typeof value === 'string') return value.trim();
+            return String(value);
+        };
+        
+        // ✅ CREATE STAFF DATA WITH PROPER STRING VALUES
         const staffData = {
+            // Required fields
             full_name: medicalStaffModal.form.full_name.trim(),
             staff_type: medicalStaffModal.form.staff_type || 'medical_resident',
             staff_id: medicalStaffModal.form.staff_id || EnhancedUtils.generateId('MD'),
             employment_status: medicalStaffModal.form.employment_status || 'active',
             professional_email: medicalStaffModal.form.professional_email || '',
+            
+            // Optional UUID fields (can be null)
             department_id: medicalStaffModal.form.department_id || null,
             
-            // ✅ FIX: Convert null/undefined to empty string for backend validation
-            academic_degree: medicalStaffModal.form.academic_degree || '',
-            specialization: medicalStaffModal.form.specialization || '',
-            training_year: medicalStaffModal.form.training_year || '',
-            clinical_certificate: medicalStaffModal.form.clinical_certificate || '',
-            certificate_status: medicalStaffModal.form.certificate_status || '',
+            // ✅ FIXED: All string fields converted to empty string if null
+            academic_degree: cleanStringField(medicalStaffModal.form.academic_degree),
+            specialization: cleanStringField(medicalStaffModal.form.specialization),
+            training_year: cleanStringField(medicalStaffModal.form.training_year),
+            clinical_certificate: cleanStringField(medicalStaffModal.form.clinical_certificate),
+            certificate_status: cleanStringField(medicalStaffModal.form.certificate_status),
             
-            // Optional fields (can be null)
-            resident_category: medicalStaffModal.form.resident_category || null,
-            primary_clinic: medicalStaffModal.form.primary_clinic || null,
-            work_phone: medicalStaffModal.form.work_phone || null,
-            medical_license: medicalStaffModal.form.medical_license || null,
+            // Other optional fields
+            resident_category: cleanStringField(medicalStaffModal.form.resident_category),
+            primary_clinic: cleanStringField(medicalStaffModal.form.primary_clinic),
+            work_phone: cleanStringField(medicalStaffModal.form.work_phone),
+            medical_license: cleanStringField(medicalStaffModal.form.medical_license),
             can_supervise_residents: medicalStaffModal.form.can_supervise_residents || false,
-            special_notes: medicalStaffModal.form.special_notes || null,
-            resident_type: medicalStaffModal.form.resident_type || null,
-            home_department: medicalStaffModal.form.home_department || null,
-            external_institution: medicalStaffModal.form.external_institution || null,
+            special_notes: cleanStringField(medicalStaffModal.form.special_notes),
+            resident_type: cleanStringField(medicalStaffModal.form.resident_type),
+            home_department: cleanStringField(medicalStaffModal.form.home_department),
+            external_institution: cleanStringField(medicalStaffModal.form.external_institution),
+            
+            // Numeric field
             years_experience: medicalStaffModal.form.years_experience || null,
-            biography: medicalStaffModal.form.biography || null,
+            
+            // Other string fields
+            biography: cleanStringField(medicalStaffModal.form.biography),
             date_of_birth: medicalStaffModal.form.date_of_birth || null,
-            mobile_phone: medicalStaffModal.form.mobile_phone || null,
-            office_phone: medicalStaffModal.form.office_phone || null,
-            training_level: medicalStaffModal.form.training_level || null
+            mobile_phone: cleanStringField(medicalStaffModal.form.mobile_phone),
+            office_phone: cleanStringField(medicalStaffModal.form.office_phone),
+            training_level: cleanStringField(medicalStaffModal.form.training_level)
         };
         
         console.log('📤 Saving medical staff data:', staffData);
+        
+        // ✅ VALIDATE DATA BEFORE SENDING
+        if (staffData.professional_email && !isValidEmail(staffData.professional_email)) {
+            showToast('Error', 'Please enter a valid email address', 'error');
+            saving.value = false;
+            return;
+        }
         
         if (medicalStaffModal.mode === 'add') {
             const result = await API.createMedicalStaff(staffData);
@@ -2153,15 +2190,25 @@ const saveMedicalStaff = async () => {
     } catch (error) {
         console.error('❌ Save medical staff error:', error);
         
-        // Handle the specific validation error
-        if (error.message.includes('"specialization" must be a string')) {
-            showToast('Error', 'Specialization must be a valid text value', 'error');
+        // ✅ BETTER ERROR HANDLING
+        if (error.message && error.message.includes('specialization')) {
+            showToast('Error', 'Please enter a valid specialization (text only)', 'error');
+        } else if (error.message && error.message.includes('Validation failed')) {
+            showToast('Error', 'Please check all fields and try again', 'error');
+        } else if (error.message && error.message.includes('email')) {
+            showToast('Error', 'Please enter a valid email address', 'error');
         } else {
             showToast('Error', error.message || 'Failed to save medical staff', 'error');
         }
     } finally {
         saving.value = false;
     }
+};
+
+// ✅ ADD EMAIL VALIDATION HELPER FUNCTION
+const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
 };
                 
                 const saveDepartment = async () => {
