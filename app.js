@@ -815,7 +815,44 @@ const API = new ApiService();
                         ...options
                     });
                 };
-                
+                const saveOnCallSchedule = async () => {
+    saving.value = true;
+    try {
+        // Ensure data is properly formatted
+        const onCallData = {
+            duty_date: onCallModal.form.duty_date,
+            shift_type: onCallModal.form.shift_type || 'primary_call',
+            start_time: onCallModal.form.start_time || '08:00',
+            end_time: onCallModal.form.end_time || '17:00',
+            primary_physician_id: onCallModal.form.primary_physician_id,
+            backup_physician_id: onCallModal.form.backup_physician_id || null,
+            coverage_area: onCallModal.form.coverage_area || 'general',
+            schedule_id: onCallModal.form.schedule_id || EnhancedUtils.generateId('SCH')
+        };
+        
+        console.log('📤 Saving on-call data:', onCallData);
+        
+        if (onCallModal.mode === 'add') {
+            const result = await API.createOnCall(onCallData);
+            onCallSchedule.value.unshift(result);
+            showToast('Success', 'On-call scheduled successfully', 'success');
+        } else {
+            const result = await API.updateOnCall(onCallModal.form.id, onCallData);
+            const index = onCallSchedule.value.findIndex(s => s.id === result.id);
+            if (index !== -1) onCallSchedule.value[index] = result;
+            showToast('Success', 'On-call updated successfully', 'success');
+        }
+        
+        onCallModal.show = false;
+        loadTodaysOnCall();
+        
+    } catch (error) {
+        console.error('❌ Save on-call error:', error);
+        showToast('Error', error.message || 'Failed to save on-call schedule', 'error');
+    } finally {
+        saving.value = false;
+    }
+};
                 const confirmAction = async () => {
                     if (confirmationModal.onConfirm) {
                         try {
@@ -3065,6 +3102,8 @@ const filteredAbsences = computed(() => {
                     
                     // Permission Functions
                     hasPermission,
+                        saveRotation,        // The function we just fixed
+    saveOnCallSchedule,  
                     
                     // Computed Properties
                     authToken,
