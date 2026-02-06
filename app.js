@@ -2296,101 +2296,191 @@ const isValidEmail = (email) => {
                     }
                 };
                 
-                const saveRotation = async () => {
-                    if (!rotationModal.form.resident_id) {
-                        showToast('Error', 'Please select a resident', 'error');
-                        return;
-                    }
-                    
-                    if (!rotationModal.form.training_unit_id) {
-                        showToast('Error', 'Please select a training unit', 'error');
-                        return;
-                    }
-                    
-                    if (!rotationModal.form.rotation_start_date) {
-                        showToast('Error', 'Please enter a start date', 'error');
-                        return;
-                    }
-                    
-                    if (!rotationModal.form.rotation_end_date) {
-                        showToast('Error', 'Please enter an end date', 'error');
-                        return;
-                    }
-                    
-                    const start = new Date(rotationModal.form.rotation_start_date);
-                    const end = new Date(rotationModal.form.rotation_end_date);
-                    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                        showToast('Error', 'Invalid date format. Please use YYYY-MM-DD', 'error');
-                        return;
-                    }
-                    
-                    if (end <= start) {
-                        showToast('Error', 'End date must be after start date', 'error');
-                        return;
-                    }
-                    
-                    saving.value = true;
-                    
-                    try {
-                        const rotationData = {
-                            rotation_id: rotationModal.form.rotation_id || EnhancedUtils.generateId('ROT'),
-                            resident_id: rotationModal.form.resident_id,
-                            training_unit_id: rotationModal.form.training_unit_id,
-                            supervising_attending_id: rotationModal.form.supervising_attending_id || null,
-                            start_date: rotationModal.form.rotation_start_date,
-                            end_date: rotationModal.form.rotation_end_date,
-                            rotation_category: rotationModal.form.rotation_category.toLowerCase(),
-                            rotation_status: rotationModal.form.rotation_status.toLowerCase()
-                        };
-                        
-                        console.log('📤 Sending rotation data to server:', rotationData);
-                        
-                        if (rotationModal.mode === 'add') {
-                            const result = await API.createRotation(rotationData);
-                            rotations.value.unshift(result);
-                            showToast('Success', 'Rotation scheduled successfully', 'success');
-                        } else {
-                            const result = await API.updateRotation(rotationModal.form.id, rotationData);
-                            const index = rotations.value.findIndex(r => r.id === result.id);
-                            if (index !== -1) rotations.value[index] = result;
-                            showToast('Success', 'Rotation updated successfully', 'success');
-                        }
-                        
-                        rotationModal.show = false;
-                        await loadRotations();
-                        updateDashboardStats();
-                        
-                    } catch (error) {
-                        console.error('❌ Rotation save error:', error);
-                        showToast('Error', error.message || 'Failed to save rotation', 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
+               const saveRotation = async () => {
+    // ============ 1. VALIDATE REQUIRED FIELDS ============
+    if (!rotationModal.form.resident_id) {
+        showToast('Error', 'Please select a resident', 'error');
+        return;
+    }
+    
+    if (!rotationModal.form.training_unit_id) {
+        showToast('Error', 'Please select a training unit', 'error');
+        return;
+    }
+    
+    // ============ 2. VALIDATE AND FORMAT DATES ============
+    const startDateStr = rotationModal.form.rotation_start_date;
+    const endDateStr = rotationModal.form.rotation_end_date;
+    
+    if (!startDateStr || !endDateStr) {
+        showToast('Error', 'Please enter both start and end dates', 'error');
+        return;
+    }
+    
+    // Parse dates using proper ISO format
+    let startDate, endDate;
+    try {
+        // Handle different date formats (YYYY-MM-DD is expected)
+        startDate = new Date(startDateStr);
+        endDate = new Date(endDateStr);
+        
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            throw new Error('Invalid date format');
+        }
+        
+        // Convert to ISO string and extract date part only (YYYY-MM-DD)
+        const formatDateToISO = (date) => {
+            return date.toISOString().split('T')[0];
+        };
+        
+        rotationModal.form.rotation_start_date = formatDateToISO(startDate);
+        rotationModal.form.rotation_end_date = formatDateToISO(endDate);
+        
+    } catch (error) {
+        showToast('Error', 
+            'Invalid date format. Please use YYYY-MM-DD format (e.g., 2026-12-12)', 
+            'error'
+        );
+        return;
+    }
+    
+    // ============ 3. VALIDATE DATE LOGIC ============
+    if (endDate <= startDate) {
+        showToast('Error', 'End date must be after start date', 'error');
+        return;
+    }
+    
+    // Check if rotation is too long (max 1 year)
+    const maxDurationDays = 365;
+    const durationDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    if (durationDays > maxDurationDays) {
+        showToast('Error', 
+            `Rotation cannot exceed ${maxDurationDays} days. Current: ${durationDays} days`, 
+            'error'
+        );
+        return;
+    }
+    
+    // ============ 4. CHECK FOR OVERLAPS (CLIENT-SIDE) ============
+    const checkForOverlap = (residentId, newStart, newEnd, excludeRotationId = null) => {
+        const existingRotations = rotations.value.filter(r => 
+            r.resident_id === residentId && 
+            r.rotation_status !== 'cancelled' &&
+            r.id !== excludeRotationId  // Exclude current rotation if editing
+        );
+        
+        return existingRotations.some(r => {
+            try {
+                const rStart = new Date(r.start_date || r.rotation_start_date);
+                const rEnd = new Date(r.end_date || r.rotation_end_date);
+                const nStart = new Date(newStart);
+                const nEnd = new Date(newEnd);
                 
-                const saveOnCallSchedule = async () => {
-                    saving.value = true;
-                    try {
-                        console.log('🔍 DEBUG - Sending on-call data:', onCallModal.form);
-                        
-                        if (onCallModal.mode === 'add') {
-                            const result = await API.createOnCall(onCallModal.form);
-                            onCallSchedule.value.unshift(result);
-                            showToast('Success', 'On-call scheduled successfully', 'success');
-                        } else {
-                            const result = await API.updateOnCall(onCallModal.form.id, onCallModal.form);
-                            const index = onCallSchedule.value.findIndex(s => s.id === result.id);
-                            if (index !== -1) onCallSchedule.value[index] = result;
-                            showToast('Success', 'On-call updated successfully', 'success');
-                        }
-                        onCallModal.show = false;
-                        loadTodaysOnCall();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
+                // Check for overlap (dates inclusive)
+                return nStart <= rEnd && nEnd >= rStart;
+            } catch {
+                return false;
+            }
+        });
+    };
+    
+    const hasOverlap = checkForOverlap(
+        rotationModal.form.resident_id,
+        rotationModal.form.rotation_start_date,
+        rotationModal.form.rotation_end_date,
+        rotationModal.mode === 'edit' ? rotationModal.form.id : null
+    );
+    
+    if (hasOverlap) {
+        // Get the resident name for better error message
+        const residentName = getResidentName(rotationModal.form.resident_id);
+        
+        showToast('Scheduling Conflict', 
+            `${residentName} already has a rotation during these dates. ` +
+            'Please choose different dates or modify the existing rotation.',
+            'error'
+        );
+        return;
+    }
+    
+    // ============ 5. PREPARE DATA FOR BACKEND ============
+    saving.value = true;
+    
+    try {
+        // Clean and prepare rotation data
+        const rotationData = {
+            rotation_id: rotationModal.form.rotation_id || EnhancedUtils.generateId('ROT'),
+            resident_id: rotationModal.form.resident_id,
+            training_unit_id: rotationModal.form.training_unit_id,
+            supervising_attending_id: rotationModal.form.supervising_attending_id || null,
+            start_date: rotationModal.form.rotation_start_date,  // Already formatted as YYYY-MM-DD
+            end_date: rotationModal.form.rotation_end_date,      // Already formatted as YYYY-MM-DD
+            rotation_category: (rotationModal.form.rotation_category || 'clinical_rotation').toLowerCase(),
+            rotation_status: (rotationModal.form.rotation_status || 'scheduled').toLowerCase(),
+            rotation_category: rotationModal.form.rotation_category || 'elective_rotation'
+        };
+        
+        console.log('📤 Sending rotation data to server:', rotationData);
+        
+        // ============ 6. SEND TO BACKEND ============
+        let result;
+        if (rotationModal.mode === 'add') {
+            result = await API.createRotation(rotationData);
+            rotations.value.unshift(result);
+            showToast('Success', 'Rotation scheduled successfully', 'success');
+        } else {
+            result = await API.updateRotation(rotationModal.form.id, rotationData);
+            const index = rotations.value.findIndex(r => r.id === result.id);
+            if (index !== -1) rotations.value[index] = result;
+            showToast('Success', 'Rotation updated successfully', 'success');
+        }
+        
+        // ============ 7. CLEAN UP AND REFRESH ============
+        rotationModal.show = false;
+        
+        // Refresh rotations to get updated meaningful IDs
+        await loadRotations();
+        updateDashboardStats();
+        
+        // Show the new meaningful ID if available
+        if (result.rotation_id && result.rotation_id.startsWith('PULM-') || 
+            result.rotation_id.startsWith('MED-') || 
+            result.rotation_id.startsWith('SURG-')) {
+            showToast('Rotation ID Generated', 
+                `Assigned ID: ${result.rotation_id}`, 
+                'info', 3000);
+        }
+        
+    } catch (error) {
+        console.error('❌ Rotation save error:', error);
+        
+        // ============ 8. USER-FRIENDLY ERROR HANDLING ============
+        let userMessage = error.message || 'Failed to save rotation';
+        
+        // Parse backend error messages
+        if (error.message.includes('overlapping rotations')) {
+            userMessage = 'This rotation conflicts with an existing rotation. Please adjust dates.';
+        } else if (error.message.includes('Resident cannot have overlapping rotations')) {
+            // Extract the conflicting date range from error message
+            const match = error.message.match(/Date range (.*?) to (.*?) conflicts/);
+            if (match) {
+                const [_, conflictStart, conflictEnd] = match;
+                userMessage = `Dates conflict with existing rotation from ${conflictStart} to ${conflictEnd}`;
+            } else {
+                userMessage = 'Rotation dates conflict with existing schedule';
+            }
+        } else if (error.message.includes('training_unit_id') || error.message.includes('resident_id')) {
+            userMessage = 'Invalid resident or training unit selected. Please refresh and try again.';
+        } else if (error.message.includes('date') || error.message.includes('Date')) {
+            userMessage = 'Invalid date format. Please use YYYY-MM-DD format.';
+        }
+        
+        showToast('Error', userMessage, 'error');
+        
+    } finally {
+        saving.value = false;
+    }
+};
 const saveAbsence = async () => {
     saving.value = true;
     try {
