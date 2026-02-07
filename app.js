@@ -2296,7 +2296,7 @@ const getPresenceStatusClass = () => {
     if (presence.status === 'ABSENT') return 'status-critical';
     return 'status-caution';
 };
-                // Add this to your Vue methods, right after getCurrentPresence()
+                // ============ ENHANCED PROFILE UI HELPERS ============
 const getCurrentPresenceStatus = () => {
     if (!currentDoctorProfile.value) return 'UNKNOWN';
     
@@ -2304,6 +2304,31 @@ const getCurrentPresenceStatus = () => {
     if (!presence) return 'UNKNOWN';
     
     return presence.status || 'UNKNOWN';
+};
+
+const getPresenceBadgeClass = () => {
+    if (!currentDoctorProfile.value) return 'badge-gray';
+    
+    const presence = currentDoctorProfile.value.live_clinical_data?.presence;
+    if (!presence) return 'badge-gray';
+    
+    if (presence.status === 'PRESENT') return 'badge-success';
+    if (presence.status === 'ABSENT') return 'badge-danger';
+    return 'badge-warning';
+};
+
+const getPresenceIndicatorClass = () => {
+    const status = getCurrentPresenceStatus();
+    if (status === 'PRESENT') return 'bg-green-100 text-green-800';
+    if (status === 'ABSENT') return 'bg-red-100 text-red-800';
+    return 'bg-yellow-100 text-yellow-800';
+};
+
+const getPresenceIcon = () => {
+    const status = getCurrentPresenceStatus();
+    if (status === 'PRESENT') return 'fas fa-check-circle';
+    if (status === 'ABSENT') return 'fas fa-times-circle';
+    return 'fas fa-question-circle';
 };
 // ============ END ENHANCED PROFILE UI HELPERS ============       
                 const editMedicalStaff = (staff) => {
@@ -3188,6 +3213,7 @@ const filteredAbsences = computed(() => {
     
     // Enhanced Profile Functions
     getCurrentPresence,
+    getCurrentPresenceStatus, 
     getCurrentActivity,
     getScheduleForToday,
     isCurrentlyOnCall,
