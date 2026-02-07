@@ -2212,9 +2212,9 @@ const showAddMedicalStaffModal = () => {
                     userMenuOpen.value = false;
                 };
                 
-                // ============ 17. VIEW/EDIT FUNCTIONS ============
-                
-                const viewStaffDetails = async (staff) => {
+               // ============ 17. VIEW/EDIT FUNCTIONS ============
+
+const viewStaffDetails = async (staff) => {
     try {
         // Show loading state
         staffProfileModal.loading = true;
@@ -2244,7 +2244,6 @@ const showAddMedicalStaffModal = () => {
         staffProfileModal.loading = false;
     }
 };
-                
 
 // Fallback function
 const fallbackToBasicView = (staff) => {
@@ -2265,38 +2264,8 @@ const fallbackToBasicView = (staff) => {
     };
     staffProfileModal.staff = staff;
 };
-                const viewStaffDetails = async (staff) => {
-    try {
-        // Show loading state
-        staffProfileModal.loading = true;
-        staffProfileModal.show = true;
-        
-        // Load enhanced profile
-        const response = await API.getEnhancedDoctorProfile(staff.id);
-        
-        if (response.success) {
-            currentDoctorProfile.value = response.data;
-            staffProfileModal.staff = response.data.basic_info;
-            staffProfileModal.activeTab = 'clinical';
-            
-            // Show live status badge
-            showToast('Profile Loaded', 
-                `${staff.full_name} is ${response.data.live_clinical_data.presence.status.toLowerCase()}`, 
-                response.data.live_clinical_data.presence.status === 'PRESENT' ? 'success' : 'info');
-        } else {
-            // Fallback to basic data
-            fallbackToBasicView(staff);
-        }
-    } catch (error) {
-        console.error('Enhanced profile failed:', error);
-        fallbackToBasicView(staff);
-        showToast('Warning', 'Using limited profile data', 'warning');
-    } finally {
-        staffProfileModal.loading = false;
-    }
-};
 
-// ============ ADD THESE MISSING EDIT FUNCTIONS HERE ============
+// ============ EDIT FUNCTIONS ============
 
 const editMedicalStaff = (staff) => {
     // Copy staff data to modal form
@@ -2413,7 +2382,9 @@ const editAbsence = (absence) => {
     };
     absenceModal.show = true;
 };
+
 // ============ ENHANCED PROFILE UI HELPERS ============
+
 const getCurrentPresenceStatus = () => {
     if (!currentDoctorProfile.value) return 'UNKNOWN';
     
@@ -2422,13 +2393,13 @@ const getCurrentPresenceStatus = () => {
     
     return presence.status || 'UNKNOWN';
 };
-                const getPresenceStatusClass = () => {
+
+const getPresenceStatusClass = () => {
     const status = getCurrentPresenceStatus();
     if (status === 'PRESENT') return 'status-normal';
     if (status === 'ABSENT') return 'status-critical';
     return 'status-caution';
 };
-                
 
 const getPresenceBadgeClass = () => {
     if (!currentDoctorProfile.value) return 'badge-gray';
@@ -2454,7 +2425,6 @@ const getPresenceIcon = () => {
     if (status === 'ABSENT') return 'fas fa-times-circle';
     return 'fas fa-question-circle';
 };
-
                 
                 // ============ 18. SAVE FUNCTIONS ============
 const saveMedicalStaff = async () => {
