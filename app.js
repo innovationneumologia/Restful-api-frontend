@@ -476,6 +476,7 @@ class ApiService {
         }
     }
 }
+    
 
 // Initialize API Service
 const API = new ApiService();
@@ -523,6 +524,8 @@ const API = new ApiService();
                 const expiryHours = ref(8);
                 const activeMedicalStaff = ref([]);
                 const liveStatsEditMode = ref(false);
+                // ✅ ADD THIS RIGHT HERE:
+const currentDoctorProfile = ref(null);  // For viewing doctor profile
                 
                 // 6.6 VERSION 2 COMPLETE STATE
                 const quickStatus = ref('');
@@ -1905,6 +1908,30 @@ const API = new ApiService();
                         loading.value = false;
                     }
                 };
+                // ============ DOCTOR PROFILE FUNCTIONS ============
+
+const loadDoctorProfile = async (doctorId) => {
+    try {
+        const response = await API.getDoctorCompleteProfile(doctorId);
+        if (response.success) {
+            currentDoctorProfile.value = response.data;
+            staffProfileModal.staff = response.data.basic_info; // Auto-populate modal
+            staffProfileModal.show = true;
+            showToast('Success', 'Doctor profile loaded', 'success');
+        }
+    } catch (error) {
+        showToast('Error', 'Failed to load doctor profile', 'error');
+    }
+};
+
+const loadQuickProfile = async (doctorId) => {
+    try {
+        const response = await API.getDoctorQuickProfile(doctorId);
+        return response.data;
+    } catch {
+        return null;
+    }
+};
                 
                 // ============ 14. AUTHENTICATION FUNCTIONS ============
                 
