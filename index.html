@@ -6455,32 +6455,36 @@ body {
 
                                 <!-- On-call Status -->
                                 <div class="dynamic-status-card">
-                                    <div class="dynamic-status-header">
-                                        <i class="fas fa-phone-medical"></i>
-                                        <h4>On-call Status</h4>
-                                    </div>
-                                    <div class="dynamic-status-content">
-                                        <div class="status-data-row">
-                                            <span class="status-data-label">Today's On-call</span>
-                                            <span class="status-data-value">
-                                                <span v-if="isOnCallToday(staffProfileModal.staff.id)" class="status-indicator status-oncall">
-                                                    On-call
-                                                </span>
-                                                <span v-else class="text-gray-500">Not scheduled</span>
-                                            </span>
-                                        </div>
-                                        <div class="status-data-row" v-if="isOnCallToday(staffProfileModal.staff.id)">
-                                            <span class="status-data-label">Shift Time</span>
-                                            <span class="status-data-value">{{ getOnCallShiftTime(staffProfileModal.staff.id) }}</span>
-                                        </div>
-                                        <div class="status-data-row" v-if="isOnCallToday(staffProfileModal.staff.id)">
-                                            <span class="status-data-label">Coverage Area</span>
-                                            <span class="status-data-value">{{ getOnCallCoverage(staffProfileModal.staff.id) }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+    <div class="dynamic-status-header">
+        <i class="fas fa-phone-medical"></i>
+        <h4>On-call Schedule</h4>
+    </div>
+    <div class="dynamic-status-content" v-if="currentDoctorProfile && currentDoctorProfile.oncall_schedule.length > 0">
+        <div v-for="shift in currentDoctorProfile.oncall_schedule.slice(0, 3)" :key="shift.id" class="status-data-row">
+            <span class="status-data-label">{{ formatDate(shift.duty_date) }}</span>
+            <span class="status-data-value">
+                <span class="status-indicator" :class="'status-' + (shift.role === 'primary' ? 'oncall' : 'backup')">
+                    {{ shift.role === 'primary' ? 'Primary On-call' : 'Backup' }}
+                </span>
+                <div class="text-xs text-gray-600 mt-1">
+                    {{ shift.start_time }} - {{ shift.end_time }}
+                </div>
+                <div class="text-xs text-gray-600">
+                    Area: {{ shift.coverage_area || 'General Coverage' }}
+                </div>
+            </span>
+        </div>
+        <div class="status-data-row" v-if="currentDoctorProfile.oncall_schedule.length > 3">
+            <span class="status-data-label">More shifts</span>
+            <span class="status-data-value">
+                +{{ currentDoctorProfile.oncall_schedule.length - 3 }} upcoming
+            </span>
+        </div>
+    </div>
+    <div class="text-center py-4 text-gray-500 text-sm" v-else>
+        No upcoming on-call shifts
+    </div>
+</div>
 
                         <!-- Current Assignments Tab -->
                         <div v-if="staffProfileModal.activeTab === 'assignments'" class="mt-6">
