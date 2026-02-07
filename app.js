@@ -621,7 +621,29 @@ const currentDoctorProfile = ref(null);
                         certificate_status: 'current'
                     }
                 });
-                
+                // Add this after line where you define "EnhancedUtils" (around line 6.11)
+const formatRelativeTime = (dateString) => {
+    if (!dateString) return 'Just now';
+    try {
+        const date = new Date(dateString);
+        const now = new Date();
+        
+        // Fix for invalid dates
+        if (isNaN(date.getTime())) {
+            return 'Recently';
+        }
+        
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+        return `${Math.floor(diffMins / 1440)}d ago`;
+    } catch { 
+        return 'Recently'; 
+    }
+};
                 const communicationsModal = reactive({
                     show: false,
                     activeTab: 'announcement',
@@ -2246,25 +2268,6 @@ const viewStaffDetails = async (staff) => {
     }
 };
 
-// Fallback function
-const fallbackToBasicView = (staff) => {
-    currentDoctorProfile.value = {
-        basic_info: staff,
-        department: null,
-        live_clinical_data: {
-            presence: { status: 'UNKNOWN', type: 'Unknown', last_seen: 'N/A' },
-            current_assignment: null,
-            todays_schedule: [],
-            upcoming_oncall: [],
-            clinical_status: null
-        },
-        academic_data: {
-            research_notes: '',
-            specializations: []
-        }
-    };
-    staffProfileModal.staff = staff;
-};
 
 // ============ EDIT FUNCTIONS ============
 
@@ -2594,7 +2597,7 @@ const fallbackToBasicView = (staff) => {
             presence: { 
                 status: 'UNKNOWN', 
                 type: 'Status not available', 
-                last_seen: staff.updated_at || new Date().toISOString() 
+                last_seen: staff.updated_at ? new Date(staff.updated_at).toISOString() : new Date().toISOString()
             },
             current_assignment: currentRotation ? {
                 unit: getTrainingUnitName(currentRotation.training_unit_id),
