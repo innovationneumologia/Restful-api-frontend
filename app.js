@@ -595,6 +595,20 @@ const currentDoctorProfile = ref(null);
                     reason: '',
                     startDate: ''
                 });
+                const getPresenceStatusClass = () => {
+    const status = getCurrentPresenceStatus();
+    if (status === 'PRESENT') return 'status-normal';
+    if (status === 'ABSENT') return 'status-critical';
+    return 'status-caution';
+};
+                const getCurrentPresenceStatus = () => {
+    if (!currentDoctorProfile.value) return 'UNKNOWN';
+    
+    const presence = currentDoctorProfile.value.live_clinical_data?.presence;
+    if (!presence) return 'UNKNOWN';
+    
+    return presence.status || 'UNKNOWN';
+};
                 
                 // 6.10 Modal States
                 const staffProfileModal = reactive({
