@@ -6380,7 +6380,7 @@ body {
             </main>
 
             <!-- ============ MODALS ============ -->
-            <!-- ============ MODAL 1: Dynamic Staff Profile ============ -->
+<!-- ============ MODAL 1: Dynamic Staff Profile ============ -->
 <div v-if="staffProfileModal.show" class="modal-overlay">
     <div class="modal-container modal-wide">
         <div class="modal-header">
@@ -6408,17 +6408,8 @@ body {
                 <p class="text-gray-600">Loading live clinical data...</p>
             </div>
             
-            <!-- Error State -->
-            <div v-else-if="staffProfileModal.error" class="text-center py-12">
-                <i class="fas fa-exclamation-triangle text-3xl text-red-600 mb-4"></i>
-                <p class="text-gray-600">{{ staffProfileModal.error }}</p>
-                <button class="btn btn-outline mt-4" @click="loadProfileData(staffProfileModal.staff.id)">
-                    <i class="fas fa-redo mr-2"></i> Retry
-                </button>
-            </div>
-            
             <!-- Enhanced Profile Content -->
-            <div v-else-if="currentDoctorProfile || staffProfileModal.staff">
+            <div v-else>
                 <!-- Profile Header with Live Status -->
                 <div class="profile-header border-b border-gray-200 pb-6 mb-6">
                     <div class="flex items-start justify-between">
@@ -6454,9 +6445,9 @@ body {
                                         <span class="text-sm font-semibold">
                                             {{ getCurrentPresenceStatus() }}
                                         </span>
-                                        <span v-if="currentDoctorProfile?.live_clinical_data?.presence?.type" 
+                                        <span v-if="getCurrentActivity()" 
                                               class="text-xs opacity-80">
-                                            • {{ currentDoctorProfile.live_clinical_data.presence.type }}
+                                            • {{ getCurrentActivity() }}
                                         </span>
                                     </div>
                                     
@@ -6526,13 +6517,13 @@ body {
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Current Status</span>
                                     <span class="font-semibold" 
-                                          :class="currentDoctorProfile?.live_clinical_data?.presence?.status === 'PRESENT' ? 'text-green-600' : 'text-red-600'">
-                                        {{ currentDoctorProfile?.live_clinical_data?.presence?.status || 'UNKNOWN' }}
+                                          :class="getCurrentPresenceStatus() === 'PRESENT' ? 'text-green-600' : 'text-red-600'">
+                                        {{ getCurrentPresenceStatus() }}
                                     </span>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Activity</span>
-                                    <span class="font-medium">{{ currentDoctorProfile?.live_clinical_data?.presence?.type || 'Not specified' }}</span>
+                                    <span class="font-medium">{{ getCurrentActivity() }}</span>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Last Seen</span>
@@ -6559,13 +6550,6 @@ body {
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Supervisor</span>
                                     <span>{{ currentDoctorProfile.live_clinical_data.current_assignment.supervisor || 'Not assigned' }}</span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-600">Period</span>
-                                    <span class="text-sm">
-                                        {{ formatDate(currentDoctorProfile.live_clinical_data.current_assignment.start_date) }} 
-                                        to {{ formatDate(currentDoctorProfile.live_clinical_data.current_assignment.end_date) }}
-                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -6599,37 +6583,6 @@ body {
                                     <div class="text-right">
                                         <div class="font-semibold">{{ getNextOnCallShift().time }}</div>
                                         <div class="text-xs text-gray-600">{{ getNextOnCallShift().coverage_area }}</div>
-                                        <div v-if="getNextOnCallShift().backup_physician" class="text-xs text-gray-600">
-                                            Backup: {{ getNextOnCallShift().backup_physician }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- No upcoming shifts -->
-                            <div v-else-if="currentDoctorProfile?.live_clinical_data?.upcoming_oncall?.length === 0" 
-                                 class="text-center py-6 text-gray-500">
-                                <i class="fas fa-phone-slash text-xl mb-2"></i>
-                                <p class="text-sm">No upcoming on-call shifts scheduled</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Clinical Status Update -->
-                    <div v-if="currentDoctorProfile?.live_clinical_data?.clinical_status" class="card mt-6">
-                        <div class="card-header">
-                            <i class="fas fa-bullhorn"></i>
-                            <h4>Current Clinical Status</h4>
-                        </div>
-                        <div class="p-4">
-                            <div class="flex items-start gap-3">
-                                <div class="w-2 h-full rounded-full bg-blue-500 flex-shrink-0"></div>
-                                <div>
-                                    <p class="text-gray-700">{{ currentDoctorProfile.live_clinical_data.clinical_status.text }}</p>
-                                    <div class="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                                        <span>Priority: {{ currentDoctorProfile.live_clinical_data.clinical_status.priority }}</span>
-                                        <span>•</span>
-                                        <span>Expires: {{ formatRelativeTime(currentDoctorProfile.live_clinical_data.clinical_status.expires_at) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -6651,8 +6604,8 @@ body {
                         </div>
                         
                         <div class="space-y-3 p-4">
-                            <div v-if="currentDoctorProfile?.live_clinical_data?.todays_schedule?.length > 0">
-                                <div v-for="item in currentDoctorProfile.live_clinical_data.todays_schedule" 
+                            <div v-if="getScheduleForToday().length > 0">
+                                <div v-for="item in getScheduleForToday()" 
                                      :key="item.time"
                                      class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50">
                                     <div class="flex items-center gap-3">
@@ -6682,34 +6635,6 @@ body {
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Upcoming Shifts -->
-                    <div v-if="currentDoctorProfile?.live_clinical_data?.upcoming_oncall?.length > 0" class="card mt-6">
-                        <div class="card-header">
-                            <i class="fas fa-calendar-week"></i>
-                            <h4>Upcoming On-call Shifts</h4>
-                        </div>
-                        <div class="space-y-3 p-4">
-                            <div v-for="shift in currentDoctorProfile.live_clinical_data.upcoming_oncall.slice(0, 5)" 
-                                 :key="shift.date + shift.time"
-                                 class="flex items-center justify-between p-3 rounded-lg border border-gray-200">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center"
-                                         :class="shift.is_today ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'">
-                                        <i class="fas fa-phone-alt text-xs"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-medium">{{ shift.shift_type }} On-call</div>
-                                        <div class="text-sm text-gray-600">{{ shift.coverage_area }}</div>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="font-semibold">{{ formatDate(shift.date) }}</div>
-                                    <div class="text-sm text-gray-600">{{ shift.time }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 
                 <!-- ACADEMIC TAB -->
@@ -6734,44 +6659,6 @@ body {
                                  class="flex justify-between items-center">
                                 <span class="text-gray-600">Training Year</span>
                                 <span class="font-medium">{{ currentDoctorProfile.basic_info.training_year }}</span>
-                            </div>
-                            <div v-if="currentDoctorProfile?.basic_info?.can_supervise_residents" 
-                                 class="flex justify-between items-center">
-                                <span class="text-gray-600">Supervision Status</span>
-                                <span class="font-medium text-green-600">
-                                    <i class="fas fa-check-circle mr-1"></i>
-                                    Can Supervise Residents
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Research Notes -->
-                    <div class="card mt-6" v-if="currentDoctorProfile?.academic_data?.research_notes">
-                        <div class="card-header">
-                            <i class="fas fa-edit"></i>
-                            <h4>Research Notes</h4>
-                        </div>
-                        <div class="p-4">
-                            <div class="prose prose-sm max-w-none whitespace-pre-line text-gray-700">
-                                {{ currentDoctorProfile.academic_data.research_notes }}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Specializations -->
-                    <div class="card mt-6" v-if="currentDoctorProfile?.academic_data?.specializations?.length > 0">
-                        <div class="card-header">
-                            <i class="fas fa-tags"></i>
-                            <h4>Specializations</h4>
-                        </div>
-                        <div class="p-4">
-                            <div class="flex flex-wrap gap-2">
-                                <span v-for="specialization in currentDoctorProfile.academic_data.specializations" 
-                                      :key="specialization"
-                                      class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                                    {{ specialization }}
-                                </span>
                             </div>
                         </div>
                     </div>
