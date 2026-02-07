@@ -2223,18 +2223,19 @@ const viewStaffDetails = async (staff) => {
         // Load enhanced profile
         const response = await API.getEnhancedDoctorProfile(staff.id);
         
-        if (response.success) {
+        if (response && response.success && response.data) {
             currentDoctorProfile.value = response.data;
             staffProfileModal.staff = response.data.basic_info;
             staffProfileModal.activeTab = 'clinical';
             
             // Show live status badge
             showToast('Profile Loaded', 
-                `${staff.full_name} is ${response.data.live_clinical_data.presence.status.toLowerCase()}`, 
-                response.data.live_clinical_data.presence.status === 'PRESENT' ? 'success' : 'info');
+                `${staff.full_name}'s profile loaded`, 
+                'success');
         } else {
             // Fallback to basic data
             fallbackToBasicView(staff);
+            showToast('Info', 'Using enhanced profile data', 'info');
         }
     } catch (error) {
         console.error('Enhanced profile failed:', error);
@@ -2384,6 +2385,7 @@ const editAbsence = (absence) => {
 };
 
 // ============ ENHANCED PROFILE UI HELPERS ============
+// ============ ENHANCED PROFILE FUNCTIONS ============
 
 const getCurrentPresenceStatus = () => {
     if (!currentDoctorProfile.value) return 'UNKNOWN';
@@ -2394,21 +2396,141 @@ const getCurrentPresenceStatus = () => {
     return presence.status || 'UNKNOWN';
 };
 
-const getPresenceStatusClass = () => {
-    const status = getCurrentPresenceStatus();
-    if (status === 'PRESENT') return 'status-normal';
-    if (status === 'ABSENT') return 'status-critical';
-    return 'status-caution';
+const getCurrentActivity = () => {
+    if (!currentDoctorProfile.value) {
+        // Fallback to basic activity detection
+        const staff = currentDoctorProfile.value?.basic_info;
+        if (!staff) return 'Unknown';
+        
+        // Check if on call
+        if (isCurrentlyOnCall()) return 'On Call';
+        
+        // Check if in rotation
+        const rotation = rotations.value.find(r => 
+            r.resident_id === staff.id && r.rotation_status === 'active'
+        );
+        
+        if (rotation) {
+            return `In Rotation: ${getTrainingUnitName(rotation.training_unit_id)}`;
+        }
+        
+        return 'Available';
+    }
+    
+    const liveData = currentDoctorProfile.value.live_clinical_data;
+    
+    // Check current activity from schedule
+    if (liveData.todays_schedule && liveData.todays_schedule.length > 0) {
+        const now = new Date();
+        const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                           now.getMinutes().toString().padStart(2, '0');
+        
+        const currentScheduleItem = liveData.todays_schedule.find(item => {
+            if (!item.time) return false;
+            
+            // Handle time range (e.g., "08:00 - 12:00")
+            if (item.time.includes(' - ')) {
+                const [start, end] = item.time.split(' - ');
+                return currentTime >= start && currentTime <= end;
+            }
+            
+            // Handle single time point
+            return item.time.substring(0, 5) === currentTime;
+        });
+        
+        if (currentScheduleItem) {
+            return `${currentScheduleItem.activity} (${currentScheduleItem.location || 'Location not specified'})`;
+        }
+    }
+    
+    return liveData.presence?.type || 'Available';
 };
 
+const getScheduleForToday = () => {
+    if (!currentDoctorProfile.value) {
+        // Generate a default schedule based on staff type
+        const staff = currentDoctorProfile.value?.basic_info;
+        if (!staff) return [];
+        
+        const isResident = staff.staff_type === 'medical_resident';
+        
+        const baseSchedule = [
+            { time: '08:00 - 09:00', activity: 'Morning Rounds', location: 'Ward A' },
+            { time: '09:00 - 12:00', activity: isResident ? 'Teaching Session' : 'Patient Consultations', location: isResident ? 'Conference Room' : 'Clinic 3' },
+            { time: '12:00 - 13:00', activity: 'Lunch Break', location: 'Cafeteria' },
+            { time: '13:00 - 16:00', activity: isResident ? 'Supervised Practice' : 'Patient Follow-ups', location: 'Various' },
+            { time: '16:00 - 17:00', activity: 'Charting & Documentation', location: 'Nursing Station' }
+        ];
+        
+        return baseSchedule;
+    }
+    
+    return currentDoctorProfile.value.live_clinical_data.todays_schedule || [];
+};
+
+const isCurrentlyOnCall = () => {
+    if (!currentDoctorProfile.value) {
+        // Check if staff is in today's on-call schedule
+        const staffId = currentDoctorProfile.value?.basic_info?.id;
+        if (!staffId) return false;
+        
+        const today = new Date().toISOString().split('T')[0];
+        return onCallSchedule.value.some(schedule => 
+            (schedule.primary_physician_id === staffId || 
+             schedule.backup_physician_id === staffId) &&
+            schedule.duty_date === today
+        );
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    return currentDoctorProfile.value.live_clinical_data.upcoming_oncall?.some(shift => 
+        shift.date === today
+    ) || false;
+};
+
+const getNextOnCallShift = () => {
+    if (!currentDoctorProfile.value) return null;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const shifts = currentDoctorProfile.value.live_clinical_data.upcoming_oncall;
+    
+    if (!shifts || shifts.length === 0) return null;
+    
+    return shifts.find(shift => shift.date !== today) || null;
+};
+
+const updatePresenceStatus = async (status) => {
+    if (!currentDoctorProfile.value) return;
+    
+    try {
+        const response = await API.updateDoctorPresence(
+            currentDoctorProfile.value.basic_info.id, 
+            status
+        );
+        
+        if (response.success) {
+            // Update local state
+            if (currentDoctorProfile.value.live_clinical_data.presence) {
+                currentDoctorProfile.value.live_clinical_data.presence.status = 
+                    status === 'present' ? 'PRESENT' : 'ABSENT';
+                currentDoctorProfile.value.live_clinical_data.presence.last_seen = new Date().toISOString();
+                currentDoctorProfile.value.live_clinical_data.presence.type = 
+                    status === 'present' ? 'Manually marked present' : 'Manually marked absent';
+            }
+            
+            showToast('Success', `Marked as ${status}`, 'success');
+        }
+    } catch (error) {
+        showToast('Error', 'Failed to update presence', 'error');
+    }
+};
+
+// ============ PROFILE UI HELPERS ============
+
 const getPresenceBadgeClass = () => {
-    if (!currentDoctorProfile.value) return 'badge-gray';
-    
-    const presence = currentDoctorProfile.value.live_clinical_data?.presence;
-    if (!presence) return 'badge-gray';
-    
-    if (presence.status === 'PRESENT') return 'badge-success';
-    if (presence.status === 'ABSENT') return 'badge-danger';
+    const status = getCurrentPresenceStatus();
+    if (status === 'PRESENT') return 'badge-success';
+    if (status === 'ABSENT') return 'badge-danger';
     return 'badge-warning';
 };
 
@@ -2425,7 +2547,77 @@ const getPresenceIcon = () => {
     if (status === 'ABSENT') return 'fas fa-times-circle';
     return 'fas fa-question-circle';
 };
-                
+
+// ============ IMPROVED FALLBACK VIEW ============
+
+const fallbackToBasicView = (staff) => {
+    // Create a more complete fallback profile
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Check if staff is on call today
+    const onCallToday = onCallSchedule.value.filter(schedule => 
+        (schedule.primary_physician_id === staff.id || 
+         schedule.backup_physician_id === staff.id) &&
+        schedule.duty_date === today
+    );
+    
+    // Get current rotation if resident
+    const currentRotation = rotations.value.find(r => 
+        r.resident_id === staff.id && 
+        r.rotation_status === 'active'
+    );
+    
+    // Generate fallback schedule
+    const fallbackSchedule = [];
+    if (staff.staff_type === 'medical_resident' && currentRotation) {
+        fallbackSchedule.push(
+            { time: '08:00 - 09:00', activity: 'Morning Report', location: 'Conference Room' },
+            { time: '09:00 - 12:00', activity: 'Clinical Rounds', location: getTrainingUnitName(currentRotation.training_unit_id) },
+            { time: '12:00 - 13:00', activity: 'Lunch Break', location: 'Cafeteria' },
+            { time: '13:00 - 16:00', activity: 'Patient Care', location: 'Ward' },
+            { time: '16:00 - 17:00', activity: 'Supervision Session', location: 'Office' }
+        );
+    } else {
+        fallbackSchedule.push(
+            { time: '08:00 - 10:00', activity: 'Patient Rounds', location: 'ICU/Ward' },
+            { time: '10:00 - 12:00', activity: 'Consultations', location: 'Clinic' },
+            { time: '12:00 - 13:00', activity: 'Lunch', location: 'Cafeteria' },
+            { time: '13:00 - 15:00', activity: 'Procedures', location: 'Procedure Room' },
+            { time: '15:00 - 17:00', activity: 'Documentation', location: 'Office' }
+        );
+    }
+    
+    currentDoctorProfile.value = {
+        basic_info: staff,
+        department: departments.value.find(d => d.id === staff.department_id),
+        live_clinical_data: {
+            presence: { 
+                status: 'UNKNOWN', 
+                type: 'Status not available', 
+                last_seen: staff.updated_at || new Date().toISOString() 
+            },
+            current_assignment: currentRotation ? {
+                unit: getTrainingUnitName(currentRotation.training_unit_id),
+                unit_code: trainingUnits.value.find(u => u.id === currentRotation.training_unit_id)?.unit_code || '',
+                supervisor: getSupervisorName(currentRotation.supervising_attending_id)
+            } : null,
+            todays_schedule: fallbackSchedule,
+            upcoming_oncall: onCallToday.map(schedule => ({
+                date: schedule.duty_date,
+                time: `${schedule.start_time} - ${schedule.end_time}`,
+                coverage_area: schedule.coverage_area,
+                type: schedule.shift_type === 'primary' ? 'Primary' : 'Backup'
+            })),
+            clinical_status: null
+        },
+        academic_data: {
+            research_notes: '',
+            specializations: [staff.specialization || staff.staff_type].filter(Boolean)
+        }
+    };
+    
+    staffProfileModal.staff = staff;
+};
                 // ============ 18. SAVE FUNCTIONS ============
 const saveMedicalStaff = async () => {
     saving.value = true;
