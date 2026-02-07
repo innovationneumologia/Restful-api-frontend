@@ -2722,6 +2722,23 @@ const saveAbsence = async () => {
                 const authToken = computed(() => {
                     return localStorage.getItem(CONFIG.TOKEN_KEY);
                 });
+                // Add to your computed properties section in Vue setup()
+const availableReplacementStaff = computed(() => {
+    return medicalStaff.value.filter(staff => 
+        staff.employment_status === 'active' && 
+        staff.id !== absenceModal.form.staff_member_id
+    );
+});
+
+const currentTimeFormatted = computed(() => {
+    return EnhancedUtils.formatTime(currentTime.value);
+});
+
+const activeAlertsCount = computed(() => {
+    return systemAlerts.value.filter(alert => 
+        alert.status === 'active' || !alert.status
+    ).length;
+});
                 
                 const unreadAnnouncements = computed(() => {
                     return announcements.value.filter(a => !a.read).length;
