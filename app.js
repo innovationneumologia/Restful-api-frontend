@@ -265,6 +265,17 @@ class ApiService {
     async deleteMedicalStaff(id) {
         return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
     }
+    // ===== ENHANCED PROFILE ENDPOINTS =====
+async getEnhancedDoctorProfile(doctorId) {
+    return await this.request(`/api/medical-staff/${doctorId}/enhanced-profile`);
+}
+
+async updateDoctorPresence(doctorId, status, location = null) {
+    return await this.request(`/api/medical-staff/${doctorId}/presence`, {
+        method: 'POST',
+        body: { status, location, timestamp: new Date().toISOString() }
+    });
+}
     
     // ===== DEPARTMENT ENDPOINTS =====
     async getDepartments() {
@@ -575,6 +586,8 @@ const API = new ApiService();
                     trainingUnit: '',
                     supervisor: ''
                 });
+                // 6.11 Enhanced Profile State
+const currentDoctorProfile = ref(null);
                 
                 const absenceFilters = reactive({
                     staff: '',
@@ -1030,6 +1043,77 @@ const API = new ApiService();
                 const calculateAbsenceDuration = (startDate, endDate) => {
                     return EnhancedUtils.calculateDateDifference(startDate, endDate);
                 };
+                // Enhanced Profile Helpers
+const getCurrentPresence = () => {
+    if (!currentDoctorProfile.value) return { status: 'Unknown', type: 'Loading...' };
+    return currentDoctorProfile.value.live_clinical_data.presence;
+};
+
+const getCurrentActivity = () => {
+    if (!currentDoctorProfile.value) return 'Loading...';
+    
+    const liveData = currentDoctorProfile.value.live_clinical_data;
+    
+    // Check current activity from schedule
+    const currentScheduleItem = liveData.todays_schedule?.find(item => {
+        if (!item.time) return false;
+        const [start, end] = item.time.split(' - ');
+        const now = new Date().toTimeString().substring(0, 5);
+        return now >= start && now <= end;
+    });
+    
+    if (currentScheduleItem) {
+        return `${currentScheduleItem.activity} (${currentScheduleItem.location})`;
+    }
+    
+    return liveData.presence.type || 'Available';
+};
+
+const getScheduleForToday = () => {
+    if (!currentDoctorProfile.value) return [];
+    return currentDoctorProfile.value.live_clinical_data.todays_schedule || [];
+};
+
+const isCurrentlyOnCall = () => {
+    if (!currentDoctorProfile.value) return false;
+    const today = new Date().toISOString().split('T')[0];
+    return currentDoctorProfile.value.live_clinical_data.upcoming_oncall?.some(shift => 
+        shift.date === today
+    ) || false;
+};
+
+const getNextOnCallShift = () => {
+    if (!currentDoctorProfile.value) return null;
+    const today = new Date().toISOString().split('T')[0];
+    const shifts = currentDoctorProfile.value.live_clinical_data.upcoming_oncall;
+    return shifts?.find(shift => shift.date !== today) || null;
+};
+
+const updatePresenceStatus = async (status) => {
+    if (!currentDoctorProfile.value) return;
+    
+    try {
+        const response = await API.updateDoctorPresence(
+            currentDoctorProfile.value.basic_info.id, 
+            status
+        );
+        
+        if (response.success) {
+            // Update local state
+            if (currentDoctorProfile.value.live_clinical_data.presence) {
+                currentDoctorProfile.value.live_clinical_data.presence.status = 
+                    status === 'present' ? 'PRESENT' : 'ABSENT';
+                currentDoctorProfile.value.live_clinical_data.presence.last_seen = 'Just now';
+                currentDoctorProfile.value.live_clinical_data.presence.type = 
+                    status === 'present' ? 'Manually marked present' : 'Manually marked absent';
+            }
+            
+            showToast('Success', `Marked as ${status}`, 'success');
+        }
+    } catch (error) {
+        showToast('Error', 'Failed to update presence', 'error');
+    }
+};
                 
                 // ============ 8. NEUMAC ENHANCEMENT FUNCTIONS ============
                 
@@ -2130,11 +2214,56 @@ const showAddMedicalStaffModal = () => {
                 
                 // ============ 17. VIEW/EDIT FUNCTIONS ============
                 
-                const viewStaffDetails = (staff) => {
-                    staffProfileModal.staff = staff;
-                    staffProfileModal.activeTab = 'clinical';
-                    staffProfileModal.show = true;
-                };
+                const viewStaffDetails = async (staff) => {
+    try {
+        // Show loading state
+        staffProfileModal.loading = true;
+        staffProfileModal.show = true;
+        
+        // Load enhanced profile
+        const response = await API.getEnhancedDoctorProfile(staff.id);
+        
+        if (response.success) {
+            currentDoctorProfile.value = response.data;
+            staffProfileModal.staff = response.data.basic_info;
+            staffProfileModal.activeTab = 'clinical';
+            
+            // Show live status badge
+            showToast('Profile Loaded', 
+                `${staff.full_name} is ${response.data.live_clinical_data.presence.status.toLowerCase()}`, 
+                response.data.live_clinical_data.presence.status === 'PRESENT' ? 'success' : 'info');
+        } else {
+            // Fallback to basic data
+            fallbackToBasicView(staff);
+        }
+    } catch (error) {
+        console.error('Enhanced profile failed:', error);
+        fallbackToBasicView(staff);
+        showToast('Warning', 'Using limited profile data', 'warning');
+    } finally {
+        staffProfileModal.loading = false;
+    }
+};
+
+// Fallback function
+const fallbackToBasicView = (staff) => {
+    currentDoctorProfile.value = {
+        basic_info: staff,
+        department: null,
+        live_clinical_data: {
+            presence: { status: 'UNKNOWN', type: 'Unknown', last_seen: 'N/A' },
+            current_assignment: null,
+            todays_schedule: [],
+            upcoming_oncall: [],
+            clinical_status: null
+        },
+        academic_data: {
+            research_notes: '',
+            specializations: []
+        }
+    };
+    staffProfileModal.staff = staff;
+};
                 
                 const editMedicalStaff = (staff) => {
                     medicalStaffModal.mode = 'edit';
@@ -2905,6 +3034,17 @@ const filteredAbsences = computed(() => {
                     saving,
                     loadingSchedule,
                     isLoadingStatus,
+                    getCurrentPresence,
+    getCurrentActivity,
+    getScheduleForToday,
+    isCurrentlyOnCall,
+    getNextOnCallShift,
+    updatePresenceStatus,
+    getPresenceBadgeClass,
+    getPresenceIndicatorClass,
+    getPresenceIcon,
+    getPresenceStatusClass,
+    fallbackToBasicView,
                     
                     currentView,
                     sidebarCollapsed,
@@ -3015,6 +3155,7 @@ const filteredAbsences = computed(() => {
                     getRotationDaysLeft,
                     getRecentActivities,
                     formatTimeAgo,
+                      currentDoctorProfile,
                     
                     // Version 2 Complete Functions
                     getStatusBadgeClass,
