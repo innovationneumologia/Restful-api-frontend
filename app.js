@@ -3026,15 +3026,127 @@ const filteredAbsences = computed(() => {
                 
                 // ============ 24. RETURN EXPOSED DATA/METHODS ============
                 return {
-                    // State
-                    currentUser,
-                    loginForm,
-                    loginLoading,
-                    loading,
-                    saving,
-                    loadingSchedule,
-                    isLoadingStatus,
-                    getCurrentPresence,
+    // State
+    currentUser,
+    loginForm,
+    loginLoading,
+    loading,
+    saving,
+    loadingSchedule,
+    isLoadingStatus,
+    currentView,
+    sidebarCollapsed,
+    mobileMenuOpen,
+    userMenuOpen,
+    statsSidebarOpen,
+    globalSearchQuery,
+    
+    // Data
+    medicalStaff,
+    departments,
+    trainingUnits,
+    rotations,
+    absences,
+    onCallSchedule,
+    announcements,
+    
+    // Live Status Data
+    clinicalStatus,
+    newStatusText,
+    selectedAuthorId,
+    expiryHours,
+    activeMedicalStaff,
+    liveStatsEditMode,
+    currentDoctorProfile,
+    
+    // Version 2 Complete State
+    quickStatus,
+    currentTime,
+    
+    // Dashboard
+    systemStats,
+    todaysOnCall,
+    todaysOnCallCount,
+    
+    // UI
+    toasts,
+    systemAlerts,
+    
+    // Filters
+    staffFilters,
+    onCallFilters,
+    rotationFilters,
+    absenceFilters,
+    
+    // Modals
+    staffProfileModal,
+    medicalStaffModal,
+    communicationsModal,
+    onCallModal,
+    rotationModal,
+    trainingUnitModal,
+    absenceModal,
+    departmentModal,
+    userProfileModal,
+    confirmationModal,
+    
+    // Core Functions
+    formatDate: EnhancedUtils.formatDate,
+    formatDateTime: EnhancedUtils.formatDateTime,
+    formatTime: EnhancedUtils.formatTime,
+    formatRelativeTime: EnhancedUtils.formatRelativeTime,
+    getInitials: EnhancedUtils.getInitials,
+    formatStaffType,
+    getStaffTypeClass,
+    formatEmploymentStatus,
+    formatAbsenceReason,
+    formatAbsenceStatus,
+    formatRotationStatus,
+    getUserRoleDisplay,
+    getCurrentViewTitle,
+    getCurrentViewSubtitle,
+    getSearchPlaceholder,
+    
+    // Helper Functions
+    getDepartmentName,
+    getStaffName,
+    getTrainingUnitName,
+    getSupervisorName,
+    getPhysicianName,
+    getResidentName,
+    getDepartmentUnits,
+    getDepartmentStaffCount,
+    getCurrentRotationForStaff,
+    calculateAbsenceDuration,
+    
+    // NEUMAC UI Functions
+    getShiftStatusClass,
+    isCurrentShift,
+    getStaffTypeIcon,
+    calculateCapacityPercent,
+    getCapacityDotClass,
+    getMeterFillClass,
+    getAbsenceReasonIcon,
+    getScheduleIcon,
+    
+    // Profile Functions
+    getCurrentUnit,
+    getCurrentWard,
+    getCurrentActivityStatus,
+    getCurrentPatientCount,
+    getICUPatientCount,
+    getWardPatientCount,
+    getTodaysSchedule,
+    isOnCallToday,
+    getOnCallShiftTime,
+    getOnCallCoverage,
+    getRotationSupervisor,
+    getRotationDaysLeft,
+    getRecentActivities,
+    formatTimeAgo,
+    
+    // Enhanced Profile Functions
+    getCurrentPresence,
     getCurrentActivity,
     getScheduleForToday,
     isCurrentlyOnCall,
@@ -3045,227 +3157,116 @@ const filteredAbsences = computed(() => {
     getPresenceIcon,
     getPresenceStatusClass,
     fallbackToBasicView,
-                    
-                    currentView,
-                    sidebarCollapsed,
-                    mobileMenuOpen,
-                    userMenuOpen,
-                    statsSidebarOpen,
-                    globalSearchQuery,
-                    
-                    // Data
-                    medicalStaff,
-                    departments,
-                    trainingUnits,
-                    rotations,
-                    absences,
-                    onCallSchedule,
-                    announcements,
-                    
-                    // Live Status Data
-                    clinicalStatus,
-                    newStatusText,
-                    selectedAuthorId,
-                    expiryHours,
-                    activeMedicalStaff,
-                    liveStatsEditMode,
-                    
-                    // Version 2 Complete State
-                    quickStatus,
-                    currentTime,
-                    
-                    // Dashboard
-                    systemStats,
-                    todaysOnCall,
-                    todaysOnCallCount,
-                    
-                    // UI
-                    toasts,
-                    systemAlerts,
-                    
-                    // Filters
-                    staffFilters,
-                    onCallFilters,
-                    rotationFilters,
-                    absenceFilters,
-                    
-                    // Modals
-                    staffProfileModal,
-                    medicalStaffModal,
-                    communicationsModal,
-                    onCallModal,
-                    rotationModal,
-                    trainingUnitModal,
-                    absenceModal,
-                    departmentModal,
-                    userProfileModal,
-                    confirmationModal,
-                    
-                    // Core Functions
-                    formatDate: EnhancedUtils.formatDate,
-                    formatDateTime: EnhancedUtils.formatDateTime,
-                    formatTime: EnhancedUtils.formatTime,
-                    formatRelativeTime: EnhancedUtils.formatRelativeTime,
-                    getInitials: EnhancedUtils.getInitials,
-                    formatStaffType,
-                    getStaffTypeClass,
-                    formatEmploymentStatus,
-                    formatAbsenceReason,
-                    formatAbsenceStatus,
-                    formatRotationStatus,
-                    getUserRoleDisplay,
-                    getCurrentViewTitle,
-                    getCurrentViewSubtitle,
-                    getSearchPlaceholder,
-                    
-                    // Helper Functions
-                    getDepartmentName,
-                    getStaffName,
-                    getTrainingUnitName,
-                    getSupervisorName,
-                    getPhysicianName,
-                    getResidentName,
-                    getDepartmentUnits,
-                    getDepartmentStaffCount,
-                    getCurrentRotationForStaff,
-                    calculateAbsenceDuration,
-                    
-                    // NEUMAC UI Functions
-                    getShiftStatusClass,
-                    isCurrentShift,
-                    getStaffTypeIcon,
-                    calculateCapacityPercent,
-                    getCapacityDotClass,
-                    getMeterFillClass,
-                    getAbsenceReasonIcon,
-                    getScheduleIcon,
-                    
-                    // Profile Functions
-                    getCurrentUnit,
-                    getCurrentWard,
-                    getCurrentActivityStatus,
-                    getCurrentPatientCount,
-                    getICUPatientCount,
-                    getWardPatientCount,
-                    getTodaysSchedule,
-                    isOnCallToday,
-                    getOnCallShiftTime,
-                    getOnCallCoverage,
-                    getRotationSupervisor,
-                    getRotationDaysLeft,
-                    getRecentActivities,
-                    formatTimeAgo,
-                      currentDoctorProfile,
-                    
-                    // Version 2 Complete Functions
-                    getStatusBadgeClass,
-                    calculateTimeRemaining,
-                    refreshStatus,
-                    setQuickStatus,
-                    formatAudience,
-                    getPreviewCardClass,
-                    getPreviewIcon,
-                    getPreviewReasonText,
-                    getPreviewStatusClass,
-                    getPreviewStatusText,
-                    updatePreview,
-                    
-                    // Live Status Functions
-                    loadClinicalStatus,
-                    loadActiveMedicalStaff,
-                    saveClinicalStatus,
-                    isStatusExpired,
-                    showCreateStatusModal,
-                    
-                    // Delete Functions
-                    deleteMedicalStaff,
-                    deleteRotation,
-                    deleteOnCallSchedule,
-                    deleteAbsence,
-                    deleteAnnouncement,
-                    deleteClinicalStatus,
-                    
-                    // Toast Functions
-                    showToast,
-                    removeToast,
-                    dismissAlert,
-                    
-                    // Confirmation Modal
-                    showConfirmation,
-                    confirmAction,
-                    cancelConfirmation,
-                    
-                    // Authentication
-                    handleLogin,
-                    handleLogout,
-                    
-                    // Navigation
-                    switchView,
-                    
-                    // UI Functions
-                    toggleStatsSidebar,
-                    handleGlobalSearch,
-                    
-                    // Modal Show Functions
-                    showAddMedicalStaffModal,
-                    showAddDepartmentModal,
-                    showAddTrainingUnitModal,
-                    showAddRotationModal,
-                    showAddOnCallModal,
-                    showAddAbsenceModal,
-                    showCommunicationsModal,
-                    showUserProfileModal,
-                    
-                    // View/Edit Functions
-                    viewStaffDetails,
-                    editMedicalStaff,
-                    editDepartment,
-                    editTrainingUnit,
-                    editRotation,
-                    editOnCallSchedule,
-                    editAbsence,
-                    
-                    // Action Functions
-                    contactPhysician,
-                    viewAnnouncement,
-                    viewDepartmentStaff,
-                    viewUnitResidents,
-                    
-                    // Save Functions
-                    saveMedicalStaff,
-                    saveDepartment,
-                    saveTrainingUnit,
-                    saveRotation,
-                    saveOnCallSchedule,
-                    saveAbsence,
-                    saveCommunication,
-                    saveUserProfile,
-                    
-                    // Permission Functions
-                    hasPermission,
-                        saveRotation,        // The function we just fixed
-    saveOnCallSchedule,  
-                    
-                    // Computed Properties
-                    authToken,
-                    unreadAnnouncements,
-                    unreadLiveUpdates,
-                    formattedExpiry,
-                    availablePhysicians,
-                    availableResidents,
-                    availableAttendings,
-                    availableHeadsOfDepartment,
-                    availableReplacementStaff,
-                    filteredMedicalStaff,
-                    filteredOnCallSchedules,
-                    filteredRotations,
-                    filteredAbsences,
-                    recentAnnouncements,
-                    
-                    // Version 2 Complete Computed Properties
-                    activeAlertsCount,
-                    currentTimeFormatted
-                };
+    
+    // Version 2 Complete Functions
+    getStatusBadgeClass,
+    calculateTimeRemaining,
+    refreshStatus,
+    setQuickStatus,
+    formatAudience,
+    getPreviewCardClass,
+    getPreviewIcon,
+    getPreviewReasonText,
+    getPreviewStatusClass,
+    getPreviewStatusText,
+    updatePreview,
+    
+    // Live Status Functions
+    loadClinicalStatus,
+    loadActiveMedicalStaff,
+    saveClinicalStatus,
+    isStatusExpired,
+    showCreateStatusModal,
+    
+    // Delete Functions
+    deleteMedicalStaff,
+    deleteRotation,
+    deleteOnCallSchedule,
+    deleteAbsence,
+    deleteAnnouncement,
+    deleteClinicalStatus,
+    
+    // Toast Functions
+    showToast,
+    removeToast,
+    dismissAlert,
+    
+    // Confirmation Modal
+    showConfirmation,
+    confirmAction,
+    cancelConfirmation,
+    
+    // Authentication
+    handleLogin,
+    handleLogout,
+    
+    // Navigation
+    switchView,
+    
+    // UI Functions
+    toggleStatsSidebar,
+    handleGlobalSearch,
+    
+    // Modal Show Functions
+    showAddMedicalStaffModal,
+    showAddDepartmentModal,
+    showAddTrainingUnitModal,
+    showAddRotationModal,
+    showAddOnCallModal,
+    showAddAbsenceModal,
+    showCommunicationsModal,
+    showUserProfileModal,
+    
+    // View/Edit Functions
+    viewStaffDetails,
+    editMedicalStaff,
+    editDepartment,
+    editTrainingUnit,
+    editRotation,
+    editOnCallSchedule,
+    editAbsence,
+    
+    // Action Functions
+    contactPhysician,
+    viewAnnouncement,
+    viewDepartmentStaff,
+    viewUnitResidents,
+    
+    // Save Functions
+    saveMedicalStaff,
+    saveDepartment,
+    saveTrainingUnit,
+    saveRotation,
+    saveOnCallSchedule,
+    saveAbsence,
+    saveCommunication,
+    saveUserProfile,
+    
+    // Permission Functions
+    hasPermission,
+    saveRotation,
+    saveOnCallSchedule,
+    
+    // Computed Properties
+    authToken,
+    unreadAnnouncements,
+    unreadLiveUpdates,
+    formattedExpiry,
+    availablePhysicians,
+    availableResidents,
+    availableAttendings,
+    availableHeadsOfDepartment,
+    availableReplacementStaff,
+    filteredMedicalStaff,
+    filteredOnCallSchedules,
+    filteredRotations,
+    filteredAbsences,
+    recentAnnouncements,
+    
+    // Version 2 Complete Computed Properties
+    activeAlertsCount,
+    currentTimeFormatted
+};
             }
         });
         
