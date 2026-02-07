@@ -119,341 +119,366 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // ============ 4. COMPLETE API SERVICE ============
-        class ApiService {
-            constructor() {
-                this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
+// ============ 4. COMPLETE API SERVICE ============
+class ApiService {
+    constructor() {
+        this.token = localStorage.getItem(CONFIG.TOKEN_KEY) || null;
+    }
+    
+    getHeaders() {
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        };
+        
+        const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+        if (token && token.trim()) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        return headers;
+    }
+    
+    async request(endpoint, options = {}) {
+        const url = `${CONFIG.API_BASE_URL}${endpoint}`;
+        
+        try {
+            const config = {
+                method: options.method || 'GET',
+                headers: this.getHeaders(),
+                mode: 'cors',
+                cache: 'no-cache',
+                credentials: 'include'
+            };
+            
+            if (options.body && typeof options.body === 'object') {
+                config.body = JSON.stringify(options.body);
             }
             
-            getHeaders() {
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                };
-                
-                const token = localStorage.getItem(CONFIG.TOKEN_KEY);
-                if (token && token.trim()) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-                
-                return headers;
+            console.log(`📡 API Request to ${url}:`, {
+                method: config.method,
+                headers: config.headers,
+                mode: config.mode,
+                credentials: config.credentials,
+                hasBody: !!options.body
+            });
+            
+            const response = await fetch(url, config);
+            
+            if (CONFIG.DEBUG) {
+                console.log(`📥 Response from ${url}:`, {
+                    status: response.status,
+                    statusText: response.statusText
+                });
             }
             
-            async request(endpoint, options = {}) {
-                const url = `${CONFIG.API_BASE_URL}${endpoint}`;
-                
-                try {
-                    const config = {
-                        method: options.method || 'GET',
-                        headers: this.getHeaders(),
-                        mode: 'cors',
-                        cache: 'no-cache'
-                    };
-                    
-                    if (options.body && typeof options.body === 'object') {
-                        config.body = JSON.stringify(options.body);
-                    }
-                    
-                    const response = await fetch(url, config);
-                    
-                    if (response.status === 204) return null;
-                    
-                    if (!response.ok) {
-                        if (response.status === 401) {
-                            this.token = null;
-                            localStorage.removeItem(CONFIG.TOKEN_KEY);
-                            localStorage.removeItem(CONFIG.USER_KEY);
-                            throw new Error('Session expired. Please login again.');
-                        }
-                        
-                        let errorText;
-                        try {
-                            errorText = await response.text();
-                        } catch {
-                            errorText = `HTTP ${response.status}: ${response.statusText}`;
-                        }
-                        
-                        throw new Error(errorText);
-                    }
-                    
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        return await response.json();
-                    }
-                    
-                    return await response.text();
-                    
-                } catch (error) {
-                    if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error);
-                    throw error;
-                }
-            }
+            if (response.status === 204) return null;
             
-            // ===== AUTHENTICATION ENDPOINTS =====
-            async login(email, password) {
-                try {
-                    const data = await this.request('/api/auth/login', {
-                        method: 'POST',
-                        body: { email, password }
-                    });
-                    
-                    if (data.token) {
-                        this.token = data.token;
-                        localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
-                        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
-                    }
-                    
-                    return data;
-                } catch (error) {
-                    throw new Error('Login failed: ' + error.message);
-                }
-            }
-            
-            async logout() {
-                try {
-                    await this.request('/api/auth/logout', { method: 'POST' });
-                } finally {
+            if (!response.ok) {
+                if (response.status === 401) {
                     this.token = null;
                     localStorage.removeItem(CONFIG.TOKEN_KEY);
                     localStorage.removeItem(CONFIG.USER_KEY);
+                    throw new Error('Session expired. Please login again.');
                 }
-            }
-            
-            // ===== MEDICAL STAFF ENDPOINTS =====
-            async getMedicalStaff() {
+                
+                let errorText;
                 try {
-                    const data = await this.request('/api/medical-staff');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createMedicalStaff(staffData) {
-                return await this.request('/api/medical-staff', {
-                    method: 'POST',
-                    body: staffData
-                });
-            }
-            
-            async updateMedicalStaff(id, staffData) {
-                return await this.request(`/api/medical-staff/${id}`, {
-                    method: 'PUT',
-                    body: staffData
-                });
-            }
-            
-            async deleteMedicalStaff(id) {
-                return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== DEPARTMENT ENDPOINTS =====
-            async getDepartments() {
-                try {
-                    const data = await this.request('/api/departments');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createDepartment(departmentData) {
-                return await this.request('/api/departments', {
-                    method: 'POST',
-                    body: departmentData
-                });
-            }
-            
-            async updateDepartment(id, departmentData) {
-                return await this.request(`/api/departments/${id}`, {
-                    method: 'PUT',
-                    body: departmentData
-                });
-            }
-            
-            // ===== TRAINING UNIT ENDPOINTS =====
-            async getTrainingUnits() {
-                try {
-                    const data = await this.request('/api/training-units');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createTrainingUnit(unitData) {
-                return await this.request('/api/training-units', {
-                    method: 'POST',
-                    body: unitData
-                });
-            }
-            
-            async updateTrainingUnit(id, unitData) {
-                return await this.request(`/api/training-units/${id}`, {
-                    method: 'PUT',
-                    body: unitData
-                });
-            }
-            
-            // ===== ROTATION ENDPOINTS =====
-            async getRotations() {
-                try {
-                    const data = await this.request('/api/rotations');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createRotation(rotationData) {
-                return await this.request('/api/rotations', {
-                    method: 'POST',
-                    body: rotationData
-                });
-            }
-            
-            async updateRotation(id, rotationData) {
-                return await this.request(`/api/rotations/${id}`, {
-                    method: 'PUT',
-                    body: rotationData
-                });
-            }
-            
-            async deleteRotation(id) {
-                return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ON-CALL ENDPOINTS =====
-            async getOnCallSchedule() {
-                try {
-                    const data = await this.request('/api/oncall');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async getOnCallToday() {
-                try {
-                    const data = await this.request('/api/oncall/today');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createOnCall(scheduleData) {
-                return await this.request('/api/oncall', {
-                    method: 'POST',
-                    body: scheduleData
-                });
-            }
-            
-            async updateOnCall(id, scheduleData) {
-                return await this.request(`/api/oncall/${id}`, {
-                    method: 'PUT',
-                    body: scheduleData
-                });
-            }
-            
-            async deleteOnCall(id) {
-                return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ABSENCE ENDPOINTS =====
-            async getAbsences() {
-                try {
-                    const data = await this.request('/api/absences');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createAbsence(absenceData) {
-                return await this.request('/api/absences', {
-                    method: 'POST',
-                    body: absenceData
-                });
-            }
-            
-            async updateAbsence(id, absenceData) {
-                return await this.request(`/api/absences/${id}`, {
-                    method: 'PUT',
-                    body: absenceData
-                });
-            }
-            
-            async deleteAbsence(id) {
-                return await this.request(`/api/absences/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== ANNOUNCEMENT ENDPOINTS =====
-            async getAnnouncements() {
-                try {
-                    const data = await this.request('/api/announcements');
-                    return EnhancedUtils.ensureArray(data);
-                } catch { return []; }
-            }
-            
-            async createAnnouncement(announcementData) {
-                return await this.request('/api/announcements', {
-                    method: 'POST',
-                    body: announcementData
-                });
-            }
-            
-            async updateAnnouncement(id, announcementData) {
-                return await this.request(`/api/announcements/${id}`, {
-                    method: 'PUT',
-                    body: announcementData
-                });
-            }
-            
-            async deleteAnnouncement(id) {
-                return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== LIVE STATUS ENDPOINTS =====
-            async getClinicalStatus() {
-                try {
-                    const data = await this.request('/api/live-status/current');
-                    return data;
-                } catch (error) {
-                    console.error('Clinical status API error:', error);
-                    return {
-                        success: false,
-                        data: null,
-                        error: error.message
-                    };
-                }
-            }
-            
-            async createClinicalStatus(statusData) {
-                return await this.request('/api/live-status', {
-                    method: 'POST',
-                    body: statusData
-                });
-            }
-            
-            async updateClinicalStatus(id, statusData) {
-                return await this.request(`/api/live-status/${id}`, {
-                    method: 'PUT',
-                    body: statusData
-                });
-            }
-            
-            async deleteClinicalStatus(id) {
-                return await this.request(`/api/live-status/${id}`, { method: 'DELETE' });
-            }
-            
-            // ===== SYSTEM STATS ENDPOINT =====
-            async getSystemStats() {
-                try {
-                    const data = await this.request('/api/system-stats');
-                    return data || {};
+                    errorText = await response.text();
                 } catch {
-                    return {
-                        activeAttending: 0,
-                        activeResidents: 0,
-                        onCallNow: 0,
-                        inSurgery: 0,
-                        nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-                        pendingApprovals: 0
-                    };
+                    errorText = `HTTP ${response.status}: ${response.statusText}`;
                 }
+                
+                throw new Error(errorText);
             }
+            
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            }
+            
+            return await response.text();
+            
+        } catch (error) {
+            if (CONFIG.DEBUG) console.error(`API ${endpoint} failed:`, error);
+            
+            if (error.message.includes('CORS') || error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                throw new Error(`Cannot connect to server. Please check:\n1. Backend is running\n2. Network connection\n3. CORS configuration`);
+            }
+            
+            throw error;
         }
-        
-        // Initialize API Service
-        const API = new ApiService();
-        
+    }
+    
+    // ===== AUTHENTICATION ENDPOINTS =====
+    async login(email, password) {
+        try {
+            const data = await this.request('/api/auth/login', {
+                method: 'POST',
+                body: { email, password }
+            });
+            
+            if (data.token) {
+                this.token = data.token;
+                localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
+                localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
+            }
+            
+            return data;
+        } catch (error) {
+            throw new Error('Login failed: ' + error.message);
+        }
+    }
+    
+    async logout() {
+        try {
+            await this.request('/api/auth/logout', { method: 'POST' });
+        } finally {
+            this.token = null;
+            localStorage.removeItem(CONFIG.TOKEN_KEY);
+            localStorage.removeItem(CONFIG.USER_KEY);
+        }
+    }
+    
+    // ===== MEDICAL STAFF ENDPOINTS =====
+    async getMedicalStaff() {
+        try {
+            const data = await this.request('/api/medical-staff');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createMedicalStaff(staffData) {
+        return await this.request('/api/medical-staff', {
+            method: 'POST',
+            body: staffData
+        });
+    }
+    
+    async updateMedicalStaff(id, staffData) {
+        return await this.request(`/api/medical-staff/${id}`, {
+            method: 'PUT',
+            body: staffData
+        });
+    }
+    
+    async deleteMedicalStaff(id) {
+        return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== DEPARTMENT ENDPOINTS =====
+    async getDepartments() {
+        try {
+            const data = await this.request('/api/departments');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createDepartment(departmentData) {
+        return await this.request('/api/departments', {
+            method: 'POST',
+            body: departmentData
+        });
+    }
+    
+    async updateDepartment(id, departmentData) {
+        return await this.request(`/api/departments/${id}`, {
+            method: 'PUT',
+            body: departmentData
+        });
+    }
+    
+    // ===== TRAINING UNIT ENDPOINTS =====
+    async getTrainingUnits() {
+        try {
+            const data = await this.request('/api/training-units');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createTrainingUnit(unitData) {
+        return await this.request('/api/training-units', {
+            method: 'POST',
+            body: unitData
+        });
+    }
+    
+    async updateTrainingUnit(id, unitData) {
+        return await this.request(`/api/training-units/${id}`, {
+            method: 'PUT',
+            body: unitData
+        });
+    }
+    
+    // ===== ROTATION ENDPOINTS =====
+    async getRotations() {
+        try {
+            const data = await this.request('/api/rotations');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createRotation(rotationData) {
+        return await this.request('/api/rotations', {
+            method: 'POST',
+            body: rotationData
+        });
+    }
+    
+    async updateRotation(id, rotationData) {
+        return await this.request(`/api/rotations/${id}`, {
+            method: 'PUT',
+            body: rotationData
+        });
+    }
+    
+    async deleteRotation(id) {
+        return await this.request(`/api/rotations/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== ON-CALL ENDPOINTS =====
+    async getOnCallSchedule() {
+        try {
+            const data = await this.request('/api/oncall');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async getOnCallToday() {
+        try {
+            const data = await this.request('/api/oncall/today');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createOnCall(scheduleData) {
+        return await this.request('/api/oncall', {
+            method: 'POST',
+            body: scheduleData
+        });
+    }
+    
+    async updateOnCall(id, scheduleData) {
+        return await this.request(`/api/oncall/${id}`, {
+            method: 'PUT',
+            body: scheduleData
+        });
+    }
+    
+    async deleteOnCall(id) {
+        return await this.request(`/api/oncall/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== ABSENCE ENDPOINTS =====
+    async getAbsences() {
+        try {
+            const data = await this.request('/api/absence-records');
+            return EnhancedUtils.ensureArray(data);
+        } catch (error) {
+            console.error('Failed to load absences:', error);
+            return [];
+        }
+    }
+    
+    async createAbsence(absenceData) {
+        return await this.request('/api/absence-records', {
+            method: 'POST',
+            body: absenceData
+        });
+    }
+    
+    async updateAbsence(id, absenceData) {
+        return await this.request(`/api/absence-records/${id}`, {
+            method: 'PUT',
+            body: absenceData
+        });
+    }
+    
+    async deleteAbsence(id) {
+        return await this.request(`/api/absence-records/${id}`, { 
+            method: 'DELETE' 
+        });
+    }
+    
+    // ===== ANNOUNCEMENT ENDPOINTS =====
+    async getAnnouncements() {
+        try {
+            const data = await this.request('/api/announcements');
+            return EnhancedUtils.ensureArray(data);
+        } catch { return []; }
+    }
+    
+    async createAnnouncement(announcementData) {
+        return await this.request('/api/announcements', {
+            method: 'POST',
+            body: announcementData
+        });
+    }
+    
+    async updateAnnouncement(id, announcementData) {
+        return await this.request(`/api/announcements/${id}`, {
+            method: 'PUT',
+            body: announcementData
+        });
+    }
+    
+    async deleteAnnouncement(id) {
+        return await this.request(`/api/announcements/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== LIVE STATUS ENDPOINTS =====
+    async getClinicalStatus() {
+        try {
+            const data = await this.request('/api/live-status/current');
+            return data;
+        } catch (error) {
+            console.error('Clinical status API error:', error);
+            return {
+                success: false,
+                data: null,
+                error: error.message
+            };
+        }
+    }
+    
+    async createClinicalStatus(statusData) {
+        return await this.request('/api/live-status', {
+            method: 'POST',
+            body: statusData
+        });
+    }
+    
+    async updateClinicalStatus(id, statusData) {
+        return await this.request(`/api/live-status/${id}`, {
+            method: 'PUT',
+            body: statusData
+        });
+    }
+    
+    async deleteClinicalStatus(id) {
+        return await this.request(`/api/live-status/${id}`, { method: 'DELETE' });
+    }
+    
+    // ===== SYSTEM STATS ENDPOINT =====
+    async getSystemStats() {
+        try {
+            const data = await this.request('/api/system-stats');
+            return data || {};
+        } catch {
+            return {
+                activeAttending: 0,
+                activeResidents: 0,
+                onCallNow: 0,
+                inSurgery: 0,
+                nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+                pendingApprovals: 0
+            };
+        }
+    }
+}
+
+// Initialize API Service
+const API = new ApiService();
         // ============ 5. CREATE VUE APP ============
         const app = createApp({
             setup() {
@@ -790,7 +815,44 @@ document.addEventListener('DOMContentLoaded', function() {
                         ...options
                     });
                 };
-                
+                const saveOnCallSchedule = async () => {
+    saving.value = true;
+    try {
+        // Ensure data is properly formatted
+        const onCallData = {
+            duty_date: onCallModal.form.duty_date,
+            shift_type: onCallModal.form.shift_type || 'primary_call',
+            start_time: onCallModal.form.start_time || '08:00',
+            end_time: onCallModal.form.end_time || '17:00',
+            primary_physician_id: onCallModal.form.primary_physician_id,
+            backup_physician_id: onCallModal.form.backup_physician_id || null,
+            coverage_area: onCallModal.form.coverage_area || 'general',
+            schedule_id: onCallModal.form.schedule_id || EnhancedUtils.generateId('SCH')
+        };
+        
+        console.log('📤 Saving on-call data:', onCallData);
+        
+        if (onCallModal.mode === 'add') {
+            const result = await API.createOnCall(onCallData);
+            onCallSchedule.value.unshift(result);
+            showToast('Success', 'On-call scheduled successfully', 'success');
+        } else {
+            const result = await API.updateOnCall(onCallModal.form.id, onCallData);
+            const index = onCallSchedule.value.findIndex(s => s.id === result.id);
+            if (index !== -1) onCallSchedule.value[index] = result;
+            showToast('Success', 'On-call updated successfully', 'success');
+        }
+        
+        onCallModal.show = false;
+        loadTodaysOnCall();
+        
+    } catch (error) {
+        console.error('❌ Save on-call error:', error);
+        showToast('Error', error.message || 'Failed to save on-call schedule', 'error');
+    } finally {
+        saving.value = false;
+    }
+};
                 const confirmAction = async () => {
                     if (confirmationModal.onConfirm) {
                         try {
@@ -1714,38 +1776,109 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                const updateDashboardStats = () => {
-                    systemStats.value.totalStaff = medicalStaff.value.length;
-                    systemStats.value.activeAttending = medicalStaff.value.filter(s => 
-                        s.staff_type === 'attending_physician' && s.employment_status === 'active'
-                    ).length;
-                    systemStats.value.activeResidents = medicalStaff.value.filter(s => 
-                        s.staff_type === 'medical_resident' && s.employment_status === 'active'
-                    ).length;
-                    systemStats.value.onLeaveStaff = medicalStaff.value.filter(s => 
-                        s.employment_status === 'on_leave'
-                    ).length;
-                    systemStats.value.activeRotations = rotations.value.filter(r => 
-                        r.rotation_status === 'active'
-                    ).length;
-                    
-                    const today = new Date();
-                    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    systemStats.value.endingThisWeek = rotations.value.filter(r => {
-                        if (r.rotation_status !== 'active') return false;
-                        const endDate = new Date(r.rotation_end_date);
-                        return endDate >= today && endDate <= nextWeek;
-                    }).length;
-                    
-                    const nextWeekStart = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    const twoWeeks = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000);
-                    systemStats.value.startingNextWeek = rotations.value.filter(r => {
-                        if (r.rotation_status !== 'scheduled') return false;
-                        const startDate = new Date(r.rotation_start_date);
-                        return startDate >= nextWeekStart && startDate <= twoWeeks;
-                    }).length;
-                };
-                
+          const updateDashboardStats = () => {
+    systemStats.value.totalStaff = medicalStaff.value.length;
+    
+    systemStats.value.activeAttending = medicalStaff.value.filter(s => 
+        s.staff_type === 'attending_physician' && s.employment_status === 'active'
+    ).length;
+    
+    systemStats.value.activeResidents = medicalStaff.value.filter(s => 
+        s.staff_type === 'medical_resident' && s.employment_status === 'active'
+    ).length;
+    
+    // ✅ FIXED: Calculate staff currently on leave correctly
+    const today = new Date().toISOString().split('T')[0];
+    
+    systemStats.value.onLeaveStaff = absences.value.filter(absence => {
+        // Check if the absence is currently active
+        const startDate = absence.start_date;
+        const endDate = absence.end_date;
+        
+        if (!startDate || !endDate) return false;
+        
+        // Check if today is within the absence date range
+        const isCurrentlyAbsent = startDate <= today && today <= endDate;
+        
+        if (!isCurrentlyAbsent) return false;
+        
+        // Check current_status if available
+        if (absence.current_status) {
+            // Check all possible status values that indicate active absence
+            const activeStatuses = ['currently_absent', 'active', 'on_leave', 'approved'];
+            return activeStatuses.includes(absence.current_status.toLowerCase());
+        }
+        
+        return true; // If no status field, assume active based on date range
+    }).length;
+    
+    // Calculate active rotations
+    systemStats.value.activeRotations = rotations.value.filter(r => 
+        r.rotation_status === 'active'
+    ).length;
+    
+    // Calculate rotations ending this week
+    const todayDate = new Date();
+    const nextWeek = new Date(todayDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    systemStats.value.endingThisWeek = rotations.value.filter(r => {
+        if (r.rotation_status !== 'active') return false;
+        
+        const endDate = new Date(r.rotation_end_date);
+        if (isNaN(endDate.getTime())) return false;
+        
+        return endDate >= todayDate && endDate <= nextWeek;
+    }).length;
+    
+    // Calculate rotations starting next week
+    const nextWeekStart = new Date(todayDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const twoWeeks = new Date(todayDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+    
+    systemStats.value.startingNextWeek = rotations.value.filter(r => {
+        if (r.rotation_status !== 'scheduled') return false;
+        
+        const startDate = new Date(r.rotation_start_date);
+        if (isNaN(startDate.getTime())) return false;
+        
+        return startDate >= nextWeekStart && startDate <= twoWeeks;
+    }).length;
+    
+    // Calculate today's on-call staff
+    const todayStr = todayDate.toISOString().split('T')[0];
+    const onCallToday = onCallSchedule.value.filter(schedule => 
+        schedule.duty_date === todayStr
+    );
+    
+    // Count unique physicians on call today
+    const uniquePhysiciansToday = new Set();
+    onCallToday.forEach(schedule => {
+        if (schedule.primary_physician_id) {
+            uniquePhysiciansToday.add(schedule.primary_physician_id);
+        }
+        if (schedule.backup_physician_id) {
+            uniquePhysiciansToday.add(schedule.backup_physician_id);
+        }
+    });
+    
+    systemStats.value.onCallNow = uniquePhysiciansToday.size;
+    
+    console.log('📊 Dashboard Stats Updated:', {
+        totalStaff: systemStats.value.totalStaff,
+        activeAttending: systemStats.value.activeAttending,
+        activeResidents: systemStats.value.activeResidents,
+        onLeaveStaff: systemStats.value.onLeaveStaff,
+        onCallNow: systemStats.value.onCallNow,
+        activeRotations: systemStats.value.activeRotations,
+        endingThisWeek: systemStats.value.endingThisWeek,
+        startingNextWeek: systemStats.value.startingNextWeek,
+        'total absences in array': absences.value.length,
+        'absences checked': absences.value.filter(a => {
+            const start = a.start_date;
+            const end = a.end_date;
+            return start && end && start <= today && today <= end;
+        }).length
+    });
+};
                 const loadAllData = async () => {
                     loading.value = true;
                     try {
@@ -1844,24 +1977,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // ============ 16. MODAL SHOW FUNCTIONS ============
                 
-                const showAddMedicalStaffModal = () => {
-                    medicalStaffModal.mode = 'add';
-                    medicalStaffModal.activeTab = 'basic';
-                    medicalStaffModal.form = {
-                        full_name: '',
-                        staff_type: 'medical_resident',
-                        staff_id: `MD-${Date.now().toString().slice(-6)}`,
-                        employment_status: 'active',
-                        professional_email: '',
-                        department_id: '',
-                        academic_degree: '',
-                        specialization: '',
-                        training_year: '',
-                        clinical_certificate: '',
-                        certificate_status: 'current'
-                    };
-                    medicalStaffModal.show = true;
-                };
+const showAddMedicalStaffModal = () => {
+    medicalStaffModal.mode = 'add';
+    medicalStaffModal.activeTab = 'basic';
+    medicalStaffModal.form = {
+        full_name: '',
+        staff_type: 'medical_resident',
+        staff_id: `MD-${Date.now().toString().slice(-6)}`,
+        employment_status: 'active',
+        professional_email: '',
+        department_id: '',
+        
+        // ✅ INITIALIZE ALL STRING FIELDS AS EMPTY STRINGS, NOT NULL
+        academic_degree: '',
+        specialization: '',
+        training_year: '',
+        clinical_certificate: '',
+        certificate_status: '',
+        resident_category: '',
+        primary_clinic: '',
+        work_phone: '',
+        medical_license: '',
+        can_supervise_residents: false,
+        special_notes: '',
+        resident_type: '',
+        home_department: '',
+        external_institution: '',
+        years_experience: null,
+        biography: '',
+        date_of_birth: null,
+        mobile_phone: '',
+        office_phone: '',
+        training_level: ''
+    };
+    medicalStaffModal.show = true;
+};
                 
                 const showAddDepartmentModal = () => {
                     departmentModal.mode = 'add';
@@ -1918,21 +2068,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     onCallModal.show = true;
                 };
                 
-                const showAddAbsenceModal = () => {
-                    absenceModal.mode = 'add';
-                    absenceModal.form = {
-                        staff_member_id: '',
-                        absence_reason: 'vacation',
-                        start_date: new Date().toISOString().split('T')[0],
-                        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        status: 'active',
-                        replacement_staff_id: '',
-                        notes: '',
-                        leave_type: 'planned'
-                    };
-                    absenceModal.show = true;
-                };
-                
+   const showAddAbsenceModal = () => {
+    absenceModal.mode = 'add';
+    absenceModal.form = {
+        staff_member_id: '',
+        absence_type: 'planned',  // ✅ Good
+        absence_reason: 'vacation',
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        current_status: 'pending',  // ✅ Good
+        covering_staff_id: '',  // ✅ Good
+        coverage_notes: '',  // ✅ Good
+        coverage_arranged: false,  // ✅ Good
+        hod_notes: ''  // ✅ Good
+    };
+    absenceModal.show = true;
+};
                 const showCommunicationsModal = () => {
                     communicationsModal.show = true;
                     communicationsModal.activeTab = 'announcement';
@@ -2022,50 +2173,110 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 
                 // ============ 18. SAVE FUNCTIONS ============
-                
-                const saveMedicalStaff = async () => {
-                    saving.value = true;
-                    
-                    if (!medicalStaffModal.form.full_name || !medicalStaffModal.form.full_name.trim()) {
-                        showToast('Error', 'Full name is required', 'error');
-                        saving.value = false;
-                        return;
-                    }
-                    
-                    try {
-                        const staffData = {
-                            full_name: medicalStaffModal.form.full_name,
-                            staff_type: medicalStaffModal.form.staff_type,
-                            staff_id: medicalStaffModal.form.staff_id || EnhancedUtils.generateId('MD'),
-                            employment_status: medicalStaffModal.form.employment_status || 'active',
-                            professional_email: medicalStaffModal.form.professional_email,
-                            department_id: medicalStaffModal.form.department_id || null,
-                            academic_degree: medicalStaffModal.form.academic_degree || null,
-                            specialization: medicalStaffModal.form.specialization || null,
-                            training_year: medicalStaffModal.form.training_year || null,
-                            clinical_certificate: medicalStaffModal.form.clinical_certificate || null,
-                            certificate_status: medicalStaffModal.form.certificate_status || null
-                        };
-                        
-                        if (medicalStaffModal.mode === 'add') {
-                            const result = await API.createMedicalStaff(staffData);
-                            medicalStaff.value.unshift(result);
-                            showToast('Success', 'Medical staff added successfully', 'success');
-                        } else {
-                            const result = await API.updateMedicalStaff(medicalStaffModal.form.id, staffData);
-                            const index = medicalStaff.value.findIndex(s => s.id === result.id);
-                            if (index !== -1) medicalStaff.value[index] = result;
-                            showToast('Success', 'Medical staff updated successfully', 'success');
-                        }
-                        medicalStaffModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        console.error('Save medical staff error:', error);
-                        showToast('Error', error.message || 'Failed to save medical staff', 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
+const saveMedicalStaff = async () => {
+    saving.value = true;
+    
+    if (!medicalStaffModal.form.full_name || !medicalStaffModal.form.full_name.trim()) {
+        showToast('Error', 'Full name is required', 'error');
+        saving.value = false;
+        return;
+    }
+    
+    try {
+        // ✅ CLEAN DATA FUNCTION - Ensures all string fields are strings, not null
+        const cleanStringField = (value) => {
+            if (value === null || value === undefined) return '';
+            if (typeof value === 'string') return value.trim();
+            return String(value);
+        };
+        
+        // ✅ CREATE STAFF DATA WITH PROPER STRING VALUES
+        const staffData = {
+            // Required fields
+            full_name: medicalStaffModal.form.full_name.trim(),
+            staff_type: medicalStaffModal.form.staff_type || 'medical_resident',
+            staff_id: medicalStaffModal.form.staff_id || EnhancedUtils.generateId('MD'),
+            employment_status: medicalStaffModal.form.employment_status || 'active',
+            professional_email: medicalStaffModal.form.professional_email || '',
+            
+            // Optional UUID fields (can be null)
+            department_id: medicalStaffModal.form.department_id || null,
+            
+            // ✅ FIXED: All string fields converted to empty string if null
+            academic_degree: cleanStringField(medicalStaffModal.form.academic_degree),
+            specialization: cleanStringField(medicalStaffModal.form.specialization),
+            training_year: cleanStringField(medicalStaffModal.form.training_year),
+            clinical_certificate: cleanStringField(medicalStaffModal.form.clinical_certificate),
+            certificate_status: cleanStringField(medicalStaffModal.form.certificate_status),
+            
+            // Other optional fields
+            resident_category: cleanStringField(medicalStaffModal.form.resident_category),
+            primary_clinic: cleanStringField(medicalStaffModal.form.primary_clinic),
+            work_phone: cleanStringField(medicalStaffModal.form.work_phone),
+            medical_license: cleanStringField(medicalStaffModal.form.medical_license),
+            can_supervise_residents: medicalStaffModal.form.can_supervise_residents || false,
+            special_notes: cleanStringField(medicalStaffModal.form.special_notes),
+            resident_type: cleanStringField(medicalStaffModal.form.resident_type),
+            home_department: cleanStringField(medicalStaffModal.form.home_department),
+            external_institution: cleanStringField(medicalStaffModal.form.external_institution),
+            
+            // Numeric field
+            years_experience: medicalStaffModal.form.years_experience || null,
+            
+            // Other string fields
+            biography: cleanStringField(medicalStaffModal.form.biography),
+            date_of_birth: medicalStaffModal.form.date_of_birth || null,
+            mobile_phone: cleanStringField(medicalStaffModal.form.mobile_phone),
+            office_phone: cleanStringField(medicalStaffModal.form.office_phone),
+            training_level: cleanStringField(medicalStaffModal.form.training_level)
+        };
+        
+        console.log('📤 Saving medical staff data:', staffData);
+        
+        // ✅ VALIDATE DATA BEFORE SENDING
+        if (staffData.professional_email && !isValidEmail(staffData.professional_email)) {
+            showToast('Error', 'Please enter a valid email address', 'error');
+            saving.value = false;
+            return;
+        }
+        
+        if (medicalStaffModal.mode === 'add') {
+            const result = await API.createMedicalStaff(staffData);
+            medicalStaff.value.unshift(result);
+            showToast('Success', 'Medical staff added successfully', 'success');
+        } else {
+            const result = await API.updateMedicalStaff(medicalStaffModal.form.id, staffData);
+            const index = medicalStaff.value.findIndex(s => s.id === result.id);
+            if (index !== -1) medicalStaff.value[index] = result;
+            showToast('Success', 'Medical staff updated successfully', 'success');
+        }
+        
+        medicalStaffModal.show = false;
+        updateDashboardStats();
+        
+    } catch (error) {
+        console.error('❌ Save medical staff error:', error);
+        
+        // ✅ BETTER ERROR HANDLING
+        if (error.message && error.message.includes('specialization')) {
+            showToast('Error', 'Please enter a valid specialization (text only)', 'error');
+        } else if (error.message && error.message.includes('Validation failed')) {
+            showToast('Error', 'Please check all fields and try again', 'error');
+        } else if (error.message && error.message.includes('email')) {
+            showToast('Error', 'Please enter a valid email address', 'error');
+        } else {
+            showToast('Error', error.message || 'Failed to save medical staff', 'error');
+        }
+    } finally {
+        saving.value = false;
+    }
+};
+
+// ✅ ADD EMAIL VALIDATION HELPER FUNCTION
+const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+};
                 
                 const saveDepartment = async () => {
                     saving.value = true;
@@ -2122,135 +2333,235 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
                 
-                const saveRotation = async () => {
-                    if (!rotationModal.form.resident_id) {
-                        showToast('Error', 'Please select a resident', 'error');
-                        return;
-                    }
-                    
-                    if (!rotationModal.form.training_unit_id) {
-                        showToast('Error', 'Please select a training unit', 'error');
-                        return;
-                    }
-                    
-                    if (!rotationModal.form.rotation_start_date) {
-                        showToast('Error', 'Please enter a start date', 'error');
-                        return;
-                    }
-                    
-                    if (!rotationModal.form.rotation_end_date) {
-                        showToast('Error', 'Please enter an end date', 'error');
-                        return;
-                    }
-                    
-                    const start = new Date(rotationModal.form.rotation_start_date);
-                    const end = new Date(rotationModal.form.rotation_end_date);
-                    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                        showToast('Error', 'Invalid date format. Please use YYYY-MM-DD', 'error');
-                        return;
-                    }
-                    
-                    if (end <= start) {
-                        showToast('Error', 'End date must be after start date', 'error');
-                        return;
-                    }
-                    
-                    saving.value = true;
-                    
-                    try {
-                        const rotationData = {
-                            rotation_id: rotationModal.form.rotation_id || EnhancedUtils.generateId('ROT'),
-                            resident_id: rotationModal.form.resident_id,
-                            training_unit_id: rotationModal.form.training_unit_id,
-                            supervising_attending_id: rotationModal.form.supervising_attending_id || null,
-                            start_date: rotationModal.form.rotation_start_date,
-                            end_date: rotationModal.form.rotation_end_date,
-                            rotation_category: rotationModal.form.rotation_category.toLowerCase(),
-                            rotation_status: rotationModal.form.rotation_status.toLowerCase()
-                        };
-                        
-                        console.log('📤 Sending rotation data to server:', rotationData);
-                        
-                        if (rotationModal.mode === 'add') {
-                            const result = await API.createRotation(rotationData);
-                            rotations.value.unshift(result);
-                            showToast('Success', 'Rotation scheduled successfully', 'success');
-                        } else {
-                            const result = await API.updateRotation(rotationModal.form.id, rotationData);
-                            const index = rotations.value.findIndex(r => r.id === result.id);
-                            if (index !== -1) rotations.value[index] = result;
-                            showToast('Success', 'Rotation updated successfully', 'success');
-                        }
-                        
-                        rotationModal.show = false;
-                        await loadRotations();
-                        updateDashboardStats();
-                        
-                    } catch (error) {
-                        console.error('❌ Rotation save error:', error);
-                        showToast('Error', error.message || 'Failed to save rotation', 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
+               const saveRotation = async () => {
+    // ============ 1. VALIDATE REQUIRED FIELDS ============
+    if (!rotationModal.form.resident_id) {
+        showToast('Error', 'Please select a resident', 'error');
+        return;
+    }
+    
+    if (!rotationModal.form.training_unit_id) {
+        showToast('Error', 'Please select a training unit', 'error');
+        return;
+    }
+    
+    // ============ 2. VALIDATE AND FORMAT DATES ============
+    const startDateStr = rotationModal.form.rotation_start_date;
+    const endDateStr = rotationModal.form.rotation_end_date;
+    
+    if (!startDateStr || !endDateStr) {
+        showToast('Error', 'Please enter both start and end dates', 'error');
+        return;
+    }
+    
+    // Parse dates using proper ISO format
+    let startDate, endDate;
+    try {
+        // Handle different date formats (YYYY-MM-DD is expected)
+        startDate = new Date(startDateStr);
+        endDate = new Date(endDateStr);
+        
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            throw new Error('Invalid date format');
+        }
+        
+        // Convert to ISO string and extract date part only (YYYY-MM-DD)
+        const formatDateToISO = (date) => {
+            return date.toISOString().split('T')[0];
+        };
+        
+        rotationModal.form.rotation_start_date = formatDateToISO(startDate);
+        rotationModal.form.rotation_end_date = formatDateToISO(endDate);
+        
+    } catch (error) {
+        showToast('Error', 
+            'Invalid date format. Please use YYYY-MM-DD format (e.g., 2026-12-12)', 
+            'error'
+        );
+        return;
+    }
+    
+    // ============ 3. VALIDATE DATE LOGIC ============
+    if (endDate <= startDate) {
+        showToast('Error', 'End date must be after start date', 'error');
+        return;
+    }
+    
+    // Check if rotation is too long (max 1 year)
+    const maxDurationDays = 365;
+    const durationDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    if (durationDays > maxDurationDays) {
+        showToast('Error', 
+            `Rotation cannot exceed ${maxDurationDays} days. Current: ${durationDays} days`, 
+            'error'
+        );
+        return;
+    }
+    
+    // ============ 4. CHECK FOR OVERLAPS (CLIENT-SIDE) ============
+    const checkForOverlap = (residentId, newStart, newEnd, excludeRotationId = null) => {
+        const existingRotations = rotations.value.filter(r => 
+            r.resident_id === residentId && 
+            r.rotation_status !== 'cancelled' &&
+            r.id !== excludeRotationId  // Exclude current rotation if editing
+        );
+        
+        return existingRotations.some(r => {
+            try {
+                const rStart = new Date(r.start_date || r.rotation_start_date);
+                const rEnd = new Date(r.end_date || r.rotation_end_date);
+                const nStart = new Date(newStart);
+                const nEnd = new Date(newEnd);
                 
-                const saveOnCallSchedule = async () => {
-                    saving.value = true;
-                    try {
-                        console.log('🔍 DEBUG - Sending on-call data:', onCallModal.form);
-                        
-                        if (onCallModal.mode === 'add') {
-                            const result = await API.createOnCall(onCallModal.form);
-                            onCallSchedule.value.unshift(result);
-                            showToast('Success', 'On-call scheduled successfully', 'success');
-                        } else {
-                            const result = await API.updateOnCall(onCallModal.form.id, onCallModal.form);
-                            const index = onCallSchedule.value.findIndex(s => s.id === result.id);
-                            if (index !== -1) onCallSchedule.value[index] = result;
-                            showToast('Success', 'On-call updated successfully', 'success');
-                        }
-                        onCallModal.show = false;
-                        loadTodaysOnCall();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const saveAbsence = async () => {
-                    saving.value = true;
-                    try {
-                        const absenceData = {
-                            staff_member_id: absenceModal.form.staff_member_id,
-                            absence_reason: absenceModal.form.absence_reason,
-                            start_date: absenceModal.form.start_date,
-                            end_date: absenceModal.form.end_date,
-                            status: absenceModal.form.status || 'pending',
-                            replacement_staff_id: absenceModal.form.replacement_staff_id || null,
-                            notes: absenceModal.form.notes || '',
-                            leave_type: absenceModal.form.leave_type || 'planned'
-                        };
-                        
-                        if (absenceModal.mode === 'add') {
-                            const result = await API.createAbsence(absenceData);
-                            absences.value.unshift(result);
-                            showToast('Success', 'Absence recorded successfully', 'success');
-                        } else {
-                            const result = await API.updateAbsence(absenceModal.form.id, absenceData);
-                            const index = absences.value.findIndex(a => a.id === result.id);
-                            if (index !== -1) absences.value[index] = result;
-                            showToast('Success', 'Absence updated successfully', 'success');
-                        }
-                        absenceModal.show = false;
-                        updateDashboardStats();
-                    } catch (error) {
-                        showToast('Error', error.message, 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
+                // Check for overlap (dates inclusive)
+                return nStart <= rEnd && nEnd >= rStart;
+            } catch {
+                return false;
+            }
+        });
+    };
+    
+    const hasOverlap = checkForOverlap(
+        rotationModal.form.resident_id,
+        rotationModal.form.rotation_start_date,
+        rotationModal.form.rotation_end_date,
+        rotationModal.mode === 'edit' ? rotationModal.form.id : null
+    );
+    
+    if (hasOverlap) {
+        // Get the resident name for better error message
+        const residentName = getResidentName(rotationModal.form.resident_id);
+        
+        showToast('Scheduling Conflict', 
+            `${residentName} already has a rotation during these dates. ` +
+            'Please choose different dates or modify the existing rotation.',
+            'error'
+        );
+        return;
+    }
+    
+    // ============ 5. PREPARE DATA FOR BACKEND ============
+    saving.value = true;
+    
+    try {
+        // Clean and prepare rotation data
+        const rotationData = {
+            rotation_id: rotationModal.form.rotation_id || EnhancedUtils.generateId('ROT'),
+            resident_id: rotationModal.form.resident_id,
+            training_unit_id: rotationModal.form.training_unit_id,
+            supervising_attending_id: rotationModal.form.supervising_attending_id || null,
+            start_date: rotationModal.form.rotation_start_date,  // Already formatted as YYYY-MM-DD
+            end_date: rotationModal.form.rotation_end_date,      // Already formatted as YYYY-MM-DD
+            rotation_category: (rotationModal.form.rotation_category || 'clinical_rotation').toLowerCase(),
+            rotation_status: (rotationModal.form.rotation_status || 'scheduled').toLowerCase(),
+            rotation_category: rotationModal.form.rotation_category || 'elective_rotation'
+        };
+        
+        console.log('📤 Sending rotation data to server:', rotationData);
+        
+        // ============ 6. SEND TO BACKEND ============
+        let result;
+        if (rotationModal.mode === 'add') {
+            result = await API.createRotation(rotationData);
+            rotations.value.unshift(result);
+            showToast('Success', 'Rotation scheduled successfully', 'success');
+        } else {
+            result = await API.updateRotation(rotationModal.form.id, rotationData);
+            const index = rotations.value.findIndex(r => r.id === result.id);
+            if (index !== -1) rotations.value[index] = result;
+            showToast('Success', 'Rotation updated successfully', 'success');
+        }
+        
+        // ============ 7. CLEAN UP AND REFRESH ============
+        rotationModal.show = false;
+        
+        // Refresh rotations to get updated meaningful IDs
+        await loadRotations();
+        updateDashboardStats();
+        
+        // Show the new meaningful ID if available
+        if (result.rotation_id && result.rotation_id.startsWith('PULM-') || 
+            result.rotation_id.startsWith('MED-') || 
+            result.rotation_id.startsWith('SURG-')) {
+            showToast('Rotation ID Generated', 
+                `Assigned ID: ${result.rotation_id}`, 
+                'info', 3000);
+        }
+        
+    } catch (error) {
+        console.error('❌ Rotation save error:', error);
+        
+        // ============ 8. USER-FRIENDLY ERROR HANDLING ============
+        let userMessage = error.message || 'Failed to save rotation';
+        
+        // Parse backend error messages
+        if (error.message.includes('overlapping rotations')) {
+            userMessage = 'This rotation conflicts with an existing rotation. Please adjust dates.';
+        } else if (error.message.includes('Resident cannot have overlapping rotations')) {
+            // Extract the conflicting date range from error message
+            const match = error.message.match(/Date range (.*?) to (.*?) conflicts/);
+            if (match) {
+                const [_, conflictStart, conflictEnd] = match;
+                userMessage = `Dates conflict with existing rotation from ${conflictStart} to ${conflictEnd}`;
+            } else {
+                userMessage = 'Rotation dates conflict with existing schedule';
+            }
+        } else if (error.message.includes('training_unit_id') || error.message.includes('resident_id')) {
+            userMessage = 'Invalid resident or training unit selected. Please refresh and try again.';
+        } else if (error.message.includes('date') || error.message.includes('Date')) {
+            userMessage = 'Invalid date format. Please use YYYY-MM-DD format.';
+        }
+        
+        showToast('Error', userMessage, 'error');
+        
+    } finally {
+        saving.value = false;
+    }
+};
+const saveAbsence = async () => {
+    saving.value = true;
+    try {
+        // Your form already uses correct field names
+        const absenceData = {
+            staff_member_id: absenceModal.form.staff_member_id,
+            absence_type: absenceModal.form.absence_type || 'planned',
+            absence_reason: absenceModal.form.absence_reason,
+            start_date: absenceModal.form.start_date,
+            end_date: absenceModal.form.end_date,
+            // ✅ Use correct status values from your database
+            current_status: absenceModal.form.current_status || 'planned_leave',
+            covering_staff_id: absenceModal.form.covering_staff_id || null,
+            coverage_notes: absenceModal.form.coverage_notes || '',
+            coverage_arranged: absenceModal.form.coverage_arranged || false,
+            hod_notes: absenceModal.form.hod_notes || '',
+            recorded_by: currentUser.value?.id || null
+        };
+        
+        console.log('📤 Sending absence data to backend:', absenceData);
+        
+        if (absenceModal.mode === 'add') {
+            const result = await API.createAbsence(absenceData);
+            absences.value.unshift(result);
+            showToast('Success', 'Absence recorded successfully', 'success');
+        } else {
+            const result = await API.updateAbsence(absenceModal.form.id, absenceData);
+            const index = absences.value.findIndex(a => a.id === result.id);
+            if (index !== -1) absences.value[index] = result;
+            showToast('Success', 'Absence updated successfully', 'success');
+        }
+        
+        absenceModal.show = false;
+        await loadAbsences();
+        updateDashboardStats();
+        
+    } catch (error) {
+        console.error('❌ Save absence error:', error);
+        showToast('Error', error.message || 'Failed to save absence record', 'error');
+    } finally {
+        saving.value = false;
+    }
+};
+
                 const saveCommunication = async () => {
                     saving.value = true;
                     try {
@@ -2467,29 +2778,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     return filtered;
                 });
-                
-                const filteredAbsences = computed(() => {
-                    let filtered = absences.value;
-                    
-                    if (absenceFilters.staff) {
-                        filtered = filtered.filter(absence => absence.staff_member_id === absenceFilters.staff);
-                    }
-                    
-                    if (absenceFilters.status) {
-                        filtered = filtered.filter(absence => absence.status === absenceFilters.status);
-                    }
-                    
-                    if (absenceFilters.reason) {
-                        filtered = filtered.filter(absence => absence.absence_reason === absenceFilters.reason);
-                    }
-                    
-                    if (absenceFilters.startDate) {
-                        filtered = filtered.filter(absence => absence.start_date >= absenceFilters.startDate);
-                    }
-                    
-                    return filtered;
-                });
-                
+const filteredAbsences = computed(() => {
+    let filtered = absences.value;
+    
+    if (absenceFilters.staff) {
+        filtered = filtered.filter(absence => 
+            absence.staff_member_id === absenceFilters.staff
+        );
+    }
+    
+    // ✅ FIXED: Handle multiple possible status field names
+    if (absenceFilters.status) {
+        filtered = filtered.filter(absence => {
+            // Check all possible status field names
+            const status = absence.current_status || absence.status || absence.absence_status;
+            return status === absenceFilters.status;
+        });
+    }
+    
+    if (absenceFilters.reason) {
+        filtered = filtered.filter(absence => 
+            absence.absence_reason === absenceFilters.reason
+        );
+    }
+    
+    if (absenceFilters.startDate) {
+        filtered = filtered.filter(absence => 
+            absence.start_date >= absenceFilters.startDate
+        );
+    }
+    
+    return filtered;
+});
+           
                 const recentAnnouncements = computed(() => {
                     return announcements.value.slice(0, 10);
                 });
@@ -2781,6 +3102,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Permission Functions
                     hasPermission,
+                        saveRotation,        // The function we just fixed
+    saveOnCallSchedule,  
                     
                     // Computed Properties
                     authToken,
