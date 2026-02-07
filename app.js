@@ -2552,8 +2552,7 @@ const getPresenceIcon = () => {
 };
 
 // ============ IMPROVED FALLBACK VIEW ============
-
-const fallbackToBasicView = (staff) => {
+                const fallbackToBasicView = (staff) => {
     // Create a more complete fallback profile
     const today = new Date().toISOString().split('T')[0];
     
