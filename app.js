@@ -2296,6 +2296,15 @@ const getPresenceStatusClass = () => {
     if (presence.status === 'ABSENT') return 'status-critical';
     return 'status-caution';
 };
+                // Add this to your Vue methods, right after getCurrentPresence()
+const getCurrentPresenceStatus = () => {
+    if (!currentDoctorProfile.value) return 'UNKNOWN';
+    
+    const presence = currentDoctorProfile.value.live_clinical_data?.presence;
+    if (!presence) return 'UNKNOWN';
+    
+    return presence.status || 'UNKNOWN';
+};
 // ============ END ENHANCED PROFILE UI HELPERS ============       
                 const editMedicalStaff = (staff) => {
                     medicalStaffModal.mode = 'edit';
