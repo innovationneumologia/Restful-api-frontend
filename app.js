@@ -476,7 +476,21 @@ class ApiService {
         }
     }
 }
-    
+    // ===== DOCTOR PROFILE ENDPOINTS =====
+async getDoctorCompleteProfile(doctorId) {
+    return await this.request(`/api/medical-staff/${doctorId}/complete-profile`);
+}
+
+async getDoctorQuickProfile(doctorId) {
+    return await this.request(`/api/medical-staff/${doctorId}/quick-profile`);
+}
+
+async getDoctorAvailability(doctorId, startDate, endDate) {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    return await this.request(`/api/medical-staff/${doctorId}/availability?${params}`);
+}
 
 // Initialize API Service
 const API = new ApiService();
@@ -1508,7 +1522,17 @@ const currentDoctorProfile = ref(null);  // For viewing doctor profile
                     selectedAuthorId.value = '';
                     expiryHours.value = 8;
                 };
-                
+                const getCurrentUnitForDoctor = (doctorProfile) => {
+    if (!doctorProfile || !doctorProfile.current_assignments) return null;
+    
+    // Find current rotation assignment
+    const currentRotation = doctorProfile.current_assignments.find(assignment => 
+        assignment.type === 'rotation' && 
+        assignment.rotation_status === 'active'
+    );
+    
+    return currentRotation?.training_unit?.unit_name || null;
+};
                 // ============ 12. DELETE FUNCTIONS ============
                 
                 const deleteMedicalStaff = async (staff) => {
@@ -2157,11 +2181,32 @@ const showAddMedicalStaffModal = () => {
                 
                 // ============ 17. VIEW/EDIT FUNCTIONS ============
                 
-                const viewStaffDetails = (staff) => {
-                    staffProfileModal.staff = staff;
-                    staffProfileModal.activeTab = 'clinical';
-                    staffProfileModal.show = true;
-                };
+              const viewStaffDetails = async (staff) => {
+    try {
+        // Load complete profile from NEW backend API
+        const response = await API.getDoctorCompleteProfile(staff.id);
+        
+        if (response.success) {
+            currentDoctorProfile.value = response.data;
+            staffProfileModal.staff = response.data.basic_info;
+            staffProfileModal.activeTab = 'clinical';
+            staffProfileModal.show = true;
+            
+            console.log('📊 Full Profile Loaded:', response.data);
+        } else {
+            // Fallback to basic info
+            staffProfileModal.staff = staff;
+            staffProfileModal.activeTab = 'clinical';
+            staffProfileModal.show = true;
+        }
+    } catch (error) {
+        console.error('Failed to load full profile:', error);
+        // Fallback to old data
+        staffProfileModal.staff = staff;
+        staffProfileModal.activeTab = 'clinical';
+        staffProfileModal.show = true;
+    }
+};
                 
                 const editMedicalStaff = (staff) => {
                     medicalStaffModal.mode = 'edit';
