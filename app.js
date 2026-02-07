@@ -2244,6 +2244,7 @@ const showAddMedicalStaffModal = () => {
         staffProfileModal.loading = false;
     }
 };
+                
 
 // Fallback function
 const fallbackToBasicView = (staff) => {
@@ -2263,6 +2264,154 @@ const fallbackToBasicView = (staff) => {
         }
     };
     staffProfileModal.staff = staff;
+};
+                const viewStaffDetails = async (staff) => {
+    try {
+        // Show loading state
+        staffProfileModal.loading = true;
+        staffProfileModal.show = true;
+        
+        // Load enhanced profile
+        const response = await API.getEnhancedDoctorProfile(staff.id);
+        
+        if (response.success) {
+            currentDoctorProfile.value = response.data;
+            staffProfileModal.staff = response.data.basic_info;
+            staffProfileModal.activeTab = 'clinical';
+            
+            // Show live status badge
+            showToast('Profile Loaded', 
+                `${staff.full_name} is ${response.data.live_clinical_data.presence.status.toLowerCase()}`, 
+                response.data.live_clinical_data.presence.status === 'PRESENT' ? 'success' : 'info');
+        } else {
+            // Fallback to basic data
+            fallbackToBasicView(staff);
+        }
+    } catch (error) {
+        console.error('Enhanced profile failed:', error);
+        fallbackToBasicView(staff);
+        showToast('Warning', 'Using limited profile data', 'warning');
+    } finally {
+        staffProfileModal.loading = false;
+    }
+};
+
+// ============ ADD THESE MISSING EDIT FUNCTIONS HERE ============
+
+const editMedicalStaff = (staff) => {
+    // Copy staff data to modal form
+    medicalStaffModal.mode = 'edit';
+    medicalStaffModal.activeTab = 'basic';
+    
+    // Map all fields from staff object to form
+    medicalStaffModal.form = {
+        id: staff.id,
+        full_name: staff.full_name || '',
+        staff_type: staff.staff_type || 'medical_resident',
+        staff_id: staff.staff_id || '',
+        employment_status: staff.employment_status || 'active',
+        professional_email: staff.professional_email || '',
+        department_id: staff.department_id || '',
+        academic_degree: staff.academic_degree || '',
+        specialization: staff.specialization || '',
+        training_year: staff.training_year || '',
+        clinical_certificate: staff.clinical_certificate || '',
+        certificate_status: staff.certificate_status || 'current',
+        resident_category: staff.resident_category || '',
+        primary_clinic: staff.primary_clinic || '',
+        work_phone: staff.work_phone || '',
+        medical_license: staff.medical_license || '',
+        can_supervise_residents: staff.can_supervise_residents || false,
+        special_notes: staff.special_notes || '',
+        resident_type: staff.resident_type || '',
+        home_department: staff.home_department || '',
+        external_institution: staff.external_institution || '',
+        years_experience: staff.years_experience || null,
+        biography: staff.biography || '',
+        date_of_birth: staff.date_of_birth || null,
+        mobile_phone: staff.mobile_phone || '',
+        office_phone: staff.office_phone || '',
+        training_level: staff.training_level || ''
+    };
+    
+    medicalStaffModal.show = true;
+};
+
+const editDepartment = (department) => {
+    departmentModal.mode = 'edit';
+    departmentModal.form = {
+        id: department.id,
+        name: department.name || '',
+        code: department.code || '',
+        status: department.status || 'active',
+        head_of_department_id: department.head_of_department_id || ''
+    };
+    departmentModal.show = true;
+};
+
+const editTrainingUnit = (unit) => {
+    trainingUnitModal.mode = 'edit';
+    trainingUnitModal.form = {
+        id: unit.id,
+        unit_name: unit.unit_name || '',
+        unit_code: unit.unit_code || '',
+        department_id: unit.department_id || '',
+        maximum_residents: unit.maximum_residents || 10,
+        unit_status: unit.unit_status || 'active',
+        specialty: unit.specialty || '',
+        supervising_attending_id: unit.supervising_attending_id || ''
+    };
+    trainingUnitModal.show = true;
+};
+
+const editRotation = (rotation) => {
+    rotationModal.mode = 'edit';
+    rotationModal.form = {
+        id: rotation.id,
+        rotation_id: rotation.rotation_id || EnhancedUtils.generateId('ROT'),
+        resident_id: rotation.resident_id || '',
+        training_unit_id: rotation.training_unit_id || '',
+        rotation_start_date: rotation.start_date || rotation.rotation_start_date || new Date().toISOString().split('T')[0],
+        rotation_end_date: rotation.end_date || rotation.rotation_end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        rotation_status: rotation.rotation_status || 'scheduled',
+        rotation_category: rotation.rotation_category || 'clinical_rotation',
+        supervising_attending_id: rotation.supervising_attending_id || ''
+    };
+    rotationModal.show = true;
+};
+
+const editOnCallSchedule = (schedule) => {
+    onCallModal.mode = 'edit';
+    onCallModal.form = {
+        id: schedule.id,
+        duty_date: schedule.duty_date || new Date().toISOString().split('T')[0],
+        shift_type: schedule.shift_type || 'primary_call',
+        start_time: schedule.start_time || '08:00',
+        end_time: schedule.end_time || '17:00',
+        primary_physician_id: schedule.primary_physician_id || '',
+        backup_physician_id: schedule.backup_physician_id || '',
+        coverage_area: schedule.coverage_area || 'emergency',
+        schedule_id: schedule.schedule_id || EnhancedUtils.generateId('SCH')
+    };
+    onCallModal.show = true;
+};
+
+const editAbsence = (absence) => {
+    absenceModal.mode = 'edit';
+    absenceModal.form = {
+        id: absence.id,
+        staff_member_id: absence.staff_member_id || '',
+        absence_type: absence.absence_type || 'planned',
+        absence_reason: absence.absence_reason || 'vacation',
+        start_date: absence.start_date || new Date().toISOString().split('T')[0],
+        end_date: absence.end_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        current_status: absence.current_status || 'pending',
+        covering_staff_id: absence.covering_staff_id || '',
+        coverage_notes: absence.coverage_notes || '',
+        coverage_arranged: absence.coverage_arranged || false,
+        hod_notes: absence.hod_notes || ''
+    };
+    absenceModal.show = true;
 };
 // ============ ENHANCED PROFILE UI HELPERS ============
 const getCurrentPresenceStatus = () => {
