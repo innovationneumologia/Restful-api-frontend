@@ -459,39 +459,23 @@ class ApiService {
         return await this.request(`/api/live-status/${id}`, { method: 'DELETE' });
     }
     
-   // ===== SYSTEM STATS ENDPOINT =====
-async getSystemStats() {
-    try {
-        const data = await this.request('/api/system-stats');
-        return data || {};
-    } catch {
-        return {
-            activeAttending: 0,
-            activeResidents: 0,
-            onCallNow: 0,
-            inSurgery: 0,
-            nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-            pendingApprovals: 0
-        };
+    // ===== SYSTEM STATS ENDPOINT =====
+    async getSystemStats() {
+        try {
+            const data = await this.request('/api/system-stats');
+            return data || {};
+        } catch {
+            return {
+                activeAttending: 0,
+                activeResidents: 0,
+                onCallNow: 0,
+                inSurgery: 0,
+                nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+                pendingApprovals: 0
+            };
+        }
     }
 }
-
-// ===== DOCTOR PROFILE ENDPOINTS =====
-async getDoctorCompleteProfile(doctorId) {
-    return await this.request(`/api/medical-staff/${doctorId}/complete-profile`);
-}
-
-async getDoctorQuickProfile(doctorId) {
-    return await this.request(`/api/medical-staff/${doctorId}/quick-profile`);
-}
-
-async getDoctorAvailability(doctorId, startDate, endDate) {
-    const params = new URLSearchParams();
-    if (startDate) params.append('start_date', startDate);
-    if (endDate) params.append('end_date', endDate);
-    return await this.request(`/api/medical-staff/${doctorId}/availability?${params}`);
-}
-}  // ← This brace closes the ApiService class
 
 // Initialize API Service
 const API = new ApiService();
@@ -539,8 +523,6 @@ const API = new ApiService();
                 const expiryHours = ref(8);
                 const activeMedicalStaff = ref([]);
                 const liveStatsEditMode = ref(false);
-                // ✅ ADD THIS RIGHT HERE:
-const currentDoctorProfile = ref(null);  // For viewing doctor profile
                 
                 // 6.6 VERSION 2 COMPLETE STATE
                 const quickStatus = ref('');
@@ -1523,17 +1505,7 @@ const currentDoctorProfile = ref(null);  // For viewing doctor profile
                     selectedAuthorId.value = '';
                     expiryHours.value = 8;
                 };
-                const getCurrentUnitForDoctor = (doctorProfile) => {
-    if (!doctorProfile || !doctorProfile.current_assignments) return null;
-    
-    // Find current rotation assignment
-    const currentRotation = doctorProfile.current_assignments.find(assignment => 
-        assignment.type === 'rotation' && 
-        assignment.rotation_status === 'active'
-    );
-    
-    return currentRotation?.training_unit?.unit_name || null;
-};
+                
                 // ============ 12. DELETE FUNCTIONS ============
                 
                 const deleteMedicalStaff = async (staff) => {
@@ -1933,30 +1905,6 @@ const currentDoctorProfile = ref(null);  // For viewing doctor profile
                         loading.value = false;
                     }
                 };
-                // ============ DOCTOR PROFILE FUNCTIONS ============
-
-const loadDoctorProfile = async (doctorId) => {
-    try {
-        const response = await API.getDoctorCompleteProfile(doctorId);
-        if (response.success) {
-            currentDoctorProfile.value = response.data;
-            staffProfileModal.staff = response.data.basic_info; // Auto-populate modal
-            staffProfileModal.show = true;
-            showToast('Success', 'Doctor profile loaded', 'success');
-        }
-    } catch (error) {
-        showToast('Error', 'Failed to load doctor profile', 'error');
-    }
-};
-
-const loadQuickProfile = async (doctorId) => {
-    try {
-        const response = await API.getDoctorQuickProfile(doctorId);
-        return response.data;
-    } catch {
-        return null;
-    }
-};
                 
                 // ============ 14. AUTHENTICATION FUNCTIONS ============
                 
@@ -2182,32 +2130,11 @@ const showAddMedicalStaffModal = () => {
                 
                 // ============ 17. VIEW/EDIT FUNCTIONS ============
                 
-              const viewStaffDetails = async (staff) => {
-    try {
-        // Load complete profile from NEW backend API
-        const response = await API.getDoctorCompleteProfile(staff.id);
-        
-        if (response.success) {
-            currentDoctorProfile.value = response.data;
-            staffProfileModal.staff = response.data.basic_info;
-            staffProfileModal.activeTab = 'clinical';
-            staffProfileModal.show = true;
-            
-            console.log('📊 Full Profile Loaded:', response.data);
-        } else {
-            // Fallback to basic info
-            staffProfileModal.staff = staff;
-            staffProfileModal.activeTab = 'clinical';
-            staffProfileModal.show = true;
-        }
-    } catch (error) {
-        console.error('Failed to load full profile:', error);
-        // Fallback to old data
-        staffProfileModal.staff = staff;
-        staffProfileModal.activeTab = 'clinical';
-        staffProfileModal.show = true;
-    }
-};
+                const viewStaffDetails = (staff) => {
+                    staffProfileModal.staff = staff;
+                    staffProfileModal.activeTab = 'clinical';
+                    staffProfileModal.show = true;
+                };
                 
                 const editMedicalStaff = (staff) => {
                     medicalStaffModal.mode = 'edit';
@@ -2722,23 +2649,6 @@ const saveAbsence = async () => {
                 const authToken = computed(() => {
                     return localStorage.getItem(CONFIG.TOKEN_KEY);
                 });
-                // Add to your computed properties section in Vue setup()
-const availableReplacementStaff = computed(() => {
-    return medicalStaff.value.filter(staff => 
-        staff.employment_status === 'active' && 
-        staff.id !== absenceModal.form.staff_member_id
-    );
-});
-
-const currentTimeFormatted = computed(() => {
-    return EnhancedUtils.formatTime(currentTime.value);
-});
-
-const activeAlertsCount = computed(() => {
-    return systemAlerts.value.filter(alert => 
-        alert.status === 'active' || !alert.status
-    ).length;
-});
                 
                 const unreadAnnouncements = computed(() => {
                     return announcements.value.filter(a => !a.read).length;
