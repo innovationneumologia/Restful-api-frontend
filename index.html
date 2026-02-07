@@ -6381,8 +6381,7 @@ body {
 
             <!-- ============ MODALS ============ -->
             
-            <!-- MODAL 1: Dynamic Staff Profile -->
-            <!-- ============ ENHANCED MEDICAL STAFF PROFILE MODAL ============ -->
+            <!-- ============ MEDICAL STAFF PROFILE MODAL - COMPATIBLE VERSION ============ -->
 <div v-if="staffProfileModal.show" class="modal-overlay">
     <div class="modal-container modal-wide">
         <div class="modal-header">
@@ -6390,10 +6389,11 @@ body {
                 <i class="fas fa-user-md"></i>
                 <div>
                     <h3>Medical Staff Profile</h3>
-                    <p class="modal-subtitle" v-if="currentDoctorProfile">
-                        {{ currentDoctorProfile.basic_info.full_name }} • 
+                    <p class="modal-subtitle">
+                        <!-- Use currentDoctorProfile if available, otherwise fallback to staffProfileModal.staff -->
+                        {{ (currentDoctorProfile?.basic_info?.full_name || staffProfileModal.staff?.full_name) }} • 
                         <span :class="getPresenceBadgeClass()">
-                            {{ getCurrentPresence().status }}
+                            {{ getCurrentPresenceStatus() }}
                         </span>
                     </p>
                 </div>
@@ -6417,14 +6417,15 @@ body {
                     <div class="flex items-start justify-between">
                         <div class="flex items-center gap-6">
                             <div class="profile-avatar-large">
-                                {{ getInitials(currentDoctorProfile?.basic_info?.full_name || '') }}
+                                {{ getInitials(currentDoctorProfile?.basic_info?.full_name || staffProfileModal.staff?.full_name || '') }}
                             </div>
                             <div>
-                                <h2 class="profile-name">{{ currentDoctorProfile?.basic_info?.full_name }}</h2>
+                                <h2 class="profile-name">{{ currentDoctorProfile?.basic_info?.full_name || staffProfileModal.staff?.full_name }}</h2>
                                 <div class="profile-title">
-                                    {{ formatStaffType(currentDoctorProfile?.basic_info?.staff_type) }}
-                                    <span v-if="currentDoctorProfile?.department" class="text-gray-600">
-                                        • {{ currentDoctorProfile.department.name }}
+                                    {{ formatStaffType(currentDoctorProfile?.basic_info?.staff_type || staffProfileModal.staff?.staff_type) }}
+                                    <span v-if="getDepartmentName(currentDoctorProfile?.basic_info?.department_id || staffProfileModal.staff?.department_id)" 
+                                          class="text-gray-600">
+                                        • {{ getDepartmentName(currentDoctorProfile?.basic_info?.department_id || staffProfileModal.staff?.department_id) }}
                                     </span>
                                 </div>
                                 
@@ -6432,28 +6433,29 @@ body {
                                 <div class="profile-meta-row mt-3">
                                     <div class="profile-meta-item">
                                         <i class="fas fa-id-badge"></i>
-                                        <span>{{ currentDoctorProfile?.basic_info?.staff_id }}</span>
+                                        <span>{{ currentDoctorProfile?.basic_info?.staff_id || staffProfileModal.staff?.staff_id || 'N/A' }}</span>
                                     </div>
                                     
                                     <div class="flex items-center gap-2 px-3 py-1 rounded-full" 
                                          :class="getPresenceIndicatorClass()">
                                         <i :class="getPresenceIcon()"></i>
                                         <span class="text-sm font-semibold">
-                                            {{ getCurrentPresence().status }}
+                                            {{ getCurrentPresenceStatus() }}
                                         </span>
-                                        <span class="text-xs opacity-80">
-                                            {{ getCurrentPresence().type }}
+                                        <span v-if="getCurrentRotationForStaff(currentDoctorProfile?.basic_info?.id || staffProfileModal.staff?.id)" 
+                                              class="text-xs opacity-80">
+                                            {{ getTrainingUnitName(getCurrentRotationForStaff(currentDoctorProfile?.basic_info?.id || staffProfileModal.staff?.id).training_unit_id) }}
                                         </span>
                                     </div>
                                     
-                                    <div v-if="currentDoctorProfile?.basic_info?.certificate_status" 
+                                    <div v-if="currentDoctorProfile?.basic_info?.certificate_status || staffProfileModal.staff?.certificate_status" 
                                          class="flex items-center gap-2 px-3 py-1 rounded-full"
-                                         :class="currentDoctorProfile.basic_info.certificate_status === 'current' 
+                                         :class="(currentDoctorProfile?.basic_info?.certificate_status || staffProfileModal.staff?.certificate_status) === 'current' 
                                                  ? 'bg-green-100 text-green-800' 
                                                  : 'bg-red-100 text-red-800'">
                                         <i class="fas fa-certificate"></i>
                                         <span class="text-sm font-semibold">
-                                            {{ currentDoctorProfile.basic_info.certificate_status === 'current' ? 'Certified' : 'Expired' }}
+                                            {{ (currentDoctorProfile?.basic_info?.certificate_status || staffProfileModal.staff?.certificate_status) === 'current' ? 'Certified' : 'Expired' }}
                                         </span>
                                     </div>
                                 </div>
@@ -6464,12 +6466,12 @@ body {
                         <div class="flex gap-2">
                             <button class="btn btn-sm btn-outline" 
                                     @click="updatePresenceStatus('present')"
-                                    v-if="getCurrentPresence().status !== 'PRESENT'">
+                                    v-if="getCurrentPresenceStatus() !== 'PRESENT' && currentDoctorProfile">
                                 <i class="fas fa-check-circle"></i> Mark Present
                             </button>
                             <button class="btn btn-sm btn-outline" 
                                     @click="updatePresenceStatus('absent')"
-                                    v-if="getCurrentPresence().status === 'PRESENT'">
+                                    v-if="getCurrentPresenceStatus() === 'PRESENT' && currentDoctorProfile">
                                 <i class="fas fa-times-circle"></i> Mark Absent
                             </button>
                         </div>
@@ -6504,14 +6506,15 @@ body {
                                 <i class="fas fa-user-clock"></i>
                                 <h4>Live Presence</h4>
                                 <span class="text-xs text-gray-500">
-                                    Updated: {{ formatRelativeTime(currentDoctorProfile?.generated_at) }}
+                                    Updated: {{ formatRelativeTime(currentDoctorProfile?.live_clinical_data?.presence?.last_seen || staffProfileModal.staff?.updated_at) }}
                                 </span>
                             </div>
                             <div class="space-y-3 p-4">
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Current Status</span>
-                                    <span class="font-semibold" :class="getPresenceStatusClass() === 'status-normal' ? 'text-green-600' : 'text-red-600'">
-                                        {{ getCurrentPresence().status }}
+                                    <span class="font-semibold" 
+                                          :class="getCurrentPresenceStatus() === 'PRESENT' ? 'text-green-600' : 'text-red-600'">
+                                        {{ getCurrentPresenceStatus() }}
                                     </span>
                                 </div>
                                 <div class="flex justify-between items-center">
@@ -6520,13 +6523,13 @@ body {
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Last Seen</span>
-                                    <span>{{ getCurrentPresence().last_seen }}</span>
+                                    <span>{{ formatRelativeTime(currentDoctorProfile?.live_clinical_data?.presence?.last_seen || staffProfileModal.staff?.updated_at) || 'N/A' }}</span>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Current Assignment -->
-                        <div class="card" v-if="currentDoctorProfile?.live_clinical_data?.current_assignment">
+                        <div class="card" v-if="getCurrentRotationForStaff(currentDoctorProfile?.basic_info?.id || staffProfileModal.staff?.id)">
                             <div class="card-header">
                                 <i class="fas fa-stethoscope"></i>
                                 <h4>Current Assignment</h4>
@@ -6534,18 +6537,18 @@ body {
                             <div class="space-y-3 p-4">
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Clinical Unit</span>
-                                    <span>{{ currentDoctorProfile.live_clinical_data.current_assignment.unit }}</span>
+                                    <span>{{ getTrainingUnitName(getCurrentRotationForStaff(currentDoctorProfile?.basic_info?.id || staffProfileModal.staff?.id).training_unit_id) }}</span>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Rotation Period</span>
                                     <span>
-                                        {{ formatDate(currentDoctorProfile.live_clinical_data.current_assignment.start_date) }} 
-                                        to {{ formatDate(currentDoctorProfile.live_clinical_data.current_assignment.end_date) }}
+                                        {{ formatDate(getCurrentRotationForStaff(currentDoctorProfile?.basic_info?.id || staffProfileModal.staff?.id).start_date) }} 
+                                        to {{ formatDate(getCurrentRotationForStaff(currentDoctorProfile?.basic_info?.id || staffProfileModal.staff?.id).end_date) }}
                                     </span>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Supervisor</span>
-                                    <span>{{ currentDoctorProfile.live_clinical_data.current_assignment.supervisor || 'Not assigned' }}</span>
+                                    <span>{{ getSupervisorName(getCurrentRotationForStaff(currentDoctorProfile?.basic_info?.id || staffProfileModal.staff?.id).supervising_attending_id) || 'Not assigned' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -6633,13 +6636,20 @@ body {
                             <h4>Academic Information</h4>
                         </div>
                         <div class="space-y-3 p-4">
-                            <div v-if="currentDoctorProfile?.basic_info?.academic_degree" class="flex justify-between items-center">
+                            <div v-if="currentDoctorProfile?.basic_info?.academic_degree || staffProfileModal.staff?.academic_degree" 
+                                 class="flex justify-between items-center">
                                 <span class="text-gray-600">Academic Degree</span>
-                                <span class="font-medium">{{ currentDoctorProfile.basic_info.academic_degree }}</span>
+                                <span class="font-medium">{{ currentDoctorProfile?.basic_info?.academic_degree || staffProfileModal.staff?.academic_degree }}</span>
                             </div>
-                            <div v-if="currentDoctorProfile?.basic_info?.specialization" class="flex justify-between items-center">
+                            <div v-if="currentDoctorProfile?.basic_info?.specialization || staffProfileModal.staff?.specialization" 
+                                 class="flex justify-between items-center">
                                 <span class="text-gray-600">Specialization</span>
-                                <span class="font-medium">{{ currentDoctorProfile.basic_info.specialization }}</span>
+                                <span class="font-medium">{{ currentDoctorProfile?.basic_info?.specialization || staffProfileModal.staff?.specialization }}</span>
+                            </div>
+                            <div v-if="currentDoctorProfile?.basic_info?.training_year || staffProfileModal.staff?.training_year" 
+                                 class="flex justify-between items-center">
+                                <span class="text-gray-600">Training Year</span>
+                                <span class="font-medium">{{ currentDoctorProfile?.basic_info?.training_year || staffProfileModal.staff?.training_year }}</span>
                             </div>
                         </div>
                     </div>
@@ -6666,7 +6676,7 @@ body {
             </button>
             <button class="btn btn-primary" 
                     v-if="hasPermission('medical_staff', 'update')"
-                    @click="editMedicalStaff(currentDoctorProfile?.basic_info)">
+                    @click="editMedicalStaff(currentDoctorProfile?.basic_info || staffProfileModal.staff)">
                 <i class="fas fa-edit"></i> Edit Profile
             </button>
         </div>
