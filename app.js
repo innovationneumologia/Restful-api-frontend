@@ -2264,39 +2264,7 @@ const fallbackToBasicView = (staff) => {
     };
     staffProfileModal.staff = staff;
 };
-         // ============ ENHANCED PROFILE UI HELPERS ============
-const getPresenceBadgeClass = () => {
-    if (!currentDoctorProfile.value) return 'badge-gray';
-    
-    const presence = currentDoctorProfile.value.live_clinical_data?.presence;
-    if (!presence) return 'badge-gray';
-    
-    if (presence.status === 'PRESENT') return 'badge-success';
-    if (presence.status === 'ABSENT') return 'badge-danger';
-    return 'badge-warning';
-};
-
-const getPresenceIndicatorClass = () => {
-    const presence = getCurrentPresence();
-    if (presence.status === 'PRESENT') return 'bg-green-100 text-green-800';
-    if (presence.status === 'ABSENT') return 'bg-red-100 text-red-800';
-    return 'bg-yellow-100 text-yellow-800';
-};
-
-const getPresenceIcon = () => {
-    const presence = getCurrentPresence();
-    if (presence.status === 'PRESENT') return 'fas fa-check-circle';
-    if (presence.status === 'ABSENT') return 'fas fa-times-circle';
-    return 'fas fa-question-circle';
-};
-
-const getPresenceStatusClass = () => {
-    const presence = getCurrentPresence();
-    if (presence.status === 'PRESENT') return 'status-normal';
-    if (presence.status === 'ABSENT') return 'status-critical';
-    return 'status-caution';
-};
-                // ============ ENHANCED PROFILE UI HELPERS ============
+// ============ ENHANCED PROFILE UI HELPERS ============
 const getCurrentPresenceStatus = () => {
     if (!currentDoctorProfile.value) return 'UNKNOWN';
     
@@ -2330,42 +2298,7 @@ const getPresenceIcon = () => {
     if (status === 'ABSENT') return 'fas fa-times-circle';
     return 'fas fa-question-circle';
 };
-// ============ END ENHANCED PROFILE UI HELPERS ============       
-                const editMedicalStaff = (staff) => {
-                    medicalStaffModal.mode = 'edit';
-                    medicalStaffModal.form = { ...staff };
-                    medicalStaffModal.show = true;
-                };
-                
-                const editDepartment = (department) => {
-                    departmentModal.mode = 'edit';
-                    departmentModal.form = { ...department };
-                    departmentModal.show = true;
-                };
-                
-                const editTrainingUnit = (unit) => {
-                    trainingUnitModal.mode = 'edit';
-                    trainingUnitModal.form = { ...unit };
-                    trainingUnitModal.show = true;
-                };
-                
-                const editRotation = (rotation) => {
-                    rotationModal.mode = 'edit';
-                    rotationModal.form = { ...rotation };
-                    rotationModal.show = true;
-                };
-                
-                const editOnCallSchedule = (schedule) => {
-                    onCallModal.mode = 'edit';
-                    onCallModal.form = { ...schedule };
-                    onCallModal.show = true;
-                };
-                
-                const editAbsence = (absence) => {
-                    absenceModal.mode = 'edit';
-                    absenceModal.form = { ...absence };
-                    absenceModal.show = true;
-                };
+
                 
                 // ============ 18. SAVE FUNCTIONS ============
 const saveMedicalStaff = async () => {
