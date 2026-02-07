@@ -6380,14 +6380,13 @@ body {
             </main>
 
             <!-- ============ MODALS ============ -->
-<!-- ============ MODALS ============ -->
-<!-- MODAL 1: Dynamic Staff Profile -->
-<div v-if="staffProfileModal.show" class="modal-overlay">
+            <!-- ============ MODAL 1: Dynamic Staff Profile ============ -->
+<div v-if="staffProfileModal.show && staffProfileModal.staff" class="modal-overlay">
     <div class="modal-container modal-wide">
         <div class="modal-header">
             <div class="modal-title">
                 <i class="fas fa-user-md"></i>
-                Staff Profile: {{ staffProfileModal.staff.full_name }}
+                Staff Profile: {{ staffProfileModal.staff?.full_name || 'Loading...' }}
             </div>
             <button class="modal-close" @click="staffProfileModal.show = false" aria-label="Close profile">
                 <i class="fas fa-times"></i>
@@ -6395,226 +6394,235 @@ body {
         </div>
         
         <div class="modal-body">
-            <!-- Profile Header -->
-            <div class="profile-header">
-                <div class="profile-avatar-large">{{ getInitials(staffProfileModal.staff.full_name) }}</div>
-                <div class="profile-basic-info">
-                    <div class="profile-name">{{ staffProfileModal.staff.full_name }}</div>
-                    <div class="profile-title">{{ formatStaffType(staffProfileModal.staff.staff_type) }}</div>
-                    <div class="profile-meta-row">
-                        <div class="profile-meta-item">
-                            <i class="fas fa-id-badge"></i>
-                            <span>{{ staffProfileModal.staff.staff_id }}</span>
-                        </div>
-                        <div class="profile-meta-item">
-                            <i class="fas fa-envelope"></i>
-                            <span>{{ staffProfileModal.staff.professional_email }}</span>
-                        </div>
-                        <span class="status-indicator" :class="'status-' + staffProfileModal.staff.employment_status">
-                            {{ formatEmploymentStatus(staffProfileModal.staff.employment_status) }}
-                        </span>
-                    </div>
-                    <div class="profile-status-row">
-                        <span class="profile-department-badge" v-if="getDepartmentName(staffProfileModal.staff.department_id)">
-                            {{ getDepartmentName(staffProfileModal.staff.department_id) }}
-                        </span>
-                    </div>
-                </div>
+            <!-- Loading State -->
+            <div v-if="!staffProfileModal.staff" class="text-center py-12">
+                <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
+                <p class="text-gray-600">Loading profile data...</p>
             </div>
-
-            <!-- Academic Information -->
-            <div class="education-section">
-                <div class="education-grid">
-                    <div class="education-item">
-                        <span class="education-label">Academic Degree</span>
-                        <span class="education-value">{{ staffProfileModal.staff.academic_degree || 'MD' }}</span>
-                    </div>
-                    <div class="education-item" v-if="staffProfileModal.staff.specialization">
-                        <span class="education-label">Specialization</span>
-                        <span class="education-value">{{ staffProfileModal.staff.specialization }}</span>
-                    </div>
-                    <div class="education-item" v-if="staffProfileModal.staff.resident_year">
-                        <span class="education-label">Resident Year</span>
-                        <span class="education-value">{{ staffProfileModal.staff.resident_year }}</span>
-                    </div>
-                    <div class="education-item" v-if="staffProfileModal.staff.clinical_certificate">
-                        <span class="education-label">Clinical Certificate</span>
-                        <span class="education-value">{{ staffProfileModal.staff.clinical_certificate }}</span>
-                        <span class="text-xs" :class="staffProfileModal.staff.certificate_status === 'expired' ? 'text-red-600' : 'text-green-600'">
-                            {{ staffProfileModal.staff.certificate_status === 'expired' ? 'Expired' : 'Current' }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dynamic Tabs -->
-            <div class="modal-tabs">
-                <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'clinical' }" 
-                        @click="staffProfileModal.activeTab = 'clinical'">
-                    <i class="fas fa-stethoscope"></i> Clinical Status
-                </button>
-                <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'assignments' }" 
-                        @click="staffProfileModal.activeTab = 'assignments'">
-                    <i class="fas fa-tasks"></i> Current Assignments
-                </button>
-                <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'activity' }" 
-                        @click="staffProfileModal.activeTab = 'activity'">
-                    <i class="fas fa-history"></i> Recent Activity
-                </button>
-            </div>
-
-            <!-- Clinical Status Tab -->
-            <div v-if="staffProfileModal.activeTab === 'clinical'" class="mt-6">
-                <div class="dynamic-status-grid">
-                    <!-- Current Location -->
-                    <div class="dynamic-status-card">
-                        <div class="dynamic-status-header">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <h4>Current Location</h4>
+            
+            <!-- Profile Content -->
+            <div v-else>
+                <!-- Profile Header -->
+                <div class="profile-header">
+                    <div class="profile-avatar-large">{{ getInitials(staffProfileModal.staff.full_name) }}</div>
+                    <div class="profile-basic-info">
+                        <div class="profile-name">{{ staffProfileModal.staff.full_name }}</div>
+                        <div class="profile-title">{{ formatStaffType(staffProfileModal.staff.staff_type) }}</div>
+                        <div class="profile-meta-row">
+                            <div class="profile-meta-item">
+                                <i class="fas fa-id-badge"></i>
+                                <span>{{ staffProfileModal.staff.staff_id }}</span>
+                            </div>
+                            <div class="profile-meta-item">
+                                <i class="fas fa-envelope"></i>
+                                <span>{{ staffProfileModal.staff.professional_email }}</span>
+                            </div>
+                            <span class="status-indicator" :class="'status-' + staffProfileModal.staff.employment_status">
+                                {{ formatEmploymentStatus(staffProfileModal.staff.employment_status) }}
+                            </span>
                         </div>
-                        <div class="dynamic-status-content">
-                            <div class="status-data-row">
-                                <span class="status-data-label">Clinical Unit</span>
-                                <span class="status-data-value">{{ getCurrentUnit(staffProfileModal.staff.id) || 'Not assigned' }}</span>
-                            </div>
-                            <div class="status-data-row">
-                                <span class="status-data-label">Ward/Floor</span>
-                                <span class="status-data-value">{{ getCurrentWard(staffProfileModal.staff.id) || 'General' }}</span>
-                            </div>
-                            <div class="status-data-row">
-                                <span class="status-data-label">Current Activity</span>
-                                <span class="status-data-value">
-                                    <span class="status-indicator" :class="'status-' + getCurrentActivityStatus(staffProfileModal.staff.id)">
-                                        {{ getCurrentActivityStatus(staffProfileModal.staff.id) || 'Available' }}
-                                    </span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Patient Load -->
-                    <div class="dynamic-status-card">
-                        <div class="dynamic-status-header">
-                            <i class="fas fa-procedures"></i>
-                            <h4>Patient Load</h4>
-                        </div>
-                        <div class="dynamic-status-content">
-                            <div class="status-data-row">
-                                <span class="status-data-label">Total Active</span>
-                                <span class="status-data-value status-data-value-large">
-                                    {{ getCurrentPatientCount(staffProfileModal.staff.id) || 0 }}
-                                </span>
-                            </div>
-                            <div class="status-data-row">
-                                <span class="status-data-label">ICU Patients</span>
-                                <span class="status-data-value">{{ getICUPatientCount(staffProfileModal.staff.id) || 0 }}</span>
-                            </div>
-                            <div class="status-data-row">
-                                <span class="status-data-label">Ward Patients</span>
-                                <span class="status-data-value">{{ getWardPatientCount(staffProfileModal.staff.id) || 0 }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- On-call Status -->
-                    <div class="dynamic-status-card">
-                        <div class="dynamic-status-header">
-                            <i class="fas fa-phone-medical"></i>
-                            <h4>On-call Status</h4>
-                        </div>
-                        <div class="dynamic-status-content">
-                            <div class="status-data-row">
-                                <span class="status-data-label">Today's On-call</span>
-                                <span class="status-data-value">
-                                    <span v-if="isOnCallToday(staffProfileModal.staff.id)" class="status-indicator status-oncall">
-                                        On-call
-                                    </span>
-                                    <span v-else class="text-gray-500">Not scheduled</span>
-                                </span>
-                            </div>
-                            <div class="status-data-row" v-if="isOnCallToday(staffProfileModal.staff.id)">
-                                <span class="status-data-label">Shift Time</span>
-                                <span class="status-data-value">{{ getOnCallShiftTime(staffProfileModal.staff.id) }}</span>
-                            </div>
-                            <div class="status-data-row" v-if="isOnCallToday(staffProfileModal.staff.id)">
-                                <span class="status-data-label">Coverage Area</span>
-                                <span class="status-data-value">{{ getOnCallCoverage(staffProfileModal.staff.id) }}</span>
-                            </div>
+                        <div class="profile-status-row">
+                            <span class="profile-department-badge" v-if="getDepartmentName(staffProfileModal.staff.department_id)">
+                                {{ getDepartmentName(staffProfileModal.staff.department_id) }}
+                            </span>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Current Assignments Tab -->
-            <div v-if="staffProfileModal.activeTab === 'assignments'" class="mt-6">
-                <div class="assignments-section">
-                    <div class="assignments-grid">
-                        <!-- Current Rotation -->
-                        <div class="assignment-card" v-if="getCurrentRotationForStaff(staffProfileModal.staff.id)">
-                            <div class="assignment-header">
-                                <i class="fas fa-calendar-check"></i>
-                                <h4>Current Rotation</h4>
+                <!-- Academic Information -->
+                <div class="education-section">
+                    <div class="education-grid">
+                        <div class="education-item">
+                            <span class="education-label">Academic Degree</span>
+                            <span class="education-value">{{ staffProfileModal.staff.academic_degree || 'MD' }}</span>
+                        </div>
+                        <div class="education-item" v-if="staffProfileModal.staff.specialization">
+                            <span class="education-label">Specialization</span>
+                            <span class="education-value">{{ staffProfileModal.staff.specialization }}</span>
+                        </div>
+                        <div class="education-item" v-if="staffProfileModal.staff.resident_year">
+                            <span class="education-label">Resident Year</span>
+                            <span class="education-value">{{ staffProfileModal.staff.resident_year }}</span>
+                        </div>
+                        <div class="education-item" v-if="staffProfileModal.staff.clinical_certificate">
+                            <span class="education-label">Clinical Certificate</span>
+                            <span class="education-value">{{ staffProfileModal.staff.clinical_certificate }}</span>
+                            <span class="text-xs" :class="staffProfileModal.staff.certificate_status === 'expired' ? 'text-red-600' : 'text-green-600'">
+                                {{ staffProfileModal.staff.certificate_status === 'expired' ? 'Expired' : 'Current' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Tabs -->
+                <div class="modal-tabs">
+                    <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'clinical' }" 
+                            @click="staffProfileModal.activeTab = 'clinical'">
+                        <i class="fas fa-stethoscope"></i> Clinical Status
+                    </button>
+                    <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'assignments' }" 
+                            @click="staffProfileModal.activeTab = 'assignments'">
+                        <i class="fas fa-tasks"></i> Current Assignments
+                    </button>
+                    <button class="modal-tab" :class="{ active: staffProfileModal.activeTab === 'activity' }" 
+                            @click="staffProfileModal.activeTab = 'activity'">
+                        <i class="fas fa-history"></i> Recent Activity
+                    </button>
+                </div>
+
+                <!-- Clinical Status Tab -->
+                <div v-if="staffProfileModal.activeTab === 'clinical'" class="mt-6">
+                    <div class="dynamic-status-grid">
+                        <!-- Current Location -->
+                        <div class="dynamic-status-card">
+                            <div class="dynamic-status-header">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <h4>Current Location</h4>
                             </div>
-                            <div class="assignment-list">
-                                <div class="assignment-item">
-                                    <span class="assignment-details">
-                                        {{ getCurrentRotationForStaff(staffProfileModal.staff.id).unitName }}
-                                    </span>
-                                    <span class="assignment-time">
-                                        {{ getRotationDaysLeft(staffProfileModal.staff.id) }} days left
-                                    </span>
+                            <div class="dynamic-status-content">
+                                <div class="status-data-row">
+                                    <span class="status-data-label">Clinical Unit</span>
+                                    <span class="status-data-value">{{ getCurrentUnit(staffProfileModal.staff.id) || 'Not assigned' }}</span>
                                 </div>
-                                <div class="assignment-item" v-if="getCurrentRotationForStaff(staffProfileModal.staff.id).supervisor">
-                                    <span class="assignment-details">
-                                        Supervisor: {{ getCurrentRotationForStaff(staffProfileModal.staff.id).supervisor }}
+                                <div class="status-data-row">
+                                    <span class="status-data-label">Ward/Floor</span>
+                                    <span class="status-data-value">{{ getCurrentWard(staffProfileModal.staff.id) || 'General' }}</span>
+                                </div>
+                                <div class="status-data-row">
+                                    <span class="status-data-label">Current Activity</span>
+                                    <span class="status-data-value">
+                                        <span class="status-indicator" :class="'status-' + getCurrentActivityStatus(staffProfileModal.staff.id)">
+                                            {{ getCurrentActivityStatus(staffProfileModal.staff.id) || 'Available' }}
+                                        </span>
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Today's Schedule -->
-                        <div class="assignment-card">
-                            <div class="assignment-header">
-                                <i class="fas fa-clock"></i>
-                                <h4>Today's Schedule</h4>
+                        <!-- Patient Load -->
+                        <div class="dynamic-status-card">
+                            <div class="dynamic-status-header">
+                                <i class="fas fa-procedures"></i>
+                                <h4>Patient Load</h4>
                             </div>
-                            <div class="assignment-list">
-                                <div v-for="item in getTodaysSchedule(staffProfileModal.staff.id)" :key="item.id" 
-                                     class="assignment-item">
-                                    <span class="assignment-details">{{ item.activity }}</span>
-                                    <span class="assignment-time">{{ item.time }}</span>
+                            <div class="dynamic-status-content">
+                                <div class="status-data-row">
+                                    <span class="status-data-label">Total Active</span>
+                                    <span class="status-data-value status-data-value-large">
+                                        {{ getCurrentPatientCount(staffProfileModal.staff.id) || 0 }}
+                                    </span>
                                 </div>
-                                <div v-if="getTodaysSchedule(staffProfileModal.staff.id).length === 0" 
-                                     class="text-center py-4 text-gray-500 text-sm">
-                                    No scheduled activities today
+                                <div class="status-data-row">
+                                    <span class="status-data-label">ICU Patients</span>
+                                    <span class="status-data-value">{{ getICUPatientCount(staffProfileModal.staff.id) || 0 }}</span>
+                                </div>
+                                <div class="status-data-row">
+                                    <span class="status-data-label">Ward Patients</span>
+                                    <span class="status-data-value">{{ getWardPatientCount(staffProfileModal.staff.id) || 0 }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- On-call Status -->
+                        <div class="dynamic-status-card">
+                            <div class="dynamic-status-header">
+                                <i class="fas fa-phone-medical"></i>
+                                <h4>On-call Status</h4>
+                            </div>
+                            <div class="dynamic-status-content">
+                                <div class="status-data-row">
+                                    <span class="status-data-label">Today's On-call</span>
+                                    <span class="status-data-value">
+                                        <span v-if="isOnCallToday(staffProfileModal.staff.id)" class="status-indicator status-oncall">
+                                            On-call
+                                        </span>
+                                        <span v-else class="text-gray-500">Not scheduled</span>
+                                    </span>
+                                </div>
+                                <div class="status-data-row" v-if="isOnCallToday(staffProfileModal.staff.id)">
+                                    <span class="status-data-label">Shift Time</span>
+                                    <span class="status-data-value">{{ getOnCallShiftTime(staffProfileModal.staff.id) }}</span>
+                                </div>
+                                <div class="status-data-row" v-if="isOnCallToday(staffProfileModal.staff.id)">
+                                    <span class="status-data-label">Coverage Area</span>
+                                    <span class="status-data-value">{{ getOnCallCoverage(staffProfileModal.staff.id) }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Recent Activity Tab -->
-            <div v-if="staffProfileModal.activeTab === 'activity'" class="mt-6">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-history"></i>
-                            Recent Clinical Activity
+                <!-- Current Assignments Tab -->
+                <div v-if="staffProfileModal.activeTab === 'assignments'" class="mt-6">
+                    <div class="assignments-section">
+                        <div class="assignments-grid">
+                            <!-- Current Rotation -->
+                            <div class="assignment-card" v-if="getCurrentRotationForStaff(staffProfileModal.staff.id)">
+                                <div class="assignment-header">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <h4>Current Rotation</h4>
+                                </div>
+                                <div class="assignment-list">
+                                    <div class="assignment-item">
+                                        <span class="assignment-details">
+                                            {{ getCurrentRotationForStaff(staffProfileModal.staff.id).unitName }}
+                                        </span>
+                                        <span class="assignment-time">
+                                            {{ getRotationDaysLeft(staffProfileModal.staff.id) }} days left
+                                        </span>
+                                    </div>
+                                    <div class="assignment-item" v-if="getCurrentRotationForStaff(staffProfileModal.staff.id).supervisor">
+                                        <span class="assignment-details">
+                                            Supervisor: {{ getCurrentRotationForStaff(staffProfileModal.staff.id).supervisor }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Today's Schedule -->
+                            <div class="assignment-card">
+                                <div class="assignment-header">
+                                    <i class="fas fa-clock"></i>
+                                    <h4>Today's Schedule</h4>
+                                </div>
+                                <div class="assignment-list">
+                                    <div v-for="item in getTodaysSchedule(staffProfileModal.staff.id)" :key="item.id" 
+                                         class="assignment-item">
+                                        <span class="assignment-details">{{ item.activity }}</span>
+                                        <span class="assignment-time">{{ item.time }}</span>
+                                    </div>
+                                    <div v-if="getTodaysSchedule(staffProfileModal.staff.id).length === 0" 
+                                         class="text-center py-4 text-gray-500 text-sm">
+                                        No scheduled activities today
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="space-y-2">
-                        <div v-for="activity in getRecentActivities(staffProfileModal.staff.id)" :key="activity.id" 
-                             class="flex items-center justify-between p-3 border-b border-gray-100 hover:bg-gray-50">
-                            <div>
-                                <div class="font-medium text-sm">{{ activity.description }}</div>
-                                <div class="text-xs text-gray-600">{{ activity.location }}</div>
+                </div>
+
+                <!-- Recent Activity Tab -->
+                <div v-if="staffProfileModal.activeTab === 'activity'" class="mt-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fas fa-history"></i>
+                                Recent Clinical Activity
                             </div>
-                            <div class="text-xs text-gray-500">{{ formatTime(activity.timestamp) }}</div>
                         </div>
-                        <div v-if="getRecentActivities(staffProfileModal.staff.id).length === 0" 
-                             class="text-center py-4 text-gray-500 text-sm">
-                            No recent activities recorded
+                        <div class="space-y-2">
+                            <div v-for="activity in getRecentActivities(staffProfileModal.staff.id)" :key="activity.id" 
+                                 class="flex items-center justify-between p-3 border-b border-gray-100 hover:bg-gray-50">
+                                <div>
+                                    <div class="font-medium text-sm">{{ activity.description }}</div>
+                                    <div class="text-xs text-gray-600">{{ activity.location }}</div>
+                                </div>
+                                <div class="text-xs text-gray-500">{{ formatTime(activity.timestamp) }}</div>
+                            </div>
+                            <div v-if="getRecentActivities(staffProfileModal.staff.id).length === 0" 
+                                 class="text-center py-4 text-gray-500 text-sm">
+                                No recent activities recorded
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -6630,6 +6638,7 @@ body {
         </div>
     </div>
 </div>
+
 
 
             <!-- MODAL 2: Add/Edit Medical Staff -->
