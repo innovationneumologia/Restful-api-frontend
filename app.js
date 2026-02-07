@@ -1071,71 +1071,6 @@ const getCurrentPresence = () => {
     return currentDoctorProfile.value.live_clinical_data.presence;
 };
 
-const getCurrentActivity = () => {
-    if (!currentDoctorProfile.value) return 'Loading...';
-    
-    const liveData = currentDoctorProfile.value.live_clinical_data;
-    
-    // Check current activity from schedule
-    const currentScheduleItem = liveData.todays_schedule?.find(item => {
-        if (!item.time) return false;
-        const [start, end] = item.time.split(' - ');
-        const now = new Date().toTimeString().substring(0, 5);
-        return now >= start && now <= end;
-    });
-    
-    if (currentScheduleItem) {
-        return `${currentScheduleItem.activity} (${currentScheduleItem.location})`;
-    }
-    
-    return liveData.presence.type || 'Available';
-};
-
-const getScheduleForToday = () => {
-    if (!currentDoctorProfile.value) return [];
-    return currentDoctorProfile.value.live_clinical_data.todays_schedule || [];
-};
-
-const isCurrentlyOnCall = () => {
-    if (!currentDoctorProfile.value) return false;
-    const today = new Date().toISOString().split('T')[0];
-    return currentDoctorProfile.value.live_clinical_data.upcoming_oncall?.some(shift => 
-        shift.date === today
-    ) || false;
-};
-
-const getNextOnCallShift = () => {
-    if (!currentDoctorProfile.value) return null;
-    const today = new Date().toISOString().split('T')[0];
-    const shifts = currentDoctorProfile.value.live_clinical_data.upcoming_oncall;
-    return shifts?.find(shift => shift.date !== today) || null;
-};
-
-const updatePresenceStatus = async (status) => {
-    if (!currentDoctorProfile.value) return;
-    
-    try {
-        const response = await API.updateDoctorPresence(
-            currentDoctorProfile.value.basic_info.id, 
-            status
-        );
-        
-        if (response.success) {
-            // Update local state
-            if (currentDoctorProfile.value.live_clinical_data.presence) {
-                currentDoctorProfile.value.live_clinical_data.presence.status = 
-                    status === 'present' ? 'PRESENT' : 'ABSENT';
-                currentDoctorProfile.value.live_clinical_data.presence.last_seen = 'Just now';
-                currentDoctorProfile.value.live_clinical_data.presence.type = 
-                    status === 'present' ? 'Manually marked present' : 'Manually marked absent';
-            }
-            
-            showToast('Success', `Marked as ${status}`, 'success');
-        }
-    } catch (error) {
-        showToast('Error', 'Failed to update presence', 'error');
-    }
-};
                 
                 // ============ 8. NEUMAC ENHANCEMENT FUNCTIONS ============
                 
@@ -2388,7 +2323,6 @@ const editAbsence = (absence) => {
 };
 
 // ============ ENHANCED PROFILE UI HELPERS ============
-// ============ ENHANCED PROFILE FUNCTIONS ============
 
 const getCurrentPresenceStatus = () => {
     if (!currentDoctorProfile.value) return 'UNKNOWN';
