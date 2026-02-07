@@ -2273,6 +2273,13 @@ const getCurrentPresenceStatus = () => {
     
     return presence.status || 'UNKNOWN';
 };
+                const getPresenceStatusClass = () => {
+    const status = getCurrentPresenceStatus();
+    if (status === 'PRESENT') return 'status-normal';
+    if (status === 'ABSENT') return 'status-critical';
+    return 'status-caution';
+};
+                
 
 const getPresenceBadgeClass = () => {
     if (!currentDoctorProfile.value) return 'badge-gray';
