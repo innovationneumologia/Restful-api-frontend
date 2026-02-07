@@ -2338,6 +2338,14 @@ const editAbsence = (absence) => {
 
 // ============ ENHANCED PROFILE UI HELPERS ============
 
+const getCurrentPresenceStatus = () => {
+    if (!currentDoctorProfile.value) return 'UNKNOWN';
+    
+    const presence = currentDoctorProfile.value.live_clinical_data?.presence;
+    if (!presence) return 'UNKNOWN';
+    
+    return presence.status || 'UNKNOWN';
+};
 
 const getCurrentActivity = () => {
     if (!currentDoctorProfile.value) {
