@@ -459,24 +459,24 @@ class ApiService {
         return await this.request(`/api/live-status/${id}`, { method: 'DELETE' });
     }
     
-    // ===== SYSTEM STATS ENDPOINT =====
-    async getSystemStats() {
-        try {
-            const data = await this.request('/api/system-stats');
-            return data || {};
-        } catch {
-            return {
-                activeAttending: 0,
-                activeResidents: 0,
-                onCallNow: 0,
-                inSurgery: 0,
-                nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-                pendingApprovals: 0
-            };
-        }
+   // ===== SYSTEM STATS ENDPOINT =====
+async getSystemStats() {
+    try {
+        const data = await this.request('/api/system-stats');
+        return data || {};
+    } catch {
+        return {
+            activeAttending: 0,
+            activeResidents: 0,
+            onCallNow: 0,
+            inSurgery: 0,
+            nextShiftChange: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+            pendingApprovals: 0
+        };
     }
 }
-    // ===== DOCTOR PROFILE ENDPOINTS =====
+
+// ===== DOCTOR PROFILE ENDPOINTS =====
 async getDoctorCompleteProfile(doctorId) {
     return await this.request(`/api/medical-staff/${doctorId}/complete-profile`);
 }
@@ -491,6 +491,7 @@ async getDoctorAvailability(doctorId, startDate, endDate) {
     if (endDate) params.append('end_date', endDate);
     return await this.request(`/api/medical-staff/${doctorId}/availability?${params}`);
 }
+}  // ← This brace closes the ApiService class
 
 // Initialize API Service
 const API = new ApiService();
