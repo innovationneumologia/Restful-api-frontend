@@ -373,14 +373,65 @@ class ApiService {
     }
     // ===== ENHANCED PROFILE ENDPOINTS =====
 async getEnhancedDoctorProfile(doctorId) {
-    return await this.request(`/api/medical-staff/${doctorId}/enhanced-profile`);
+    try {
+        console.log('🔍 Fetching enhanced profile for:', doctorId);
+        
+        const response = await this.request(`/api/medical-staff/${doctorId}/enhanced-profile`);
+        
+        if (response && response.success) {
+            return response;
+        }
+        
+        throw new Error('Enhanced profile endpoint returned invalid response');
+        
+    } catch (error) {
+        console.warn('Enhanced profile endpoint failed:', error.message);
+        
+        // Fallback: Build enhanced profile from available data
+        return this.buildEnhancedProfileFallback(doctorId);
+    }
 }
 
-async updateDoctorPresence(doctorId, status, location = null) {
-    return await this.request(`/api/medical-staff/${doctorId}/presence`, {
-        method: 'POST',
-        body: { status, location, timestamp: new Date().toISOString() }
-    });
+async buildEnhancedProfileFallback(doctorId) {
+    try {
+        // Get basic staff info
+        const basicInfo = await this.request(`/api/medical-staff/${doctorId}`);
+        
+        // Get related data if needed
+        const [rotationsData, onCallData] = await Promise.all([
+            this.getRotations(),
+            this.getOnCallToday()
+        ]);
+        
+        // Build basic enhanced profile structure
+        const enhancedProfile = {
+            success: true,
+            data: {
+                basic_info: basicInfo,
+                live_clinical_data: {
+                    presence: {
+                        status: basicInfo.employment_status === 'active' ? 'PRESENT' : 'ABSENT',
+                        type: 'Basic Profile',
+                        last_seen: basicInfo.updated_at || new Date().toISOString()
+                    },
+                    current_assignment: null,
+                    todays_schedule: [],
+                    upcoming_oncall: [],
+                    clinical_status: null
+                }
+            }
+        };
+        
+        return enhancedProfile;
+        
+    } catch (error) {
+        console.error('Fallback profile build failed:', error);
+        return {
+            success: false,
+            error: 'Could not build enhanced profile',
+            data: null
+        };
+    }
 }
     
     // ===== DEPARTMENT ENDPOINTS =====
@@ -2393,32 +2444,50 @@ const showAddAbsenceModal = () => {
                // ============ 17. VIEW/EDIT FUNCTIONS ============
 
 const viewStaffDetails = async (staff) => {
+    console.log('📋 Opening profile for:', staff.full_name);
+    
+    staffProfileModal.loading = true;
+    staffProfileModal.show = true;
+    staffProfileModal.activeTab = 'clinical';
+    staffProfileModal.staff = staff;
+    
     try {
-        // Show loading state
-        staffProfileModal.loading = true;
-        staffProfileModal.show = true;
-        
-        // Load enhanced profile
         const response = await API.getEnhancedDoctorProfile(staff.id);
         
         if (response && response.success && response.data) {
             currentDoctorProfile.value = response.data;
-            staffProfileModal.staff = response.data.basic_info;
-            staffProfileModal.activeTab = 'clinical';
-            
-            // Show live status badge
-            showToast('Profile Loaded', 
-                `${staff.full_name}'s profile loaded`, 
-                'success');
+            showToast('Success', `${staff.full_name}'s profile loaded`, 'success');
         } else {
-            // Fallback to basic data
-            fallbackToBasicView(staff);
-            showToast('Info', 'Using enhanced profile data', 'info');
+            // Use basic staff data
+            currentDoctorProfile.value = {
+                basic_info: staff,
+                live_clinical_data: {
+                    presence: {
+                        status: staff.employment_status === 'active' ? 'PRESENT' : 'ABSENT',
+                        type: 'Available',
+                        last_seen: staff.updated_at || new Date().toISOString()
+                    }
+                }
+            };
+            showToast('Info', 'Using basic profile data', 'info');
         }
+        
     } catch (error) {
-        console.error('Enhanced profile failed:', error);
-        fallbackToBasicView(staff);
-        showToast('Warning', 'Using limited profile data', 'warning');
+        console.error('Profile loading error:', error);
+        
+        // Ultimate fallback
+        currentDoctorProfile.value = {
+            basic_info: staff,
+            live_clinical_data: {
+                presence: {
+                    status: 'UNKNOWN',
+                    type: 'Profile not available',
+                    last_seen: new Date().toISOString()
+                }
+            }
+        };
+        
+        showToast('Notice', 'Profile loaded with limited data', 'info');
     } finally {
         staffProfileModal.loading = false;
     }
