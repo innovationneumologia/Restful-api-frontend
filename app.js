@@ -889,7 +889,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const API = new ApiService();
 
         // ============ 5. CREATE VUE APP ============
-     const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
 
 const app = createApp({
     setup() {
