@@ -377,21 +377,25 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // ===== ENHANCED PROFILE ENDPOINT =====
-    async getEnhancedDoctorProfile(doctorId) {
-    console.log('🏥 Fetching enhanced profile for:', doctorId);
-    
-    try {
-        // CHANGE THIS: The backend doesn't have this endpoint
-        // const response = await this.request(`/api/medical-staff/${doctorId}/enhanced-profile`);
-        
-        // USE THIS INSTEAD: Use the build function directly since endpoint doesn't exist
-        return await this.buildEnhancedProfileFromAllData(doctorId);
-        
-    } catch (error) {
-        console.warn('⚠️ Enhanced profile endpoint failed, using fallback:', error.message);
-        return await this.buildEnhancedProfileFromAllData(doctorId);
-    }
-}
+            async getEnhancedDoctorProfile(doctorId) {
+                console.log('🏥 Fetching enhanced profile for:', doctorId);
+                
+                try {
+                    const response = await this.request(`/api/medical-staff/${doctorId}/enhanced-profile`);
+                    
+                    if (response && response.success) {
+                        console.log('✅ Enhanced profile loaded successfully');
+                        return response;
+                    }
+                    
+                    // Fallback to building profile from multiple data sources
+                    return await this.buildEnhancedProfileFromAllData(doctorId);
+                    
+                } catch (error) {
+                    console.warn('⚠️ Enhanced profile endpoint failed, using fallback:', error.message);
+                    return await this.buildEnhancedProfileFromAllData(doctorId);
+                }
+            }
 
             // ===== ENHANCED PROFILE BUILDER =====
             async buildEnhancedProfileFromAllData(doctorId) {
