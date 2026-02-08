@@ -1519,6 +1519,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     staffProfileModal.staff = currentDoctorProfile.value.header;
                 };
+                const getPresenceIndicatorClass = () => {
+    const status = getCurrentPresenceStatus();
+    if (status === 'PRESENT') return 'neumac-status-normal';
+    if (status === 'ABSENT') return 'neumac-status-critical';
+    if (status === 'ON CALL') return 'neumac-status-caution';
+    return 'neumac-status-unknown';
+};
                 
                 // Profile UI Helpers
                 const getCurrentPresenceStatus = () => {
@@ -3159,6 +3166,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     // UI Functions
                     toggleStatsSidebar,
                     handleGlobalSearch,
+                     getPresenceIndicatorClass,
+    getPresenceStatusClass,
+    getCurrentPresence,
                     
                     // Modal Show Functions
                     showAddMedicalStaffModal,
