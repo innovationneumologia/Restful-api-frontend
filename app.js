@@ -2970,6 +2970,13 @@ const updatePresenceStatus = async (status) => {
 
 // ============ PROFILE UI HELPERS ============
 
+const getPresenceBadgeClass = () => {
+    const status = getCurrentPresenceStatus();
+    if (status === 'PRESENT') return 'badge-success';
+    if (status === 'ABSENT') return 'badge-danger';
+    if (status === 'ON CALL') return 'badge-warning';
+    return 'badge-secondary';
+};
 
 const getPresenceIndicatorClass = () => {
     const status = getCurrentPresenceStatus();
