@@ -2969,6 +2969,73 @@ const app = createApp({
             const dept = departments.value.find(d => d.id === departmentId);
             return dept ? dept.name : 'Unknown Department';
         };
+        // ============ MISSING HELPER FUNCTIONS ============
+
+// 1. getCurrentRotationForStaff - Returns the current rotation for a staff member
+const getCurrentRotationForStaff = (staffId) => {
+    if (!staffId || !rotations.value.length) return null;
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Find active or current rotation
+    const currentRotation = rotations.value.find(rotation => 
+        rotation.resident_id === staffId && 
+        (rotation.rotation_status === 'active' || 
+         (rotation.start_date <= today && rotation.end_date >= today))
+    );
+    
+    return currentRotation;
+};
+
+// 2. getDepartmentStaffCount - Returns the number of staff in a department
+const getDepartmentStaffCount = (departmentId) => {
+    if (!departmentId) return 0;
+    
+    return medicalStaff.value.filter(staff => 
+        staff.department_id === departmentId && 
+        staff.employment_status === 'active'
+    ).length;
+};
+
+
+const getCurrentAbsenceForStaff = (staffId) => {
+    if (!staffId || !absences.value.length) return null;
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    return absences.value.find(absence => 
+        absence.staff_member_id === staffId &&
+        absence.start_date <= today && 
+        absence.end_date >= today
+    );
+};
+
+// getTodaysOnCallForStaff - Returns today's on-call for staff
+const getTodaysOnCallForStaff = (staffId) => {
+    if (!staffId || !todaysOnCall.value.length) return null;
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    return todaysOnCall.value.find(shift => 
+        (shift.primary_physician_id === staffId || shift.backup_physician_id === staffId) &&
+        shift.duty_date === today
+    );
+};
+
+// getStaffCertificationStatus - Returns staff certification status
+const getStaffCertificationStatus = (staff) => {
+    if (!staff) return 'unknown';
+    
+    if (staff.certificate_status === 'expired') {
+        return { status: 'expired', icon: 'fas fa-exclamation-triangle', class: 'text-danger' };
+    } else if (staff.certificate_status === 'pending') {
+        return { status: 'pending', icon: 'fas fa-clock', class: 'text-warning' };
+    } else if (staff.certificate_status === 'current') {
+        return { status: 'current', icon: 'fas fa-check-circle', class: 'text-success' };
+    } else {
+        return { status: 'unknown', icon: 'fas fa-question-circle', class: 'text-muted' };
+    }
+};
         
         const getStaffName = (staffId) => {
             if (!staffId) return 'Not assigned';
@@ -3322,6 +3389,11 @@ const app = createApp({
             filteredAbsences,
             todaysOnCallCount,
             recentAnnouncements,
+            getCurrentRotationForStaff,
+    getDepartmentStaffCount,
+    getCurrentAbsenceForStaff,
+    getTodaysOnCallForStaff,
+    getStaffCertificationStatus,
             
             // Data Loading Functions
             loadMedicalStaff,
