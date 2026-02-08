@@ -36,88 +36,195 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         // ============ 3. ENHANCED UTILITIES ============
-        class EnhancedUtils {
-            static formatDate(dateString) {
-                if (!dateString) return 'N/A';
-                try {
-                    const date = new Date(dateString);
-                    if (isNaN(date.getTime())) return dateString;
-                    return date.toLocaleDateString('en-US', { 
-                        month: 'short', day: 'numeric', year: 'numeric' 
-                    });
-                } catch { return dateString; }
-            }
+       // ============ ENHANCED UTILITIES ============
+class EnhancedUtils {
+    static formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', day: 'numeric', year: 'numeric' 
+            });
+        } catch { return dateString; }
+    }
+    
+    static formatDateTime(dateString) {
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            return date.toLocaleString('en-US', { 
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+            });
+        } catch { return dateString; }
+    }
+    
+    static getInitials(name) {
+        if (!name || typeof name !== 'string') return '??';
+        return name.split(' ')
+            .map(word => word[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2);
+    }
+    
+    static ensureArray(data) {
+        if (Array.isArray(data)) return data;
+        if (data && typeof data === 'object' && data.data && Array.isArray(data.data)) return data.data;
+        if (data && typeof data === 'object') return Object.values(data);
+        return [];
+    }
+    
+    static truncateText(text, maxLength = 100) {
+        if (!text) return '';
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    }
+    
+    static formatTime(dateString) {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } catch { return dateString; }
+    }
+    
+    static formatRelativeTime(dateString) {
+        if (!dateString) return 'Just now';
+        try {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
             
-            static formatDateTime(dateString) {
-                if (!dateString) return 'N/A';
-                try {
-                    const date = new Date(dateString);
-                    if (isNaN(date.getTime())) return dateString;
-                    return date.toLocaleString('en-US', { 
-                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-                    });
-                } catch { return dateString; }
-            }
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+            return `${Math.floor(diffMins / 1440)}d ago`;
+        } catch { return 'Just now'; }
+    }
+    
+    static calculateDateDifference(startDate, endDate) {
+        try {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+            const diffTime = Math.abs(end - start);
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        } catch { return 0; }
+    }
+    
+    static generateId(prefix) {
+        return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 9)}`;
+    }
+}
+
+// ============ ON-CALL UTILITIES ============
+class OnCallUtils {
+    static isOvernightShift(startTime, endTime) {
+        if (!startTime || !endTime) return false;
+        
+        const parseTime = (timeStr) => {
+            const [hours, minutes] = (timeStr || '').split(':').map(Number);
+            return (hours || 0) * 60 + (minutes || 0);
+        };
+        
+        const startMinutes = parseTime(startTime);
+        const endMinutes = parseTime(endTime);
+        
+        return endMinutes < startMinutes;
+    }
+    
+    static calculateShiftDuration(startTime, endTime) {
+        if (!startTime || !endTime) return 0;
+        
+        const parseTime = (timeStr) => {
+            const [hours, minutes] = (timeStr || '').split(':').map(Number);
+            return (hours || 0) * 60 + (minutes || 0);
+        };
+        
+        const startMinutes = parseTime(startTime);
+        const endMinutes = parseTime(endTime);
+        
+        if (endMinutes < startMinutes) {
+            // Overnight shift
+            return (24 * 60 - startMinutes + endMinutes) / 60;
+        } else {
+            // Regular shift
+            return (endMinutes - startMinutes) / 60;
+        }
+    }
+    
+    static getShiftDisplayInfo(schedule) {
+        if (!schedule) return null;
+        
+        const startTime = schedule.start_time || '15:00';
+        const endTime = schedule.end_time || '08:00';
+        const dutyDate = schedule.duty_date;
+        const isOvernight = this.isOvernightShift(startTime, endTime);
+        
+        if (isOvernight) {
+            // Calculate next day
+            const nextDay = new Date(dutyDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const nextDayStr = nextDay.toISOString().split('T')[0];
             
-            static getInitials(name) {
-                if (!name || typeof name !== 'string') return '??';
-                return name.split(' ')
-                    .map(word => word[0])
-                    .join('')
-                    .toUpperCase()
-                    .substring(0, 2);
-            }
+            return {
+                displayText: `${dutyDate} ${startTime} → ${nextDayStr} ${endTime}`,
+                isOvernight: true,
+                startDate: dutyDate,
+                endDate: nextDayStr,
+                startTime,
+                endTime,
+                duration: this.calculateShiftDuration(startTime, endTime)
+            };
+        } else {
+            return {
+                displayText: `${dutyDate} ${startTime} - ${endTime}`,
+                isOvernight: false,
+                startDate: dutyDate,
+                endDate: dutyDate,
+                startTime,
+                endTime,
+                duration: this.calculateShiftDuration(startTime, endTime)
+            };
+        }
+    }
+    
+    static isShiftActive(schedule) {
+        if (!schedule) return false;
+        
+        const now = new Date();
+        const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                           now.getMinutes().toString().padStart(2, '0');
+        const today = now.toISOString().split('T')[0];
+        
+        const shiftInfo = this.getShiftDisplayInfo(schedule);
+        if (!shiftInfo) return false;
+        
+        if (shiftInfo.isOvernight) {
+            // Check if current time is in overnight shift
+            const isToday = today === shiftInfo.startDate;
+            const isTomorrow = today === shiftInfo.endDate;
             
-            static ensureArray(data) {
-                if (Array.isArray(data)) return data;
-                if (data && typeof data === 'object' && data.data && Array.isArray(data.data)) return data.data;
-                if (data && typeof data === 'object') return Object.values(data);
-                return [];
+            if (isToday && currentTime >= shiftInfo.startTime) {
+                return true;
+            } else if (isTomorrow && currentTime <= shiftInfo.endTime) {
+                return true;
             }
-            
-            static truncateText(text, maxLength = 100) {
-                if (!text) return '';
-                if (text.length <= maxLength) return text;
-                return text.substring(0, maxLength) + '...';
-            }
-            
-            static formatTime(dateString) {
-                if (!dateString) return '';
-                try {
-                    const date = new Date(dateString);
-                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                } catch { return dateString; }
-            }
-            
-            static formatRelativeTime(dateString) {
-                if (!dateString) return 'Just now';
-                try {
-                    const date = new Date(dateString);
-                    const now = new Date();
-                    const diffMs = now - date;
-                    const diffMins = Math.floor(diffMs / 60000);
-                    
-                    if (diffMins < 1) return 'Just now';
-                    if (diffMins < 60) return `${diffMins}m ago`;
-                    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-                    return `${Math.floor(diffMins / 1440)}d ago`;
-                } catch { return 'Just now'; }
-            }
-            
-            static calculateDateDifference(startDate, endDate) {
-                try {
-                    const start = new Date(startDate);
-                    const end = new Date(endDate);
-                    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
-                    const diffTime = Math.abs(end - start);
-                    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                } catch { return 0; }
-            }
-            
-            static generateId(prefix) {
-                return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 9)}`;
+        } else {
+            // Regular shift
+            if (today === shiftInfo.startDate && 
+                currentTime >= shiftInfo.startTime && 
+                currentTime <= shiftInfo.endTime) {
+                return true;
             }
         }
+        
+        return false;
+    }
+}
         
 // ============ 4. COMPLETE API SERVICE ============
 class ApiService {
@@ -709,6 +816,33 @@ const currentDoctorProfile = ref(null);
     if (status === 'PRESENT') return 'status-normal';
     if (status === 'ABSENT') return 'status-critical';
     return 'status-caution';
+};
+                // Add this function inside setup(), before the return statement:
+const testAllAPIs = async () => {
+    console.log('🔍 Testing API connections...');
+    
+    const endpoints = [
+        { name: 'Medical Staff', url: '/api/medical-staff?limit=5' },
+        { name: 'Departments', url: '/api/departments' },
+        { name: 'Training Units', url: '/api/training-units' },
+        { name: 'Rotations', url: '/api/rotations?limit=5' },
+        { name: 'On-Call Schedule', url: '/api/oncall/today' },
+        { name: 'Absence Records', url: '/api/absence-records?limit=5' },
+        { name: 'Announcements', url: '/api/announcements' },
+        { name: 'Live Status', url: '/api/live-status/current' },
+        { name: 'System Stats', url: '/api/system-stats' }
+    ];
+    
+    for (const endpoint of endpoints) {
+        try {
+            const response = await API.request(endpoint.url);
+            console.log(`✅ ${endpoint.name}:`, response?.data?.length || response?.length || 'OK');
+        } catch (error) {
+            console.error(`❌ ${endpoint.name}:`, error.message);
+        }
+    }
+    
+    showToast('API Test Complete', 'Check console for results', 'info');
 };
                 
                 // 6.10 Modal States
@@ -3612,12 +3746,12 @@ const filteredAbsences = computed(() => {
     getDepartmentStaffCount,
     getCurrentRotationForStaff,
     calculateAbsenceDuration,
-                     OnCallUtils,
                      OnCallUtils,  // Add this
     getShiftStatusClass,  // Make sure this is included
     updateOnCallStats,  // Add this
     isValidEmail,  // Add this
     testAllAPIs,
+                    EnhancedUtils,
     
     // NEUMAC UI Functions
     getShiftStatusClass,
