@@ -371,660 +371,327 @@ class ApiService {
     async deleteMedicalStaff(id) {
         return await this.request(`/api/medical-staff/${id}`, { method: 'DELETE' });
     }
-    // ===== ENHANCED PROFILE ENDPOINTS =====
-async getEnhancedDoctorProfile(doctorId) {
-    console.log('🏗️ Building complete enhanced profile for:', doctorId);
-    
-    try {
-        // First try the real endpoint
-        try {
-            const response = await this.request(`/api/medical-staff/${doctorId}/enhanced-profile`);
-            if (response && response.success) {
-                console.log('✅ Enhanced profile from endpoint');
-                return response;
-            }
-        } catch (endpointError) {
-            console.warn('⚠️ Enhanced endpoint failed, using robust fallback:', endpointError.message);
-        }
-        
-        // Robust fallback: Build from all available data
-        return await this.buildEnhancedProfileFromAllData(doctorId);
-        
-    } catch (error) {
-        console.error('💥 All enhanced profile methods failed:', error);
-        return {
-            success: false,
-            error: 'Could not load enhanced profile',
-            data: null
-        };
-    }
-}
 
-async buildEnhancedProfileFromAllData(doctorId) {
-    try {
-        console.log('🔍 Building ENHANCED profile with ALL real data for:', doctorId);
+    // ===== SUPERB ENHANCED PROFILE ENDPOINTS =====
+    async getEnhancedDoctorProfile(doctorId) {
+        console.log('🏥 Building SUPERB enhanced profile for:', doctorId);
         
-        // Get ALL necessary data in parallel with proper error handling
-        const [
-            basicInfo, 
-            rotations, 
-            onCallToday, 
-            absences, 
-            departments, 
-            trainingUnits,
-            allStaff
-        ] = await Promise.all([
-            // 1. Basic staff info - REQUIRED
-            this.request(`/api/medical-staff/${doctorId}`)
-                .catch(error => {
-                    console.error('Failed to get basic staff info:', error);
-                    return { 
-                        id: doctorId, 
-                        employment_status: 'active',
-                        updated_at: new Date().toISOString(),
-                        full_name: 'Unknown Staff'
-                    };
-                }),
-            
-            // 2. ALL rotations for this staff
-            this.getRotations()
-                .then(data => {
-                    console.log(`📋 Found ${data.length} rotations for staff ${doctorId}`);
-                    return data;
-                })
-                .catch(error => {
-                    console.error('Failed to get rotations:', error);
-                    return [];
-                }),
-            
-            // 3. ALL on-call schedules for today
-            this.getOnCallToday()
-                .then(data => {
-                    console.log(`📋 Found ${data.length} on-call schedules for today`);
-                    return data;
-                })
-                .catch(error => {
-                    console.error('Failed to get on-call:', error);
-                    return [];
-                }),
-            
-            // 4. ALL absence records
-            this.getAbsences()
-                .then(data => {
-                    console.log(`📋 Found ${data.length} absence records`);
-                    return data;
-                })
-                .catch(error => {
-                    console.error('Failed to get absences:', error);
-                    return [];
-                }),
-            
-            // 5. ALL departments
-            this.getDepartments()
-                .then(data => {
-                    console.log(`📋 Found ${data.length} departments`);
-                    return data;
-                })
-                .catch(error => {
-                    console.error('Failed to get departments:', error);
-                    return [];
-                }),
-            
-            // 6. ALL training units
-            this.getTrainingUnits()
-                .then(data => {
-                    console.log(`📋 Found ${data.length} training units`);
-                    return data;
-                })
-                .catch(error => {
-                    console.error('Failed to get training units:', error);
-                    return [];
-                }),
-            
-            // 7. ALL medical staff (for supervisor/backup lookups)
-            this.getMedicalStaff()
-                .then(data => {
-                    console.log(`📋 Found ${data.length} total medical staff`);
-                    return data;
-                })
-                .catch(error => {
-                    console.error('Failed to get all staff:', error);
-                    return [];
-                })
-        ]);
-        
-        const today = new Date().toISOString().split('T')[0];
-        const now = new Date();
-        
-        console.log(`📊 Processing real data for ${basicInfo.full_name || doctorId}:`, {
-            rotationsCount: rotations.length,
-            onCallTodayCount: onCallToday.length,
-            absencesCount: absences.length,
-            today: today
-        });
-        
-        // ============ 1. FIND DEPARTMENT WITH ALL DETAILS ============
-        let departmentDetails = null;
-        if (basicInfo.department_id) {
-            const department = departments.find(d => d.id === basicInfo.department_id);
-            if (department) {
-                // Find head of department
-                let headOfDepartment = null;
-                if (department.head_of_department_id) {
-                    headOfDepartment = allStaff.find(s => s.id === department.head_of_department_id);
+        try {
+            // First try the real endpoint
+            try {
+                const response = await this.request(`/api/medical-staff/${doctorId}/enhanced-profile`);
+                if (response && response.success) {
+                    console.log('✅ Enhanced profile from endpoint');
+                    return response;
                 }
-                
-                departmentDetails = {
-                    id: department.id,
-                    name: department.name || 'Unknown Department',
-                    code: department.code || 'N/A',
-                    description: department.description || '',
-                    status: department.status || 'active',
-                    contact_email: department.contact_email || '',
-                    contact_phone: department.contact_phone || '',
-                    head_of_department: headOfDepartment ? {
-                        id: headOfDepartment.id,
-                        name: headOfDepartment.full_name,
-                        email: headOfDepartment.professional_email,
-                        staff_type: headOfDepartment.staff_type
-                    } : null,
-                    created_at: department.created_at,
-                    updated_at: department.updated_at
-                };
-                
-                console.log('✅ Found department:', departmentDetails.name);
-            }
-        }
-        
-        // ============ 2. FIND ALL CURRENT/ACTIVE ROTATIONS ============
-        const activeRotations = rotations.filter(r => 
-            r.resident_id === doctorId && 
-            (r.rotation_status === 'active' || r.status === 'active')
-        );
-        
-        const currentRotation = activeRotations.length > 0 ? activeRotations[0] : null;
-        let rotationDetails = null;
-        
-        if (currentRotation) {
-            // Find training unit details
-            const trainingUnit = currentRotation.training_unit_id ? 
-                trainingUnits.find(u => u.id === currentRotation.training_unit_id) : null;
-            
-            // Find supervisor details
-            let supervisorDetails = null;
-            if (currentRotation.supervising_attending_id) {
-                const supervisor = allStaff.find(s => s.id === currentRotation.supervising_attending_id);
-                if (supervisor) {
-                    supervisorDetails = {
-                        id: supervisor.id,
-                        name: supervisor.full_name,
-                        email: supervisor.professional_email,
-                        staff_type: supervisor.staff_type,
-                        department: supervisor.department_id ? 
-                            departments.find(d => d.id === supervisor.department_id)?.name : 'Unknown'
-                    };
-                }
+            } catch (endpointError) {
+                console.warn('⚠️ Enhanced endpoint failed, using robust fallback:', endpointError.message);
             }
             
-            // Calculate days remaining
-            let daysRemaining = 0;
-            if (currentRotation.end_date || currentRotation.rotation_end_date) {
-                const endDate = new Date(currentRotation.end_date || currentRotation.rotation_end_date);
-                if (!isNaN(endDate.getTime())) {
-                    daysRemaining = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
-                }
-            }
+            // Use our SUPERB enhanced profile builder
+            return await this.buildEnhancedProfileFromAllData(doctorId);
             
-            rotationDetails = {
-                id: currentRotation.id,
-                rotation_id: currentRotation.rotation_id || 'N/A',
-                start_date: currentRotation.start_date || currentRotation.rotation_start_date,
-                end_date: currentRotation.end_date || currentRotation.rotation_end_date,
-                days_remaining: daysRemaining > 0 ? daysRemaining : 0,
-                rotation_status: currentRotation.rotation_status,
-                rotation_category: currentRotation.rotation_category,
-                
-                training_unit: trainingUnit ? {
-                    id: trainingUnit.id,
-                    name: trainingUnit.unit_name,
-                    code: trainingUnit.unit_code,
-                    department: trainingUnit.department_id ? 
-                        departments.find(d => d.id === trainingUnit.department_id)?.name : 'Unknown',
-                    maximum_residents: trainingUnit.maximum_residents,
-                    current_residents: rotations.filter(r => 
-                        r.training_unit_id === trainingUnit.id && 
-                        r.rotation_status === 'active'
-                    ).length,
-                    supervisor_id: trainingUnit.supervisor_id,
-                    unit_status: trainingUnit.unit_status
-                } : null,
-                
-                supervisor: supervisorDetails,
-                clinical_notes: currentRotation.clinical_notes || '',
-                goals: currentRotation.goals || '',
-                evaluation: currentRotation.evaluation || '',
-                created_at: currentRotation.created_at,
-                updated_at: currentRotation.updated_at
+        } catch (error) {
+            console.error('💥 Enhanced profile failed:', error);
+            return {
+                success: false,
+                error: 'Could not load enhanced profile',
+                data: null
             };
-            
-            console.log('✅ Found current rotation:', rotationDetails.training_unit?.name);
         }
-        
-        // ============ 3. FIND ALL ON-CALL SCHEDULES ============
-        const allOnCallShifts = onCallToday.filter(schedule => 
-            schedule.primary_physician_id === doctorId || 
-            schedule.backup_physician_id === doctorId
-        );
-        
-        const todayOnCall = allOnCallShifts.find(schedule => schedule.duty_date === today);
-        let upcomingShifts = allOnCallShifts.filter(schedule => schedule.duty_date !== today);
-        
-        // Process on-call shifts with complete details
-        const processOnCallShift = (schedule) => {
-            const primaryPhysician = schedule.primary_physician_id ? 
-                allStaff.find(s => s.id === schedule.primary_physician_id) : null;
+    }
+
+    // ===== SUPERB ENHANCED PROFILE BUILDER =====
+    async buildEnhancedProfileFromAllData(doctorId) {
+        try {
+            console.log('🏥 Building SUPERB enhanced profile for:', doctorId);
             
-            const backupPhysician = schedule.backup_physician_id ? 
-                allStaff.find(s => s.id === schedule.backup_physician_id) : null;
+            // SECTION 1: GET ALL REAL DATA IN PARALLEL
+            const [basicInfo, rotations, onCallToday, absences, departments] = await Promise.all([
+                this.request(`/api/medical-staff/${doctorId}`).catch(() => ({})),
+                this.getRotations().catch(() => []),
+                this.getOnCallToday().catch(() => []),
+                this.getAbsences().catch(() => []),
+                this.getDepartments().catch(() => [])
+            ]);
             
-            // Calculate if shift is currently active
-            let isActive = false;
-            if (schedule.duty_date === today) {
+            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            
+            // SECTION 2: RESIDENT SPECIALIZATION DISPLAY
+            let residentSpecialization = null;
+            if (basicInfo.staff_type === 'medical_resident') {
+                let specialization = basicInfo.training_year || 'Medical Resident';
+                
+                if (basicInfo.resident_category === 'department_internal') {
+                    specialization += ' Internal Resident';
+                } else if (basicInfo.resident_category === 'external_resident') {
+                    specialization += ' External Resident';
+                } else if (basicInfo.resident_category === 'rotating_other_dept') {
+                    specialization += ' Rotating Resident';
+                }
+                
+                const dept = departments.find(d => d.id === basicInfo.department_id);
+                if (dept) {
+                    specialization += ` • ${dept.name}`;
+                }
+                
+                if (basicInfo.external_institution) {
+                    specialization += ` (${basicInfo.external_institution})`;
+                }
+                
+                residentSpecialization = specialization;
+            }
+            
+            // SECTION 3: CURRENT ROTATION STATUS
+            let currentRotation = null;
+            const activeRotation = rotations.find(r => 
+                r.resident_id === doctorId && r.rotation_status === 'active'
+            );
+            
+            if (activeRotation) {
+                const rotationDept = departments.find(d => d.id === activeRotation.department_id);
+                
+                let daysRemaining = 0;
+                let rotationStatus = 'Active';
+                if (activeRotation.end_date) {
+                    const endDate = new Date(activeRotation.end_date);
+                    daysRemaining = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+                    
+                    if (daysRemaining === 0) rotationStatus = 'Last day today!';
+                    else if (daysRemaining < 0) rotationStatus = 'Completed';
+                    else if (daysRemaining <= 7) rotationStatus = 'Ending soon';
+                }
+                
+                currentRotation = {
+                    id: activeRotation.rotation_id || activeRotation.id,
+                    unit_name: activeRotation.training_unit?.unit_name || 'Training Unit',
+                    unit_code: activeRotation.training_unit?.unit_code || '',
+                    department: rotationDept?.name || 'Not specified',
+                    supervisor: activeRotation.supervising_attending?.full_name || 'Not assigned',
+                    start_date: activeRotation.start_date,
+                    end_date: activeRotation.end_date,
+                    days_remaining: daysRemaining > 0 ? daysRemaining : 0,
+                    status: rotationStatus,
+                    category: activeRotation.rotation_category || 'Clinical Rotation'
+                };
+            }
+            
+            // SECTION 4: ON-CALL STATUS (TODAY)
+            let todaysOnCall = null;
+            const onCallShift = onCallToday.find(s => 
+                (s.primary_physician_id === doctorId || s.backup_physician_id === doctorId) &&
+                s.duty_date === today
+            );
+            
+            if (onCallShift) {
+                let isActive = false;
                 try {
                     const currentTime = now.getHours() * 100 + now.getMinutes();
-                    const startTime = parseInt((schedule.start_time || '00:00').replace(':', ''));
-                    const endTime = parseInt((schedule.end_time || '00:00').replace(':', ''));
+                    const startTime = parseInt((onCallShift.start_time || '00:00').replace(':', ''));
+                    const endTime = parseInt((onCallShift.end_time || '00:00').replace(':', ''));
                     
                     if (endTime < startTime) {
-                        // Overnight shift
                         isActive = currentTime >= startTime || currentTime <= endTime;
                     } else {
-                        // Regular shift
                         isActive = currentTime >= startTime && currentTime <= endTime;
                     }
                 } catch (error) {
-                    console.warn('Error calculating shift activity:', error);
+                    console.warn('Error checking shift activity:', error);
                 }
+                
+                let displayTime = `${onCallShift.start_time || '08:00'} - ${onCallShift.end_time || '17:00'}`;
+                if (onCallShift.end_time < onCallShift.start_time) {
+                    displayTime = `${onCallShift.start_time} → Next day ${onCallShift.end_time}`;
+                }
+                
+                todaysOnCall = {
+                    id: onCallShift.id,
+                    shift_type: onCallShift.shift_type === 'primary_call' ? 'Primary' : 'Backup',
+                    time: displayTime,
+                    coverage_area: onCallShift.coverage_notes || 'Emergency Department',
+                    is_active: isActive,
+                    is_overnight: onCallShift.end_time < onCallShift.start_time,
+                    role: onCallShift.primary_physician_id === doctorId ? 'Primary Physician' : 'Backup Physician',
+                    status: isActive ? 'ON-CALL NOW' : 'Scheduled'
+                };
             }
+            
+            // SECTION 5: ABSENCE STATUS
+            let currentAbsence = null;
+            const absenceRecord = absences.find(a => 
+                a.staff_member_id === doctorId &&
+                a.start_date <= today && 
+                a.end_date >= today &&
+                (a.current_status === 'currently_absent' || a.status === 'active')
+            );
+            
+            if (absenceRecord) {
+                let durationDays = 0;
+                let daysRemaining = 0;
+                try {
+                    const start = new Date(absenceRecord.start_date);
+                    const end = new Date(absenceRecord.end_date);
+                    durationDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                    
+                    const todayDate = new Date(today);
+                    daysRemaining = Math.ceil((end - todayDate) / (1000 * 60 * 60 * 24));
+                } catch (error) {
+                    console.warn('Error calculating absence duration:', error);
+                }
+                
+                currentAbsence = {
+                    id: absenceRecord.id,
+                    reason: absenceRecord.absence_reason || 'Leave',
+                    start_date: absenceRecord.start_date,
+                    end_date: absenceRecord.end_date,
+                    duration_days: durationDays,
+                    days_remaining: daysRemaining,
+                    coverage_arranged: absenceRecord.coverage_arranged || false,
+                    covering_staff: absenceRecord.covering_staff?.full_name,
+                    coverage_notes: absenceRecord.coverage_notes || '',
+                    status: daysRemaining <= 0 ? 'Returning today' : 
+                           daysRemaining <= 3 ? 'Returning soon' : 'On leave'
+                };
+            }
+            
+            // SECTION 6: UPCOMING ON-CALL (NEXT 7 DAYS)
+            const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const upcomingOnCall = onCallToday
+                .filter(s => 
+                    (s.primary_physician_id === doctorId || s.backup_physician_id === doctorId) &&
+                    s.duty_date > today && 
+                    s.duty_date <= nextWeek.toISOString().split('T')[0]
+                )
+                .map(s => ({
+                    date: s.duty_date,
+                    day: new Date(s.duty_date).toLocaleDateString('en-US', { weekday: 'short' }),
+                    shift_type: s.shift_type === 'primary_call' ? 'Primary' : 'Backup',
+                    time: `${s.start_time || '08:00'} - ${s.end_time || '17:00'}`,
+                    coverage: s.coverage_notes || 'Not specified'
+                }))
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            // SECTION 7: DETERMINE CURRENT STATUS
+            let currentStatus = 'PRESENT';
+            let statusIcon = '✅';
+            let statusDescription = 'Available';
+            
+            if (currentAbsence) {
+                currentStatus = 'ABSENT';
+                statusIcon = '🏖️';
+                statusDescription = `${currentAbsence.reason} (${currentAbsence.days_remaining} days remaining)`;
+            } else if (todaysOnCall?.is_active) {
+                currentStatus = 'ON CALL';
+                statusIcon = '🚨';
+                statusDescription = `On-Call Duty (${todaysOnCall.coverage_area})`;
+            } else if (todaysOnCall) {
+                currentStatus = 'PRESENT';
+                statusIcon = '📅';
+                statusDescription = `Scheduled on-call at ${todaysOnCall.time}`;
+            } else if (currentRotation) {
+                currentStatus = 'PRESENT';
+                statusIcon = '🏥';
+                statusDescription = `In Rotation: ${currentRotation.unit_name}`;
+            }
+            
+            // SECTION 8: DEPARTMENT INFO
+            let departmentInfo = null;
+            const department = departments.find(d => d.id === basicInfo.department_id);
+            if (department) {
+                departmentInfo = {
+                    id: department.id,
+                    name: department.name,
+                    code: department.code,
+                    status: department.status,
+                    head_of_department: department.head_of_department?.full_name
+                };
+            }
+            
+            // SECTION 9: BUILD FINAL SUPERB PROFILE
+            const enhancedProfile = {
+                success: true,
+                data: {
+                    header: {
+                        full_name: basicInfo.full_name || 'Unknown Staff',
+                        staff_type: basicInfo.staff_type,
+                        staff_id: basicInfo.staff_id || 'N/A',
+                        professional_email: basicInfo.professional_email || '',
+                        specialization: residentSpecialization || basicInfo.specialization || '',
+                        department: departmentInfo?.name || 'Not assigned',
+                        department_code: departmentInfo?.code || ''
+                    },
+                    
+                    status_bar: {
+                        status: currentStatus,
+                        icon: statusIcon,
+                        description: statusDescription,
+                        last_updated: basicInfo.updated_at || new Date().toISOString()
+                    },
+                    
+                    scheduled_activities: {
+                        rotation: currentRotation,
+                        on_call_today: todaysOnCall,
+                        absence: currentAbsence
+                    },
+                    
+                    upcoming: {
+                        on_call_shifts: upcomingOnCall,
+                        next_rotation_end: currentRotation?.end_date || null
+                    },
+                    
+                    contact_info: {
+                        email: basicInfo.professional_email || '',
+                        phone: basicInfo.work_phone || basicInfo.mobile_phone || 'Not specified',
+                        department_head: departmentInfo?.head_of_department || 'Not specified'
+                    },
+                    
+                    metadata: {
+                        generated_at: now.toISOString(),
+                        data_sources: ['medical_staff', 'rotations', 'oncall', 'absences', 'departments'],
+                        has_rotation: !!currentRotation,
+                        has_oncall: !!todaysOnCall,
+                        has_absence: !!currentAbsence,
+                        upcoming_count: upcomingOnCall.length
+                    }
+                }
+            };
+            
+            console.log('✅ SUPERB enhanced profile built:', {
+                staff: basicInfo.full_name,
+                status: currentStatus,
+                description: statusDescription,
+                rotation: currentRotation?.unit_name,
+                oncall: todaysOnCall?.coverage_area,
+                absence: currentAbsence?.reason,
+                upcoming_shifts: upcomingOnCall.length
+            });
+            
+            return enhancedProfile;
+            
+        } catch (error) {
+            console.error('💥 Enhanced profile build failed:', error);
             
             return {
-                id: schedule.id,
-                duty_date: schedule.duty_date,
-                shift_type: schedule.shift_type,
-                start_time: schedule.start_time || '08:00',
-                end_time: schedule.end_time || '17:00',
-                is_active: isActive,
-                is_today: schedule.duty_date === today,
-                
-                primary_physician: primaryPhysician ? {
-                    id: primaryPhysician.id,
-                    name: primaryPhysician.full_name,
-                    email: primaryPhysician.professional_email,
-                    staff_type: primaryPhysician.staff_type
-                } : null,
-                
-                backup_physician: backupPhysician ? {
-                    id: backupPhysician.id,
-                    name: backupPhysician.full_name,
-                    email: backupPhysician.professional_email,
-                    staff_type: backupPhysician.staff_type
-                } : null,
-                
-                coverage_area: schedule.coverage_area || schedule.coverage_notes || 'Not specified',
-                schedule_id: schedule.schedule_id,
-                created_by: schedule.created_by,
-                created_at: schedule.created_at,
-                updated_at: schedule.updated_at
-            };
-        };
-        
-        const processedTodayOnCall = todayOnCall ? processOnCallShift(todayOnCall) : null;
-        const processedUpcomingShifts = upcomingShifts.map(processOnCallShift);
-        
-        if (processedTodayOnCall) {
-            console.log('✅ Found on-call today:', processedTodayOnCall.shift_type);
-        }
-        
-        // ============ 4. FIND ALL ACTIVE ABSENCES ============
-        const activeAbsences = absences.filter(absence => {
-            if (absence.staff_member_id !== doctorId) return false;
-            
-            const startDate = absence.start_date || absence.absence_start_date;
-            const endDate = absence.end_date || absence.absence_end_date;
-            const status = absence.current_status || absence.status;
-            
-            // Check if today is within absence dates
-            if (startDate && endDate) {
-                const isDateInRange = startDate <= today && today <= endDate;
-                const isActiveStatus = status === 'currently_absent' || 
-                                      status === 'active' || 
-                                      status === 'approved';
-                
-                return isDateInRange && isActiveStatus;
-            }
-            
-            return false;
-        });
-        
-        const currentAbsence = activeAbsences.length > 0 ? activeAbsences[0] : null;
-        let absenceDetails = null;
-        
-        if (currentAbsence) {
-            // Find covering staff
-            let coveringStaff = null;
-            if (currentAbsence.covering_staff_id) {
-                const covering = allStaff.find(s => s.id === currentAbsence.covering_staff_id);
-                if (covering) {
-                    coveringStaff = {
-                        id: covering.id,
-                        name: covering.full_name,
-                        email: covering.professional_email,
-                        staff_type: covering.staff_type
-                    };
-                }
-            }
-            
-            absenceDetails = {
-                id: currentAbsence.id,
-                absence_type: currentAbsence.absence_type,
-                absence_reason: currentAbsence.absence_reason,
-                start_date: currentAbsence.start_date,
-                end_date: currentAbsence.end_date,
-                duration_days: currentAbsence.start_date && currentAbsence.end_date ? 
-                    EnhancedUtils.calculateDateDifference(currentAbsence.start_date, currentAbsence.end_date) : 0,
-                current_status: currentAbsence.current_status,
-                coverage_arranged: currentAbsence.coverage_arranged || false,
-                covering_staff: coveringStaff,
-                coverage_notes: currentAbsence.coverage_notes || '',
-                hod_notes: currentAbsence.hod_notes || '',
-                recorded_by: currentAbsence.recorded_by,
-                recorded_at: currentAbsence.recorded_at,
-                last_updated: currentAbsence.last_updated
-            };
-            
-            console.log('✅ Found active absence:', absenceDetails.absence_reason);
-        }
-        
-        // ============ 5. BUILD COMPLETE TODAY'S SCHEDULE ============
-        const todaysSchedule = [];
-        
-        // Add on-call shift if exists
-        if (processedTodayOnCall) {
-            todaysSchedule.push({
-                time: `${processedTodayOnCall.start_time} - ${processedTodayOnCall.end_time}`,
-                activity: 'On-Call Duty',
-                location: processedTodayOnCall.coverage_area,
-                status: processedTodayOnCall.is_active ? 'active' : 'scheduled',
-                type: 'oncall',
-                shift_type: processedTodayOnCall.shift_type
-            });
-        }
-        
-        // Add rotation schedule if exists
-        if (rotationDetails) {
-            todaysSchedule.push({
-                time: '08:00 - 17:00',
-                activity: 'Clinical Rotation',
-                location: rotationDetails.training_unit?.name || 'Training Unit',
-                status: 'scheduled',
-                type: 'rotation',
-                supervisor: rotationDetails.supervisor?.name
-            });
-        }
-        
-        // Add academic activities for residents
-        if (basicInfo.staff_type === 'medical_resident' && !processedTodayOnCall) {
-            todaysSchedule.push(
-                {
-                    time: '08:00 - 09:00',
-                    activity: 'Morning Report',
-                    location: 'Conference Room',
-                    status: 'scheduled',
-                    type: 'academic'
-                },
-                {
-                    time: '09:00 - 12:00',
-                    activity: 'Clinical Rounds',
-                    location: rotationDetails?.training_unit?.name || 'Ward',
-                    status: 'scheduled',
-                    type: 'clinical'
-                },
-                {
-                    time: '13:00 - 16:00',
-                    activity: 'Patient Care',
-                    location: 'Clinical Area',
-                    status: 'scheduled',
-                    type: 'clinical'
-                }
-            );
-        }
-        
-        // Add attending physician schedule
-        if (basicInfo.staff_type === 'attending_physician' && !processedTodayOnCall) {
-            todaysSchedule.push(
-                {
-                    time: '08:00 - 10:00',
-                    activity: 'Patient Rounds',
-                    location: 'ICU/Ward',
-                    status: 'scheduled',
-                    type: 'clinical'
-                },
-                {
-                    time: '10:00 - 12:00',
-                    activity: 'Consultations',
-                    location: 'Clinic',
-                    status: 'scheduled',
-                    type: 'clinical'
-                },
-                {
-                    time: '13:00 - 15:00',
-                    activity: 'Procedures/Surgery',
-                    location: 'Procedure Room',
-                    status: 'scheduled',
-                    type: 'procedure'
-                }
-            );
-        }
-        
-        // ============ 6. DETERMINE CURRENT ACTIVITY ============
-        let currentActivity = 'Available';
-        let currentLocation = 'Not specified';
-        
-        // Check if currently in an on-call shift
-        if (processedTodayOnCall?.is_active) {
-            currentActivity = 'On-Call Duty';
-            currentLocation = processedTodayOnCall.coverage_area;
-        }
-        // Check if currently in a scheduled activity
-        else {
-            const currentTime = now.getHours() * 100 + now.getMinutes();
-            const currentScheduleItem = todaysSchedule.find(item => {
-                try {
-                    const [startStr, endStr] = item.time.split(' - ');
-                    const startTime = parseInt(startStr.replace(':', ''));
-                    const endTime = parseInt(endStr.replace(':', ''));
-                    
-                    if (endTime < startTime) {
-                        // Overnight activity
-                        return currentTime >= startTime || currentTime <= endTime;
-                    } else {
-                        // Regular activity
-                        return currentTime >= startTime && currentTime <= endTime;
-                    }
-                } catch {
-                    return false;
-                }
-            });
-            
-            if (currentScheduleItem) {
-                currentActivity = currentScheduleItem.activity;
-                currentLocation = currentScheduleItem.location;
-            }
-        }
-        
-        // ============ 7. BUILD COMPLETE ENHANCED PROFILE ============
-        const enhancedProfile = {
-            success: true,
-            data: {
-                // BASIC STAFF INFO (from medical_staff table)
-                basic_info: {
-                    id: basicInfo.id,
-                    full_name: basicInfo.full_name || 'Unknown Staff',
-                    staff_type: basicInfo.staff_type,
-                    staff_id: basicInfo.staff_id || 'N/A',
-                    professional_email: basicInfo.professional_email || '',
-                    employment_status: basicInfo.employment_status || 'active',
-                    academic_degree: basicInfo.academic_degree || '',
-                    specialization: basicInfo.specialization || '',
-                    training_year: basicInfo.training_year || '',
-                    clinical_study_certificate: basicInfo.clinical_study_certificate || '',
-                    certificate_status: basicInfo.certificate_status || '',
-                    can_supervise_residents: basicInfo.can_supervise_residents || false,
-                    resident_category: basicInfo.resident_category || '',
-                    primary_clinic: basicInfo.primary_clinic || '',
-                    years_experience: basicInfo.years_experience || 0,
-                    biography: basicInfo.biography || '',
-                    date_of_birth: basicInfo.date_of_birth || null,
-                    special_notes: basicInfo.special_notes || '',
-                    created_at: basicInfo.created_at,
-                    updated_at: basicInfo.updated_at || new Date().toISOString()
-                },
-                
-                // DEPARTMENT DETAILS (from departments table)
-                department: departmentDetails,
-                
-                // LIVE CLINICAL DATA (from multiple tables)
-                live_clinical_data: {
-                    // PRESENCE STATUS (calculated from multiple sources)
-                    presence: {
-                        status: absenceDetails ? 'ABSENT' : 
-                               (basicInfo.employment_status === 'active' ? 'PRESENT' : 'ABSENT'),
-                        type: absenceDetails ? 'On Leave' : 
-                              (processedTodayOnCall ? 'On Call' : currentActivity),
-                        location: currentLocation,
-                        last_seen: basicInfo.updated_at || new Date().toISOString(),
-                        source: 'frontend_calculation'
+                success: false,
+                error: error.message,
+                data: {
+                    header: { 
+                        full_name: 'Unknown',
+                        staff_type: 'unknown',
+                        staff_id: 'N/A'
                     },
-                    
-                    // CURRENT ASSIGNMENT (from resident_rotations table)
-                    current_assignment: rotationDetails ? {
-                        rotation_id: rotationDetails.rotation_id,
-                        unit: rotationDetails.training_unit?.name,
-                        unit_code: rotationDetails.training_unit?.code,
-                        department: rotationDetails.training_unit?.department,
-                        supervisor: rotationDetails.supervisor,
-                        start_date: rotationDetails.start_date,
-                        end_date: rotationDetails.end_date,
-                        days_remaining: rotationDetails.days_remaining,
-                        rotation_status: rotationDetails.rotation_status,
-                        rotation_category: rotationDetails.rotation_category,
-                        clinical_notes: rotationDetails.clinical_notes,
-                        goals: rotationDetails.goals,
-                        evaluation: rotationDetails.evaluation
-                    } : null,
-                    
-                    // TODAY'S SCHEDULE (compiled from multiple sources)
-                    todays_schedule: todaysSchedule,
-                    
-                    // UPCOMING ON-CALL (from oncall_schedule table)
-                    upcoming_oncall: processedUpcomingShifts.map(shift => ({
-                        date: shift.duty_date,
-                        shift_type: shift.shift_type,
-                        time: `${shift.start_time} - ${shift.end_time}`,
-                        coverage_area: shift.coverage_area,
-                        primary_physician: shift.primary_physician,
-                        backup_physician: shift.backup_physician,
-                        is_today: shift.is_today,
-                        is_active: shift.is_active
-                    })),
-                    
-                    // ABSENCE INFO (from staff_absence_records table)
-                    current_absence: absenceDetails ? {
-                        absence_type: absenceDetails.absence_type,
-                        absence_reason: absenceDetails.absence_reason,
-                        start_date: absenceDetails.start_date,
-                        end_date: absenceDetails.end_date,
-                        duration_days: absenceDetails.duration_days,
-                        coverage_arranged: absenceDetails.coverage_arranged,
-                        covering_staff: absenceDetails.covering_staff,
-                        coverage_notes: absenceDetails.coverage_notes,
-                        hod_notes: absenceDetails.hod_notes
-                    } : null,
-                    
-                    clinical_status: null
-                },
-                
-                // ACADEMIC DATA (from medical_staff + calculations)
-                academic_data: {
-                    research_notes: basicInfo.special_notes || '',
-                    specializations: basicInfo.specialization ? 
-                        basicInfo.specialization.split(',').map(s => s.trim()) : [],
-                    publications: [],
-                    ongoing_research: [],
-                    certifications: basicInfo.clinical_study_certificate ? 
-                        [basicInfo.clinical_study_certificate] : []
-                },
-                
-                // METADATA
-                metadata: {
-                    source: 'frontend_fallback_complete',
-                    generated_at: now.toISOString(),
-                    data_sources: [
-                        'medical_staff',
-                        'departments', 
-                        'resident_rotations',
-                        'oncall_schedule',
-                        'staff_absence_records',
-                        'training_units'
-                    ],
-                    data_freshness: 'LIVE',
-                    processed_items: {
-                        rotations: activeRotations.length,
-                        oncall_shifts: allOnCallShifts.length,
-                        absences: activeAbsences.length,
-                        schedule_items: todaysSchedule.length
+                    status_bar: {
+                        status: 'UNKNOWN',
+                        icon: '❓',
+                        description: 'Profile data unavailable',
+                        last_updated: new Date().toISOString()
                     }
                 }
-            }
-        };
-        
-        console.log('✅ COMPLETE enhanced profile built:', {
-            staff: basicInfo.full_name,
-            has_department: !!departmentDetails,
-            has_rotation: !!rotationDetails,
-            has_oncall_today: !!processedTodayOnCall,
-            has_absence: !!absenceDetails,
-            schedule_items: todaysSchedule.length,
-            upcoming_shifts: processedUpcomingShifts.length
-        });
-        
-        return enhancedProfile;
-        
-    } catch (error) {
-        console.error('💥 COMPLETE enhanced profile build failed:', error);
-        
-        // Fallback with basic structure
-        return {
-            success: true,
-            data: {
-                basic_info: { 
-                    id: doctorId, 
-                    full_name: 'Staff Member',
-                    employment_status: 'active'
-                },
-                live_clinical_data: {
-                    presence: {
-                        status: 'PRESENT',
-                        type: 'Available',
-                        last_seen: new Date().toISOString()
-                    },
-                    todays_schedule: [],
-                    upcoming_oncall: []
-                }
-            }
-        };
+            };
+        }
     }
-}
+
     // ===== DEPARTMENT ENDPOINTS =====
     async getDepartments() {
         try {
