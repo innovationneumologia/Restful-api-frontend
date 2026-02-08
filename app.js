@@ -2713,7 +2713,7 @@ const viewStaffDetails = async (staff) => {
         
         if (response && response.success) {
             currentDoctorProfile.value = response.data;
-            staffProfileModal.staff = response.data.basic_info;
+            staffProfileModal.staff = response.data.header; // ← CHANGED
             showToast('Profile Loaded', `${staff.full_name}'s enhanced profile loaded`, 'success');
         } else {
             // Fallback to basic view
@@ -2729,6 +2729,17 @@ const viewStaffDetails = async (staff) => {
         staffProfileModal.loading = false;
     }
 };
+
+// Update getCurrentActivity to use new structure
+const getCurrentActivity = () => {
+    if (!currentDoctorProfile.value) return 'Unknown';
+    
+    const statusBar = currentDoctorProfile.value.status_bar;
+    if (statusBar?.description) return statusBar.description;
+    
+    return 'Available';
+};
+
 
 
 // ============ EDIT FUNCTIONS ============
