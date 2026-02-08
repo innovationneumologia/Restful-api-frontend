@@ -889,7 +889,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const API = new ApiService();
 
         // ============ 5. CREATE VUE APP ============
-
 const app = createApp({
     setup() {
         // ============ CORE STATE ============
@@ -1017,31 +1016,7 @@ const app = createApp({
                 }
             }
         });
-        // Add this to your setup() function
-const getSearchPlaceholder = () => {
-    const placeholders = {
-        'dashboard': 'Search staff, departments...',
-        'medical_staff': 'Search by name, staff ID, or email...',
-        'oncall_schedule': 'Search by physician, date, or coverage area...',
-        'resident_rotations': 'Search by resident name, training unit...',
-        'training_units': 'Search by unit name, department...',
-        'staff_absence': 'Search by staff name or reason...',
-        'department_management': 'Search by department name or code...',
-        'communications': 'Search announcements...'
-    };
-    return placeholders[currentView.value] || 'Search...';
-};
-        const getUserRoleDisplay = (role) => {
-    const roleMap = {
-        'system_admin': 'System Administrator',
-        'department_head': 'Department Head',
-        'attending_physician': 'Attending Physician',
-        'medical_resident': 'Medical Resident',
-        'fellow': 'Fellow',
-        'nurse_practitioner': 'Nurse Practitioner'
-    };
-    return roleMap[role] || role || 'Unknown Role';
-};
+        
         const onCallModal = reactive({
             show: false,
             mode: 'add',
@@ -1875,6 +1850,98 @@ const getSearchPlaceholder = () => {
             } catch { 
                 return 'Recently'; 
             }
+        };
+        
+        // ============ MISSING FUNCTIONS FROM ERRORS ============
+        const calculateAbsenceDuration = (startDate, endDate) => {
+            if (!startDate || !endDate) return 'N/A';
+            
+            try {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const diffTime = Math.abs(end - start);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 1) return '1 day';
+                if (diffDays < 30) return `${diffDays} days`;
+                
+                const diffMonths = Math.floor(diffDays / 30);
+                const remainingDays = diffDays % 30;
+                
+                if (remainingDays === 0) {
+                    return diffMonths === 1 ? '1 month' : `${diffMonths} months`;
+                }
+                
+                return `${diffMonths}m ${remainingDays}d`;
+            } catch {
+                return 'Invalid dates';
+            }
+        };
+        
+        const formatTimeAgo = (dateString) => {
+            if (!dateString) return 'Recently';
+            
+            try {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffSeconds = Math.floor(diffMs / 1000);
+                const diffMinutes = Math.floor(diffSeconds / 60);
+                const diffHours = Math.floor(diffMinutes / 60);
+                const diffDays = Math.floor(diffHours / 24);
+                const diffWeeks = Math.floor(diffDays / 7);
+                const diffMonths = Math.floor(diffDays / 30);
+                
+                if (diffSeconds < 60) return 'Just now';
+                if (diffMinutes < 60) return `${diffMinutes}m ago`;
+                if (diffHours < 24) return `${diffHours}h ago`;
+                if (diffDays < 7) return `${diffDays}d ago`;
+                if (diffWeeks < 4) return `${diffWeeks}w ago`;
+                if (diffMonths < 12) return `${diffMonths}mo ago`;
+                
+                const diffYears = Math.floor(diffMonths / 12);
+                return `${diffYears}y ago`;
+            } catch {
+                return 'Recently';
+            }
+        };
+        
+        const getStaffTypeClass = (staffType) => {
+            const classMap = {
+                'medical_resident': 'badge-resident',
+                'attending_physician': 'badge-attending',
+                'fellow': 'badge-fellow',
+                'nurse_practitioner': 'badge-np',
+                'system_admin': 'badge-admin',
+                'department_head': 'badge-head'
+            };
+            return classMap[staffType] || 'badge-default';
+        };
+        
+        const getUserRoleDisplay = (role) => {
+            const roleMap = {
+                'system_admin': 'System Administrator',
+                'department_head': 'Department Head',
+                'attending_physician': 'Attending Physician',
+                'medical_resident': 'Medical Resident',
+                'fellow': 'Fellow',
+                'nurse_practitioner': 'Nurse Practitioner'
+            };
+            return roleMap[role] || role || 'Unknown Role';
+        };
+        
+        const getSearchPlaceholder = () => {
+            const placeholders = {
+                'dashboard': 'Search staff, departments...',
+                'medical_staff': 'Search by name, staff ID, or email...',
+                'oncall_schedule': 'Search by physician, date, or coverage area...',
+                'resident_rotations': 'Search by resident name, training unit...',
+                'training_units': 'Search by unit name, department...',
+                'staff_absence': 'Search by staff name or reason...',
+                'department_management': 'Search by department name or code...',
+                'communications': 'Search announcements...'
+            };
+            return placeholders[currentView.value] || 'Search...';
         };
         
         // ============ TOAST SYSTEM ============
@@ -3151,120 +3218,124 @@ const getSearchPlaceholder = () => {
             userProfileModal,
             confirmationModal,
             
-           // Profile Functions
-viewStaffDetails,
-getStatusClass,
-getStatusIcon,
-getStatusText,
-getStatusDescription,
-
-// Auth Functions
-handleLogin,
-handleLogout,
-
-// Navigation
-switchView,
-toggleStatsSidebar,
-handleGlobalSearch,
-
-// View Title Helpers
-getCurrentViewTitle,
-getCurrentViewSubtitle,
-
-// Permission System
-hasPermission,
-
-// Modal Show Functions
-showAddMedicalStaffModal,
-showAddOnCallModal,
-showAddAbsenceModal,
-showAddRotationModal,
-showAddTrainingUnitModal,
-showAddDepartmentModal,
-showCommunicationsModal,
-showUserProfileModal,
-
-// Edit Functions
-editMedicalStaff,
-editDepartment,
-editTrainingUnit,
-editRotation,
-editOnCallSchedule,
-editAbsence,
-
-// Save Functions
-saveMedicalStaff,
-saveDepartment,
-saveTrainingUnit,
-saveRotation,
-saveOnCallSchedule,
-saveAbsence,
-saveCommunication,
-saveUserProfile,
-    getSearchPlaceholder,
-
-// Delete Functions
-deleteMedicalStaff,
-deleteRotation,
-deleteOnCallSchedule,
-deleteAbsence,
-
-// Helper Functions
-getDepartmentName,
-getStaffName,
-getTrainingUnitName,
-getPhysicianName,
-getResidentName,
-getSupervisorName,
-contactPhysician,
-
-// Formatting Utilities
-formatStaffType,
-formatEmploymentStatus,
-formatAbsenceReason,
-formatRotationStatus,
-getInitials,
-formatDate,
-formatTime,
-formatRelativeTime,
-
-// Toast System
-showToast,
-removeToast,
-
-// Confirmation Modal
-showConfirmation,
-confirmAction,
-cancelConfirmation,
-
-// Computed Properties
-availablePhysicians,
-availableResidents,
-availableAttendings,
-availableHeadsOfDepartment,
-availableReplacementStaff,
-filteredMedicalStaff,
-filteredOnCallSchedules,
-filteredRotations,
-filteredAbsences,
-todaysOnCallCount,
-recentAnnouncements,
-getUserRoleDisplay,
-
-
-// Data Loading Functions
-loadMedicalStaff,
-loadDepartments,
-loadTrainingUnits,
-loadRotations,
-loadAbsences,
-loadOnCallSchedule,
-loadTodaysOnCall,
-loadAnnouncements,
-loadClinicalStatus,
-loadSystemStats,
-loadAllData
-};
+            // Profile Functions
+            viewStaffDetails,
+            getStatusClass,
+            getStatusIcon,
+            getStatusText,
+            getStatusDescription,
+            
+            // Auth Functions
+            handleLogin,
+            handleLogout,
+            
+            // Navigation
+            switchView,
+            toggleStatsSidebar,
+            handleGlobalSearch,
+            
+            // View Title Helpers
+            getCurrentViewTitle,
+            getCurrentViewSubtitle,
+            
+            // Permission System
+            hasPermission,
+            
+            // Modal Show Functions
+            showAddMedicalStaffModal,
+            showAddOnCallModal,
+            showAddAbsenceModal,
+            showAddRotationModal,
+            showAddTrainingUnitModal,
+            showAddDepartmentModal,
+            showCommunicationsModal,
+            showUserProfileModal,
+            
+            // Edit Functions
+            editMedicalStaff,
+            editDepartment,
+            editTrainingUnit,
+            editRotation,
+            editOnCallSchedule,
+            editAbsence,
+            
+            // Save Functions
+            saveMedicalStaff,
+            saveDepartment,
+            saveTrainingUnit,
+            saveRotation,
+            saveOnCallSchedule,
+            saveAbsence,
+            saveCommunication,
+            saveUserProfile,
+            
+            // Delete Functions
+            deleteMedicalStaff,
+            deleteRotation,
+            deleteOnCallSchedule,
+            deleteAbsence,
+            
+            // Helper Functions
+            getDepartmentName,
+            getStaffName,
+            getTrainingUnitName,
+            getPhysicianName,
+            getResidentName,
+            getSupervisorName,
+            contactPhysician,
+            
+            // Formatting Utilities
+            formatStaffType,
+            formatEmploymentStatus,
+            formatAbsenceReason,
+            formatRotationStatus,
+            getInitials,
+            formatDate,
+            formatTime,
+            formatRelativeTime,
+            
+            // Missing Functions (from errors)
+            calculateAbsenceDuration,
+            formatTimeAgo,
+            getStaffTypeClass,
+            getUserRoleDisplay,
+            getSearchPlaceholder,
+            
+            // Toast System
+            showToast,
+            removeToast,
+            
+            // Confirmation Modal
+            showConfirmation,
+            confirmAction,
+            cancelConfirmation,
+            
+            // Computed Properties
+            availablePhysicians,
+            availableResidents,
+            availableAttendings,
+            availableHeadsOfDepartment,
+            availableReplacementStaff,
+            filteredMedicalStaff,
+            filteredOnCallSchedules,
+            filteredRotations,
+            filteredAbsences,
+            todaysOnCallCount,
+            recentAnnouncements,
+            
+            // Data Loading Functions
+            loadMedicalStaff,
+            loadDepartments,
+            loadTrainingUnits,
+            loadRotations,
+            loadAbsences,
+            loadOnCallSchedule,
+            loadTodaysOnCall,
+            loadAnnouncements,
+            loadClinicalStatus,
+            loadSystemStats,
+            loadAllData
+        };
     }
 });
         // ============ 23. MOUNT APP ============
