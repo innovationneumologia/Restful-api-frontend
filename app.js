@@ -138,6 +138,115 @@ class ApiService {
         
         return headers;
     }
+    // ============ ON-CALL UTILITY FUNCTIONS ============
+class OnCallUtils {
+    static isOvernightShift(startTime, endTime) {
+        if (!startTime || !endTime) return false;
+        
+        const parseTime = (timeStr) => {
+            const [hours, minutes] = (timeStr || '').split(':').map(Number);
+            return (hours || 0) * 60 + (minutes || 0);
+        };
+        
+        const startMinutes = parseTime(startTime);
+        const endMinutes = parseTime(endTime);
+        
+        return endMinutes < startMinutes;
+    }
+    const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+};
+    
+    static calculateShiftDuration(startTime, endTime) {
+        if (!startTime || !endTime) return 0;
+        
+        const parseTime = (timeStr) => {
+            const [hours, minutes] = (timeStr || '').split(':').map(Number);
+            return (hours || 0) * 60 + (minutes || 0);
+        };
+        
+        const startMinutes = parseTime(startTime);
+        const endMinutes = parseTime(endTime);
+        
+        if (endMinutes < startMinutes) {
+            // Overnight shift
+            return (24 * 60 - startMinutes + endMinutes) / 60;
+        } else {
+            // Regular shift
+            return (endMinutes - startMinutes) / 60;
+        }
+    }
+    
+    static getShiftDisplayInfo(schedule) {
+        if (!schedule) return null;
+        
+        const startTime = schedule.start_time || '15:00';
+        const endTime = schedule.end_time || '08:00';
+        const dutyDate = schedule.duty_date;
+        const isOvernight = this.isOvernightShift(startTime, endTime);
+        
+        if (isOvernight) {
+            // Calculate next day
+            const nextDay = new Date(dutyDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const nextDayStr = nextDay.toISOString().split('T')[0];
+            
+            return {
+                displayText: `${dutyDate} ${startTime} → ${nextDayStr} ${endTime}`,
+                isOvernight: true,
+                startDate: dutyDate,
+                endDate: nextDayStr,
+                startTime,
+                endTime,
+                duration: this.calculateShiftDuration(startTime, endTime)
+            };
+        } else {
+            return {
+                displayText: `${dutyDate} ${startTime} - ${endTime}`,
+                isOvernight: false,
+                startDate: dutyDate,
+                endDate: dutyDate,
+                startTime,
+                endTime,
+                duration: this.calculateShiftDuration(startTime, endTime)
+            };
+        }
+    }
+    
+    static isShiftActive(schedule) {
+        if (!schedule) return false;
+        
+        const now = new Date();
+        const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                           now.getMinutes().toString().padStart(2, '0');
+        const today = now.toISOString().split('T')[0];
+        
+        const shiftInfo = this.getShiftDisplayInfo(schedule);
+        if (!shiftInfo) return false;
+        
+        if (shiftInfo.isOvernight) {
+            // Check if current time is in overnight shift
+            const isToday = today === shiftInfo.startDate;
+            const isTomorrow = today === shiftInfo.endDate;
+            
+            if (isToday && currentTime >= shiftInfo.startTime) {
+                return true;
+            } else if (isTomorrow && currentTime <= shiftInfo.endTime) {
+                return true;
+            }
+        } else {
+            // Regular shift
+            if (today === shiftInfo.startDate && 
+                currentTime >= shiftInfo.startTime && 
+                currentTime <= shiftInfo.endTime) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+}
     
     async request(endpoint, options = {}) {
         const url = `${CONFIG.API_BASE_URL}${endpoint}`;
@@ -650,6 +759,35 @@ const formatRelativeTime = (dateString) => {
         return 'Recently'; 
     }
 };
+
+                // Test function to verify all APIs are working
+const testAllAPIs = async () => {
+    console.log('🔍 Testing API connections...');
+    
+    const endpoints = [
+        { name: 'Medical Staff', url: '/api/medical-staff?limit=5' },
+        { name: 'Departments', url: '/api/departments' },
+        { name: 'Training Units', url: '/api/training-units' },
+        { name: 'Rotations', url: '/api/rotations?limit=5' },
+        { name: 'On-Call Schedule', url: '/api/oncall/today' },
+        { name: 'Absence Records', url: '/api/absence-records?limit=5' },
+        { name: 'Announcements', url: '/api/announcements' },
+        { name: 'Live Status', url: '/api/live-status/current' },
+        { name: 'System Stats', url: '/api/system-stats' }
+    ];
+    
+    for (const endpoint of endpoints) {
+        try {
+            const response = await API.request(endpoint.url);
+            console.log(`✅ ${endpoint.name}:`, response?.data?.length || response?.length || 'OK');
+        } catch (error) {
+            console.error(`❌ ${endpoint.name}:`, error.message);
+        }
+    }
+    
+    showToast('API Test Complete', 'Check console for results', 'info');
+};
+
                 const communicationsModal = reactive({
                     show: false,
                     activeTab: 'announcement',
@@ -859,41 +997,72 @@ const formatRelativeTime = (dateString) => {
                 const saveOnCallSchedule = async () => {
     saving.value = true;
     try {
-        // Ensure data is properly formatted
+        // Validate time logic for overnight shifts
+        const startTime = onCallModal.form.start_time || '15:00';
+        const endTime = onCallModal.form.end_time || '08:00';
+        
+        // Check if it's overnight (end time is earlier than start time)
+        const parseTime = (timeStr) => {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        };
+        
+        const startMinutes = parseTime(startTime);
+        const endMinutes = parseTime(endTime);
+        const isOvernight = endMinutes < startMinutes;
+        
+        // Prepare data matching backend schema
         const onCallData = {
             duty_date: onCallModal.form.duty_date,
             shift_type: onCallModal.form.shift_type || 'primary_call',
-            start_time: onCallModal.form.start_time || '08:00',
-            end_time: onCallModal.form.end_time || '17:00',
+            start_time: startTime,
+            end_time: endTime,
             primary_physician_id: onCallModal.form.primary_physician_id,
             backup_physician_id: onCallModal.form.backup_physician_id || null,
-            coverage_area: onCallModal.form.coverage_area || 'general',
+            coverage_notes: onCallModal.form.coverage_notes || 'Emergency Department',
             schedule_id: onCallModal.form.schedule_id || EnhancedUtils.generateId('SCH')
         };
         
-        console.log('📤 Saving on-call data:', onCallData);
+        console.log('📤 Saving on-call data:', {
+            ...onCallData,
+            isOvernight,
+            duration_hours: isOvernight 
+                ? (24 * 60 - startMinutes + endMinutes) / 60 
+                : (endMinutes - startMinutes) / 60
+        });
         
+        let result;
         if (onCallModal.mode === 'add') {
-            const result = await API.createOnCall(onCallData);
+            result = await API.createOnCall(onCallData);
             onCallSchedule.value.unshift(result);
             showToast('Success', 'On-call scheduled successfully', 'success');
         } else {
-            const result = await API.updateOnCall(onCallModal.form.id, onCallData);
+            result = await API.updateOnCall(onCallModal.form.id, onCallData);
             const index = onCallSchedule.value.findIndex(s => s.id === result.id);
             if (index !== -1) onCallSchedule.value[index] = result;
             showToast('Success', 'On-call updated successfully', 'success');
         }
         
         onCallModal.show = false;
-        loadTodaysOnCall();
+        await loadTodaysOnCall();
         
     } catch (error) {
         console.error('❌ Save on-call error:', error);
-        showToast('Error', error.message || 'Failed to save on-call schedule', 'error');
+        let errorMessage = error.message || 'Failed to save on-call schedule';
+        
+        // Parse common errors
+        if (error.message.includes('primary_physician_id') || error.message.includes('23503')) {
+            errorMessage = 'Selected physician not found. Please refresh and try again.';
+        } else if (error.message.includes('validation') || error.message.includes('400')) {
+            errorMessage = 'Invalid time format. Please use HH:MM format (24-hour).';
+        }
+        
+        showToast('Error', errorMessage, 'error');
     } finally {
         saving.value = false;
     }
 };
+
                 const confirmAction = async () => {
                     if (confirmationModal.onConfirm) {
                         try {
@@ -1082,6 +1251,12 @@ const getCurrentPresence = () => {
                 
                 const getShiftStatusClass = (shift) => {
                     if (!shift || !shift.raw) return 'neumac-status-oncall';
+                        if (OnCallUtils.isShiftActive(shift.raw)) {
+        return 'neumac-status-critical';
+    }
+    
+    return shift.shiftType === 'Primary' ? 'neumac-status-oncall' : 'neumac-status-busy';
+};
                     
                     const now = new Date();
                     const today = now.toISOString().split('T')[0];
@@ -1749,59 +1924,96 @@ const getCurrentPresence = () => {
                     }
                 };
                 
-                const loadTodaysOnCall = async () => {
-                    try {
-                        loadingSchedule.value = true;
-                        const data = await API.getOnCallToday();
-                        
-                        todaysOnCall.value = data.map(item => {
-                            const startTime = item.start_time ? item.start_time.substring(0, 5) : 'N/A';
-                            const endTime = item.end_time ? item.end_time.substring(0, 5) : 'N/A';
-                            const physicianName = item.primary_physician?.full_name || 'Unknown Physician';
-                            
-                            let shiftTypeDisplay = 'Unknown';
-                            if (item.shift_type === 'primary_call' || item.shift_type === 'primary') {
-                                shiftTypeDisplay = 'Primary';
-                            } else if (item.shift_type === 'backup_call' || item.shift_type === 'backup' || item.shift_type === 'secondary') {
-                                shiftTypeDisplay = 'Backup';
-                            }
-                            
-                            const coverageArea = item.coverage_area || 'General Coverage';
-                            const backupPhysician = item.backup_physician?.full_name || null;
-                            const contactInfo = item.primary_physician?.professional_email || 'No contact info';
-                            
-                            let staffType = 'Physician';
-                            const matchingStaff = medicalStaff.value.find(staff => 
-                                staff.id === item.primary_physician_id
-                            );
-                            
-                            if (matchingStaff) {
-                                staffType = formatStaffType(matchingStaff.staff_type);
-                            }
-                            
-                            return {
-                                id: item.id,
-                                startTime,
-                                endTime,
-                                physicianName,
-                                staffType,
-                                shiftType: shiftTypeDisplay,
-                                coverageArea,
-                                backupPhysician,
-                                contactInfo,
-                                raw: item
-                            };
-                        });
-                        
-                    } catch (error) {
-                        console.error('Failed to load today\'s on-call:', error);
-                        showToast('Error', 'Failed to load today\'s on-call schedule', 'error');
-                        todaysOnCall.value = [];
-                    } finally {
-                        loadingSchedule.value = false;
-                    }
-                };
-                
+            const loadTodaysOnCall = async () => {
+    try {
+        loadingSchedule.value = true;
+        const data = await API.getOnCallToday();
+        
+        todaysOnCall.value = data.map(item => {
+            const shiftInfo = OnCallUtils.getShiftDisplayInfo(item);
+            const isActive = OnCallUtils.isShiftActive(item);
+            
+            const physicianName = item.primary_physician?.full_name || 'Unknown Physician';
+            const backupPhysician = item.backup_physician?.full_name || null;
+            
+            let shiftTypeDisplay = 'Primary';
+            if (item.shift_type === 'backup_call' || item.shift_type === 'backup') {
+                shiftTypeDisplay = 'Backup';
+            }
+            
+            return {
+                id: item.id,
+                displayText: shiftInfo.displayText,
+                isOvernight: shiftInfo.isOvernight,
+                isActive,
+                physicianName,
+                shiftType: shiftTypeDisplay,
+                coverageArea: item.coverage_notes || 'Emergency Department',
+                backupPhysician,
+                contactInfo: item.primary_physician?.professional_email || 'No contact info',
+                staffType: formatStaffType(item.primary_physician?.staff_type) || 'Physician',
+                duration: shiftInfo.duration.toFixed(1) + 'h',
+                raw: item
+            };
+        });
+        
+        // Update dashboard stats
+        updateOnCallStats();
+        
+    } catch (error) {
+        console.error('Failed to load today\'s on-call:', error);
+        showToast('Error', 'Failed to load today\'s on-call schedule', 'error');
+        todaysOnCall.value = [];
+    } finally {
+        loadingSchedule.value = false;
+    }
+};
+          const updateOnCallStats = () => {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    
+    // Count active on-call right now
+    const currentOnCall = todaysOnCall.value.filter(shift => shift.isActive);
+    systemStats.value.onCallNow = currentOnCall.length;
+    
+    // Count overnight shifts tonight
+    const tonightShifts = todaysOnCall.value.filter(shift => {
+        if (!shift.isOvernight) return false;
+        
+        const shiftDate = shift.raw.duty_date;
+        const shiftStartTime = shift.raw.start_time || '15:00';
+        
+        return shiftDate === today && shiftStartTime >= '12:00'; // Afternoon/evening starts
+    });
+    
+    // Find next shift change
+    const allShifts = todaysOnCall.value.map(shift => OnCallUtils.getShiftDisplayInfo(shift.raw));
+    const upcomingShifts = allShifts.filter(shiftInfo => {
+        const shiftStart = new Date(`${shiftInfo.startDate}T${shiftInfo.startTime}`);
+        return shiftStart > now;
+    }).sort((a, b) => {
+        const aTime = new Date(`${a.startDate}T${a.startTime}`);
+        const bTime = new Date(`${b.startDate}T${b.startTime}`);
+        return aTime - bTime;
+    });
+    
+    if (upcomingShifts.length > 0) {
+        const nextShift = upcomingShifts[0];
+        systemStats.value.nextShiftChange = `${nextShift.startDate}T${nextShift.startTime}`;
+    } else {
+        // Default to tomorrow morning if no upcoming shifts
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(8, 0, 0, 0);
+        systemStats.value.nextShiftChange = tomorrow.toISOString();
+    }
+    
+    console.log('📊 On-call stats updated:', {
+        activeNow: systemStats.value.onCallNow,
+        overnightTonight: tonightShifts.length,
+        nextShiftChange: systemStats.value.nextShiftChange
+    });
+};      
                 const loadAnnouncements = async () => {
                     try {
                         const data = await API.getAnnouncements();
@@ -2035,11 +2247,11 @@ const showAddMedicalStaffModal = () => {
         professional_email: '',
         department_id: '',
         
-        // ✅ INITIALIZE ALL STRING FIELDS AS EMPTY STRINGS, NOT NULL
+        // ✅ CORRECTED FIELD NAMES
         academic_degree: '',
         specialization: '',
         training_year: '',
-        clinical_certificate: '',
+        clinical_study_certificate: '',  // ✅ Changed from clinical_certificate
         certificate_status: '',
         resident_category: '',
         primary_clinic: '',
@@ -2058,8 +2270,7 @@ const showAddMedicalStaffModal = () => {
         training_level: ''
     };
     medicalStaffModal.show = true;
-};
-                
+};            
                 const showAddDepartmentModal = () => {
                     departmentModal.mode = 'add';
                     departmentModal.form = {
@@ -2085,49 +2296,50 @@ const showAddMedicalStaffModal = () => {
                     trainingUnitModal.show = true;
                 };
                 
-                const showAddRotationModal = () => {
-                    rotationModal.mode = 'add';
-                    rotationModal.form = {
-                        rotation_id: `ROT-${Date.now().toString().slice(-6)}`,
-                        resident_id: '',
-                        training_unit_id: '',
-                        rotation_start_date: new Date().toISOString().split('T')[0],
-                        rotation_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        rotation_status: 'scheduled',
-                        rotation_category: 'clinical_rotation',
-                        supervising_attending_id: ''
-                    };
-                    rotationModal.show = true;
-                };
+      const showAddRotationModal = () => {
+    rotationModal.mode = 'add';
+    rotationModal.form = {
+        rotation_id: `ROT-${Date.now().toString().slice(-6)}`,
+        resident_id: '',
+        training_unit_id: '',
+        start_date: new Date().toISOString().split('T')[0],  // ✅ Changed from rotation_start_date
+        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],  // ✅ Changed from rotation_end_date
+        rotation_status: 'scheduled',
+        rotation_category: 'clinical_rotation',
+        supervising_attending_id: ''
+    };
+    rotationModal.show = true;
+};
                 
-                const showAddOnCallModal = () => {
-                    onCallModal.mode = 'add';
-                    onCallModal.form = {
-                        duty_date: new Date().toISOString().split('T')[0],
-                        shift_type: 'primary_call',
-                        start_time: '08:00',
-                        end_time: '17:00',
-                        primary_physician_id: '',
-                        backup_physician_id: '',
-                        coverage_notes: 'emergency',
-                        schedule_id: `SCH-${Date.now().toString().slice(-6)}`
-                    };
-                    onCallModal.show = true;
-                };
+           const showAddOnCallModal = () => {
+    onCallModal.mode = 'add';
+    onCallModal.form = {
+        duty_date: new Date().toISOString().split('T')[0],
+        shift_type: 'primary_call',
+        start_time: '15:00',  // Default afternoon start for hospital
+        end_time: '08:00',    // Default morning end (overnight)
+        primary_physician_id: '',
+        backup_physician_id: '',
+        coverage_notes: 'Emergency Department',  // Changed from coverage_area
+        schedule_id: `SCH-${Date.now().toString().slice(-6)}`
+    };
+    onCallModal.show = true;
+};
                 
-   const showAddAbsenceModal = () => {
+const showAddAbsenceModal = () => {
     absenceModal.mode = 'add';
+    absenceModal.activeTab = 'basic';
     absenceModal.form = {
         staff_member_id: '',
-        absence_type: 'planned',  // ✅ Good
+        absence_type: 'planned',
         absence_reason: 'vacation',
         start_date: new Date().toISOString().split('T')[0],
         end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        current_status: 'pending',  // ✅ Good
-        covering_staff_id: '',  // ✅ Good
-        coverage_notes: '',  // ✅ Good
-        coverage_arranged: false,  // ✅ Good
-        hod_notes: ''  // ✅ Good
+        current_status: 'planned_leave',
+        covering_staff_id: '',
+        coverage_notes: '',
+        coverage_arranged: false,
+        hod_notes: ''
     };
     absenceModal.show = true;
 };
@@ -2211,13 +2423,10 @@ const viewStaffDetails = async (staff) => {
 
 
 // ============ EDIT FUNCTIONS ============
-
 const editMedicalStaff = (staff) => {
-    // Copy staff data to modal form
     medicalStaffModal.mode = 'edit';
     medicalStaffModal.activeTab = 'basic';
     
-    // Map all fields from staff object to form
     medicalStaffModal.form = {
         id: staff.id,
         full_name: staff.full_name || '',
@@ -2229,7 +2438,7 @@ const editMedicalStaff = (staff) => {
         academic_degree: staff.academic_degree || '',
         specialization: staff.specialization || '',
         training_year: staff.training_year || '',
-        clinical_certificate: staff.clinical_certificate || '',
+        clinical_study_certificate: staff.clinical_study_certificate || '',  // ✅ Correct field
         certificate_status: staff.certificate_status || 'current',
         resident_category: staff.resident_category || '',
         primary_clinic: staff.primary_clinic || '',
@@ -2285,8 +2494,8 @@ const editRotation = (rotation) => {
         rotation_id: rotation.rotation_id || EnhancedUtils.generateId('ROT'),
         resident_id: rotation.resident_id || '',
         training_unit_id: rotation.training_unit_id || '',
-        rotation_start_date: rotation.start_date || rotation.rotation_start_date || new Date().toISOString().split('T')[0],
-        rotation_end_date: rotation.end_date || rotation.rotation_end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        start_date: rotation.start_date || rotation.rotation_start_date || new Date().toISOString().split('T')[0],  // ✅ Unified
+        end_date: rotation.end_date || rotation.rotation_end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],  // ✅ Unified
         rotation_status: rotation.rotation_status || 'scheduled',
         rotation_category: rotation.rotation_category || 'clinical_rotation',
         supervising_attending_id: rotation.supervising_attending_id || ''
@@ -2300,11 +2509,11 @@ const editOnCallSchedule = (schedule) => {
         id: schedule.id,
         duty_date: schedule.duty_date || new Date().toISOString().split('T')[0],
         shift_type: schedule.shift_type || 'primary_call',
-        start_time: schedule.start_time || '08:00',
-        end_time: schedule.end_time || '17:00',
+        start_time: schedule.start_time || '15:00',
+        end_time: schedule.end_time || '08:00',
         primary_physician_id: schedule.primary_physician_id || '',
         backup_physician_id: schedule.backup_physician_id || '',
-        coverage_area: schedule.coverage_area || 'emergency',
+        coverage_notes: schedule.coverage_notes || 'Emergency Department',
         schedule_id: schedule.schedule_id || EnhancedUtils.generateId('SCH')
     };
     onCallModal.show = true;
@@ -2312,6 +2521,7 @@ const editOnCallSchedule = (schedule) => {
 
 const editAbsence = (absence) => {
     absenceModal.mode = 'edit';
+    absenceModal.activeTab = 'basic';
     absenceModal.form = {
         id: absence.id,
         staff_member_id: absence.staff_member_id || '',
@@ -2319,7 +2529,7 @@ const editAbsence = (absence) => {
         absence_reason: absence.absence_reason || 'vacation',
         start_date: absence.start_date || new Date().toISOString().split('T')[0],
         end_date: absence.end_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        current_status: absence.current_status || 'pending',
+        current_status: absence.current_status || 'planned_leave',
         covering_staff_id: absence.covering_staff_id || '',
         coverage_notes: absence.coverage_notes || '',
         coverage_arranged: absence.coverage_arranged || false,
@@ -2571,14 +2781,12 @@ const saveMedicalStaff = async () => {
     }
     
     try {
-        // ✅ CLEAN DATA FUNCTION - Ensures all string fields are strings, not null
         const cleanStringField = (value) => {
             if (value === null || value === undefined) return '';
             if (typeof value === 'string') return value.trim();
             return String(value);
         };
         
-        // ✅ CREATE STAFF DATA WITH PROPER STRING VALUES
         const staffData = {
             // Required fields
             full_name: medicalStaffModal.form.full_name.trim(),
@@ -2587,17 +2795,17 @@ const saveMedicalStaff = async () => {
             employment_status: medicalStaffModal.form.employment_status || 'active',
             professional_email: medicalStaffModal.form.professional_email || '',
             
-            // Optional UUID fields (can be null)
+            // Optional UUID fields
             department_id: medicalStaffModal.form.department_id || null,
             
-            // ✅ FIXED: All string fields converted to empty string if null
+            // ✅ UPDATED TO MATCH BACKEND
             academic_degree: cleanStringField(medicalStaffModal.form.academic_degree),
             specialization: cleanStringField(medicalStaffModal.form.specialization),
             training_year: cleanStringField(medicalStaffModal.form.training_year),
-            clinical_certificate: cleanStringField(medicalStaffModal.form.clinical_certificate),
+            clinical_study_certificate: cleanStringField(medicalStaffModal.form.clinical_study_certificate),  // ✅ Correct field
             certificate_status: cleanStringField(medicalStaffModal.form.certificate_status),
             
-            // Other optional fields
+            // Other fields
             resident_category: cleanStringField(medicalStaffModal.form.resident_category),
             primary_clinic: cleanStringField(medicalStaffModal.form.primary_clinic),
             work_phone: cleanStringField(medicalStaffModal.form.work_phone),
@@ -2607,11 +2815,7 @@ const saveMedicalStaff = async () => {
             resident_type: cleanStringField(medicalStaffModal.form.resident_type),
             home_department: cleanStringField(medicalStaffModal.form.home_department),
             external_institution: cleanStringField(medicalStaffModal.form.external_institution),
-            
-            // Numeric field
             years_experience: medicalStaffModal.form.years_experience || null,
-            
-            // Other string fields
             biography: cleanStringField(medicalStaffModal.form.biography),
             date_of_birth: medicalStaffModal.form.date_of_birth || null,
             mobile_phone: cleanStringField(medicalStaffModal.form.mobile_phone),
@@ -2621,7 +2825,6 @@ const saveMedicalStaff = async () => {
         
         console.log('📤 Saving medical staff data:', staffData);
         
-        // ✅ VALIDATE DATA BEFORE SENDING
         if (staffData.professional_email && !isValidEmail(staffData.professional_email)) {
             showToast('Error', 'Please enter a valid email address', 'error');
             saving.value = false;
@@ -2645,7 +2848,6 @@ const saveMedicalStaff = async () => {
     } catch (error) {
         console.error('❌ Save medical staff error:', error);
         
-        // ✅ BETTER ERROR HANDLING
         if (error.message && error.message.includes('specialization')) {
             showToast('Error', 'Please enter a valid specialization (text only)', 'error');
         } else if (error.message && error.message.includes('Validation failed')) {
@@ -2721,7 +2923,7 @@ const isValidEmail = (email) => {
                     }
                 };
                 
-               const saveRotation = async () => {
+ const saveRotation = async () => {
     // ============ 1. VALIDATE REQUIRED FIELDS ============
     if (!rotationModal.form.resident_id) {
         showToast('Error', 'Please select a resident', 'error');
@@ -2734,8 +2936,8 @@ const isValidEmail = (email) => {
     }
     
     // ============ 2. VALIDATE AND FORMAT DATES ============
-    const startDateStr = rotationModal.form.rotation_start_date;
-    const endDateStr = rotationModal.form.rotation_end_date;
+    const startDateStr = rotationModal.form.start_date || rotationModal.form.rotation_start_date;
+    const endDateStr = rotationModal.form.end_date || rotationModal.form.rotation_end_date;
     
     if (!startDateStr || !endDateStr) {
         showToast('Error', 'Please enter both start and end dates', 'error');
@@ -2758,8 +2960,9 @@ const isValidEmail = (email) => {
             return date.toISOString().split('T')[0];
         };
         
-        rotationModal.form.rotation_start_date = formatDateToISO(startDate);
-        rotationModal.form.rotation_end_date = formatDateToISO(endDate);
+        // Update form with standardized dates
+        rotationModal.form.start_date = formatDateToISO(startDate);
+        rotationModal.form.end_date = formatDateToISO(endDate);
         
     } catch (error) {
         showToast('Error', 
@@ -2811,8 +3014,8 @@ const isValidEmail = (email) => {
     
     const hasOverlap = checkForOverlap(
         rotationModal.form.resident_id,
-        rotationModal.form.rotation_start_date,
-        rotationModal.form.rotation_end_date,
+        rotationModal.form.start_date,
+        rotationModal.form.end_date,
         rotationModal.mode === 'edit' ? rotationModal.form.id : null
     );
     
@@ -2832,17 +3035,16 @@ const isValidEmail = (email) => {
     saving.value = true;
     
     try {
-        // Clean and prepare rotation data
+        // Clean and prepare rotation data - MATCHING BACKEND SCHEMA
         const rotationData = {
             rotation_id: rotationModal.form.rotation_id || EnhancedUtils.generateId('ROT'),
             resident_id: rotationModal.form.resident_id,
             training_unit_id: rotationModal.form.training_unit_id,
             supervising_attending_id: rotationModal.form.supervising_attending_id || null,
-            start_date: rotationModal.form.rotation_start_date,  // Already formatted as YYYY-MM-DD
-            end_date: rotationModal.form.rotation_end_date,      // Already formatted as YYYY-MM-DD
+            start_date: rotationModal.form.start_date,  // ✅ Uses start_date (backend expects this)
+            end_date: rotationModal.form.end_date,      // ✅ Uses end_date (backend expects this)
             rotation_category: (rotationModal.form.rotation_category || 'clinical_rotation').toLowerCase(),
-            rotation_status: (rotationModal.form.rotation_status || 'scheduled').toLowerCase(),
-            rotation_category: rotationModal.form.rotation_category || 'elective_rotation'
+            rotation_status: (rotationModal.form.rotation_status || 'scheduled').toLowerCase()
         };
         
         console.log('📤 Sending rotation data to server:', rotationData);
@@ -2898,6 +3100,10 @@ const isValidEmail = (email) => {
             userMessage = 'Invalid resident or training unit selected. Please refresh and try again.';
         } else if (error.message.includes('date') || error.message.includes('Date')) {
             userMessage = 'Invalid date format. Please use YYYY-MM-DD format.';
+        } else if (error.message.includes('JWT') || error.message.includes('token')) {
+            userMessage = 'Session expired. Please login again.';
+        } else if (error.message.includes('network') || error.message.includes('CORS')) {
+            userMessage = 'Cannot connect to server. Please check your network connection.';
         }
         
         showToast('Error', userMessage, 'error');
@@ -2906,17 +3112,33 @@ const isValidEmail = (email) => {
         saving.value = false;
     }
 };
+
 const saveAbsence = async () => {
     saving.value = true;
     try {
-        // Your form already uses correct field names
+        // Validate dates
+        if (!absenceModal.form.start_date || !absenceModal.form.end_date) {
+            showToast('Error', 'Start date and end date are required', 'error');
+            saving.value = false;
+            return;
+        }
+        
+        const startDate = new Date(absenceModal.form.start_date);
+        const endDate = new Date(absenceModal.form.end_date);
+        
+        if (endDate < startDate) {
+            showToast('Error', 'End date must be after start date', 'error');
+            saving.value = false;
+            return;
+        }
+        
+        // Prepare data matching backend schema
         const absenceData = {
             staff_member_id: absenceModal.form.staff_member_id,
             absence_type: absenceModal.form.absence_type || 'planned',
             absence_reason: absenceModal.form.absence_reason,
             start_date: absenceModal.form.start_date,
             end_date: absenceModal.form.end_date,
-            // ✅ Use correct status values from your database
             current_status: absenceModal.form.current_status || 'planned_leave',
             covering_staff_id: absenceModal.form.covering_staff_id || null,
             coverage_notes: absenceModal.form.coverage_notes || '',
@@ -2927,12 +3149,13 @@ const saveAbsence = async () => {
         
         console.log('📤 Sending absence data to backend:', absenceData);
         
+        let result;
         if (absenceModal.mode === 'add') {
-            const result = await API.createAbsence(absenceData);
+            result = await API.createAbsence(absenceData);
             absences.value.unshift(result);
             showToast('Success', 'Absence recorded successfully', 'success');
         } else {
-            const result = await API.updateAbsence(absenceModal.form.id, absenceData);
+            result = await API.updateAbsence(absenceModal.form.id, absenceData);
             const index = absences.value.findIndex(a => a.id === result.id);
             if (index !== -1) absences.value[index] = result;
             showToast('Success', 'Absence updated successfully', 'success');
@@ -2944,12 +3167,24 @@ const saveAbsence = async () => {
         
     } catch (error) {
         console.error('❌ Save absence error:', error);
-        showToast('Error', error.message || 'Failed to save absence record', 'error');
+        let errorMessage = error.message || 'Failed to save absence record';
+        
+        // Parse common errors
+        if (error.message.includes('staff_member_id') || error.message.includes('23503')) {
+            errorMessage = 'Selected staff member not found. Please refresh and try again.';
+        } else if (error.message.includes('validation') || error.message.includes('400')) {
+            errorMessage = 'Invalid data. Please check all fields and try again.';
+        } else if (error.message.includes('JWT') || error.message.includes('token')) {
+            errorMessage = 'Session expired. Please login again.';
+        } else if (error.message.includes('network') || error.message.includes('CORS')) {
+            errorMessage = 'Cannot connect to server. Please check your network connection.';
+        }
+        
+        showToast('Error', errorMessage, 'error');
     } finally {
         saving.value = false;
     }
 };
-
                 const saveCommunication = async () => {
                     saving.value = true;
                     try {
@@ -3377,6 +3612,12 @@ const filteredAbsences = computed(() => {
     getDepartmentStaffCount,
     getCurrentRotationForStaff,
     calculateAbsenceDuration,
+                     OnCallUtils,
+                     OnCallUtils,  // Add this
+    getShiftStatusClass,  // Make sure this is included
+    updateOnCallStats,  // Add this
+    isValidEmail,  // Add this
+    testAllAPIs,
     
     // NEUMAC UI Functions
     getShiftStatusClass,
