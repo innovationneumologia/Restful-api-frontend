@@ -1017,6 +1017,20 @@ const app = createApp({
                 }
             }
         });
+        // Add this to your setup() function
+const getSearchPlaceholder = () => {
+    const placeholders = {
+        'dashboard': 'Search staff, departments...',
+        'medical_staff': 'Search by name, staff ID, or email...',
+        'oncall_schedule': 'Search by physician, date, or coverage area...',
+        'resident_rotations': 'Search by resident name, training unit...',
+        'training_units': 'Search by unit name, department...',
+        'staff_absence': 'Search by staff name or reason...',
+        'department_management': 'Search by department name or code...',
+        'communications': 'Search announcements...'
+    };
+    return placeholders[currentView.value] || 'Search...';
+};
         const getUserRoleDisplay = (role) => {
     const roleMap = {
         'system_admin': 'System Administrator',
@@ -3187,6 +3201,7 @@ saveOnCallSchedule,
 saveAbsence,
 saveCommunication,
 saveUserProfile,
+    getSearchPlaceholder,
 
 // Delete Functions
 deleteMedicalStaff,
