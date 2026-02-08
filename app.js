@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         // ============ 3. ENHANCED UTILITIES ============
-       // ============ ENHANCED UTILITIES ============
 class EnhancedUtils {
     static formatDate(dateString) {
         if (!dateString) return 'N/A';
@@ -245,116 +244,7 @@ class ApiService {
         
         return headers;
     }
-    // ============ ON-CALL UTILITY FUNCTIONS ============
-class OnCallUtils {
-    static isOvernightShift(startTime, endTime) {
-        if (!startTime || !endTime) return false;
-        
-        const parseTime = (timeStr) => {
-            const [hours, minutes] = (timeStr || '').split(':').map(Number);
-            return (hours || 0) * 60 + (minutes || 0);
-        };
-        
-        const startMinutes = parseTime(startTime);
-        const endMinutes = parseTime(endTime);
-        
-        return endMinutes < startMinutes;
-    }
-    const isValidEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-};
-    
-    static calculateShiftDuration(startTime, endTime) {
-        if (!startTime || !endTime) return 0;
-        
-        const parseTime = (timeStr) => {
-            const [hours, minutes] = (timeStr || '').split(':').map(Number);
-            return (hours || 0) * 60 + (minutes || 0);
-        };
-        
-        const startMinutes = parseTime(startTime);
-        const endMinutes = parseTime(endTime);
-        
-        if (endMinutes < startMinutes) {
-            // Overnight shift
-            return (24 * 60 - startMinutes + endMinutes) / 60;
-        } else {
-            // Regular shift
-            return (endMinutes - startMinutes) / 60;
-        }
-    }
-    
-    static getShiftDisplayInfo(schedule) {
-        if (!schedule) return null;
-        
-        const startTime = schedule.start_time || '15:00';
-        const endTime = schedule.end_time || '08:00';
-        const dutyDate = schedule.duty_date;
-        const isOvernight = this.isOvernightShift(startTime, endTime);
-        
-        if (isOvernight) {
-            // Calculate next day
-            const nextDay = new Date(dutyDate);
-            nextDay.setDate(nextDay.getDate() + 1);
-            const nextDayStr = nextDay.toISOString().split('T')[0];
-            
-            return {
-                displayText: `${dutyDate} ${startTime} → ${nextDayStr} ${endTime}`,
-                isOvernight: true,
-                startDate: dutyDate,
-                endDate: nextDayStr,
-                startTime,
-                endTime,
-                duration: this.calculateShiftDuration(startTime, endTime)
-            };
-        } else {
-            return {
-                displayText: `${dutyDate} ${startTime} - ${endTime}`,
-                isOvernight: false,
-                startDate: dutyDate,
-                endDate: dutyDate,
-                startTime,
-                endTime,
-                duration: this.calculateShiftDuration(startTime, endTime)
-            };
-        }
-    }
-    
-    static isShiftActive(schedule) {
-        if (!schedule) return false;
-        
-        const now = new Date();
-        const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
-                           now.getMinutes().toString().padStart(2, '0');
-        const today = now.toISOString().split('T')[0];
-        
-        const shiftInfo = this.getShiftDisplayInfo(schedule);
-        if (!shiftInfo) return false;
-        
-        if (shiftInfo.isOvernight) {
-            // Check if current time is in overnight shift
-            const isToday = today === shiftInfo.startDate;
-            const isTomorrow = today === shiftInfo.endDate;
-            
-            if (isToday && currentTime >= shiftInfo.startTime) {
-                return true;
-            } else if (isTomorrow && currentTime <= shiftInfo.endTime) {
-                return true;
-            }
-        } else {
-            // Regular shift
-            if (today === shiftInfo.startDate && 
-                currentTime >= shiftInfo.startTime && 
-                currentTime <= shiftInfo.endTime) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-}
-    
+
     async request(endpoint, options = {}) {
         const url = `${CONFIG.API_BASE_URL}${endpoint}`;
         
