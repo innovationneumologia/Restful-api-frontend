@@ -1010,12 +1010,6 @@ const currentDoctorProfile = ref(null);
                     reason: '',
                     startDate: ''
                 });
-                const getPresenceStatusClass = () => {
-    const status = getCurrentPresenceStatus();
-    if (status === 'PRESENT') return 'status-normal';
-    if (status === 'ABSENT') return 'status-critical';
-    return 'status-caution';
-};
                 // Add this function inside setup(), before the return statement:
 const testAllAPIs = async () => {
     console.log('🔍 Testing API connections...');
