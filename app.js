@@ -1243,125 +1243,132 @@ const getCurrentPresence = () => {
 };
 
                 
-                // ============ 8. NEUMAC ENHANCEMENT FUNCTIONS ============
-                
-                const getShiftStatusClass = (shift) => {
-                    if (!shift || !shift.raw) return 'neumac-status-oncall';
-                        if (OnCallUtils.isShiftActive(shift.raw)) {
+       // ============ 8. NEUMAC ENHANCEMENT FUNCTIONS ============
+
+const getShiftStatusClass = (shift) => {
+    if (!shift || !shift.raw) return 'neumac-status-oncall';
+    
+    // First, use OnCallUtils to check if shift is active (most accurate)
+    if (OnCallUtils.isShiftActive(shift.raw)) {
         return 'neumac-status-critical';
     }
     
+    // Fallback: manual check if today's shift
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    
+    if (shift.raw.duty_date === today) {
+        try {
+            const startTime = shift.startTime || shift.raw.start_time;
+            const endTime = shift.endTime || shift.raw.end_time;
+            
+            if (startTime && endTime) {
+                const currentTime = now.getHours() * 100 + now.getMinutes();
+                const start = parseInt(startTime.replace(':', ''));
+                const end = parseInt(endTime.replace(':', ''));
+                
+                if (currentTime >= start && currentTime <= end) {
+                    return 'neumac-status-critical';
+                }
+            }
+        } catch (error) {
+            console.warn('Error calculating shift status:', error);
+        }
+    }
+    
+    // Default classification based on shift type
     return shift.shiftType === 'Primary' ? 'neumac-status-oncall' : 'neumac-status-busy';
 };
-                    
-                    const now = new Date();
-                    const today = now.toISOString().split('T')[0];
-                    
-                    if (shift.raw.duty_date === today) {
-                        try {
-                            const startTime = shift.startTime;
-                            const endTime = shift.endTime;
-                            
-                            if (startTime && endTime) {
-                                const currentTime = now.getHours() * 100 + now.getMinutes();
-                                const start = parseInt(startTime.replace(':', ''));
-                                const end = parseInt(endTime.replace(':', ''));
-                                
-                                if (currentTime >= start && currentTime <= end) {
-                                    return 'neumac-status-critical';
-                                }
-                            }
-                        } catch (error) {
-                            console.warn('Error calculating shift status:', error);
-                        }
-                    }
-                    
-                    return shift.shiftType === 'Primary' ? 'neumac-status-oncall' : 'neumac-status-busy';
-                };
-                
-                const isCurrentShift = (shift) => {
-                    if (!shift || !shift.raw) return false;
-                    
-                    const now = new Date();
-                    const today = now.toISOString().split('T')[0];
-                    
-                    if (shift.raw.duty_date !== today) return false;
-                    
-                    try {
-                        const startTime = shift.startTime;
-                        const endTime = shift.endTime;
-                        
-                        if (!startTime || !endTime) return false;
-                        
-                        const currentTime = now.getHours() * 100 + now.getMinutes();
-                        const start = parseInt(startTime.replace(':', ''));
-                        const end = parseInt(endTime.replace(':', ''));
-                        
-                        return currentTime >= start && currentTime <= end;
-                    } catch (error) {
-                        console.warn('Error checking current shift:', error);
-                        return false;
-                    }
-                };
-                
-                const getStaffTypeIcon = (staffType) => {
-                    const icons = {
-                        'attending_physician': 'fa-user-md',
-                        'medical_resident': 'fa-user-graduate',
-                        'fellow': 'fa-user-tie',
-                        'nurse_practitioner': 'fa-user-nurse'
-                    };
-                    return icons[staffType] || 'fa-user';
-                };
-                
-                const calculateCapacityPercent = (current, max) => {
-                    if (current === undefined || current === null || !max || max === 0) return 0;
-                    return Math.round((current / max) * 100);
-                };
-                
-                const getCapacityDotClass = (index, current) => {
-                    if (!current || current === 0) return 'available';
-                    if (index <= current) {
-                        const percent = (current / (index || 1)) * 100;
-                        if (percent >= 90) return 'full';
-                        if (percent >= 75) return 'limited';
-                        return 'filled';
-                    }
-                    return 'available';
-                };
-                
-                const getMeterFillClass = (current, max) => {
-                    if (!current || !max) return '';
-                    const percent = (current / max) * 100;
-                    if (percent >= 90) return 'neumac-meter-fill-full';
-                    if (percent >= 75) return 'neumac-meter-fill-limited';
-                    return '';
-                };
-                
-                const getAbsenceReasonIcon = (reason) => {
-                    const icons = {
-                        'vacation': 'fa-umbrella-beach',
-                        'sick_leave': 'fa-procedures',
-                        'conference': 'fa-chalkboard-teacher',
-                        'training': 'fa-graduation-cap',
-                        'personal': 'fa-user-clock',
-                        'other': 'fa-question-circle'
-                    };
-                    return icons[reason] || 'fa-clock';
-                };
-                
-                const getScheduleIcon = (activity) => {
-                    if (!activity) return 'fa-calendar-check';
-                    
-                    const activityLower = activity.toLowerCase();
-                    if (activityLower.includes('round')) return 'fa-stethoscope';
-                    if (activityLower.includes('clinic')) return 'fa-clinic-medical';
-                    if (activityLower.includes('surgery')) return 'fa-scalpel-path';
-                    if (activityLower.includes('meeting')) return 'fa-users';
-                    if (activityLower.includes('lecture')) return 'fa-chalkboard-teacher';
-                    if (activityLower.includes('consultation')) return 'fa-comments-medical';
-                    return 'fa-calendar-check';
-                };
+
+const isCurrentShift = (shift) => {
+    if (!shift || !shift.raw) return false;
+    
+    // Use OnCallUtils for accurate active shift detection
+    if (OnCallUtils.isShiftActive(shift.raw)) {
+        return true;
+    }
+    
+    // Fallback: manual check
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    
+    if (shift.raw.duty_date !== today) return false;
+    
+    try {
+        const startTime = shift.startTime || shift.raw.start_time;
+        const endTime = shift.endTime || shift.raw.end_time;
+        
+        if (!startTime || !endTime) return false;
+        
+        const currentTime = now.getHours() * 100 + now.getMinutes();
+        const start = parseInt(startTime.replace(':', ''));
+        const end = parseInt(endTime.replace(':', ''));
+        
+        return currentTime >= start && currentTime <= end;
+    } catch (error) {
+        console.warn('Error checking current shift:', error);
+        return false;
+    }
+};
+
+const getStaffTypeIcon = (staffType) => {
+    const icons = {
+        'attending_physician': 'fa-user-md',
+        'medical_resident': 'fa-user-graduate',
+        'fellow': 'fa-user-tie',
+        'nurse_practitioner': 'fa-user-nurse'
+    };
+    return icons[staffType] || 'fa-user';
+};
+
+const calculateCapacityPercent = (current, max) => {
+    if (current === undefined || current === null || !max || max === 0) return 0;
+    return Math.round((current / max) * 100);
+};
+
+const getCapacityDotClass = (index, current) => {
+    if (!current || current === 0) return 'available';
+    if (index <= current) {
+        const percent = (current / (index || 1)) * 100;
+        if (percent >= 90) return 'full';
+        if (percent >= 75) return 'limited';
+        return 'filled';
+    }
+    return 'available';
+};
+
+const getMeterFillClass = (current, max) => {
+    if (!current || !max) return '';
+    const percent = (current / max) * 100;
+    if (percent >= 90) return 'neumac-meter-fill-full';
+    if (percent >= 75) return 'neumac-meter-fill-limited';
+    return '';
+};
+
+const getAbsenceReasonIcon = (reason) => {
+    const icons = {
+        'vacation': 'fa-umbrella-beach',
+        'sick_leave': 'fa-procedures',
+        'conference': 'fa-chalkboard-teacher',
+        'training': 'fa-graduation-cap',
+        'personal': 'fa-user-clock',
+        'other': 'fa-question-circle'
+    };
+    return icons[reason] || 'fa-clock';
+};
+
+const getScheduleIcon = (activity) => {
+    if (!activity) return 'fa-calendar-check';
+    
+    const activityLower = activity.toLowerCase();
+    if (activityLower.includes('round')) return 'fa-stethoscope';
+    if (activityLower.includes('clinic')) return 'fa-clinic-medical';
+    if (activityLower.includes('surgery')) return 'fa-scalpel-path';
+    if (activityLower.includes('meeting')) return 'fa-users';
+    if (activityLower.includes('lecture')) return 'fa-chalkboard-teacher';
+    if (activityLower.includes('consultation')) return 'fa-comments-medical';
+    return 'fa-calendar-check';
+};
                 
                 // ============ 9. PROFILE DATA FUNCTIONS ============
                 
