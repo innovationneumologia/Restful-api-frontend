@@ -1017,7 +1017,17 @@ const app = createApp({
                 }
             }
         });
-        
+        const getUserRoleDisplay = (role) => {
+    const roleMap = {
+        'system_admin': 'System Administrator',
+        'department_head': 'Department Head',
+        'attending_physician': 'Attending Physician',
+        'medical_resident': 'Medical Resident',
+        'fellow': 'Fellow',
+        'nurse_practitioner': 'Nurse Practitioner'
+    };
+    return roleMap[role] || role || 'Unknown Role';
+};
         const onCallModal = reactive({
             show: false,
             mode: 'add',
@@ -3224,6 +3234,8 @@ filteredRotations,
 filteredAbsences,
 todaysOnCallCount,
 recentAnnouncements,
+getUserRoleDisplay,
+
 
 // Data Loading Functions
 loadMedicalStaff,
