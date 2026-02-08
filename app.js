@@ -2399,27 +2399,81 @@ const isValidEmail = (email) => {
     }
     
     // ============ 4. CHECK FOR OVERLAPS (CLIENT-SIDE) ============
-    const checkForOverlap = (residentId, newStart, newEnd, excludeRotationId = null) => {
-        const existingRotations = rotations.value.filter(r => 
-            r.resident_id === residentId && 
-            r.rotation_status !== 'cancelled' &&
-            r.id !== excludeRotationId  // Exclude current rotation if editing
-        );
+const checkForOverlap = (residentId, newStart, newEnd, excludeRotationId = null) => {
+    const existingRotations = rotations.value.filter(r => 
+        r.resident_id === residentId && 
+        r.rotation_status !== 'cancelled' &&
+        r.id !== excludeRotationId
+    );
+    
+    // If no existing rotations, no overlap
+    if (existingRotations.length === 0) return false;
+    
+    // Parse the new dates ONCE (not in the loop)
+    let nStart, nEnd;
+    try {
+        nStart = new Date(newStart);
+        nEnd = new Date(newEnd);
         
-        return existingRotations.some(r => {
-            try {
-                const rStart = new Date(r.start_date || r.rotation_start_date);
-                const rEnd = new Date(r.end_date || r.rotation_end_date);
-                const nStart = new Date(newStart);
-                const nEnd = new Date(newEnd);
-                
-                // Check for overlap (dates inclusive)
-                return nStart <= rEnd && nEnd >= rStart;
-            } catch {
-                return false;
+        // Ensure dates are valid
+        if (isNaN(nStart.getTime()) || isNaN(nEnd.getTime())) {
+            console.warn('Invalid date format for new rotation');
+            return false;
+        }
+        
+        // Normalize to date-only (remove time component)
+        nStart.setHours(0, 0, 0, 0);
+        nEnd.setHours(0, 0, 0, 0);
+        
+    } catch (error) {
+        console.error('Error parsing new dates:', error);
+        return false;
+    }
+    
+    // Check each existing rotation
+    for (const r of existingRotations) {
+        try {
+            // Parse existing rotation dates
+            const rStart = new Date(r.start_date || r.rotation_start_date);
+            const rEnd = new Date(r.end_date || r.rotation_end_date);
+            
+            // Ensure dates are valid
+            if (isNaN(rStart.getTime()) || isNaN(rEnd.getTime())) {
+                console.warn('Invalid date in existing rotation:', r);
+                continue;
             }
-        });
-    };
+            
+            // Normalize to date-only
+            rStart.setHours(0, 0, 0, 0);
+            rEnd.setHours(0, 0, 0, 0);
+            
+            console.log('🔍 Date Comparison:', {
+                existing: `${rStart.toISOString().split('T')[0]} to ${rEnd.toISOString().split('T')[0]}`,
+                new: `${nStart.toISOString().split('T')[0]} to ${nEnd.toISOString().split('T')[0]}`,
+                condition: `nStart (${nStart}) <= rEnd (${rEnd}) && nEnd (${nEnd}) >= rStart (${rStart})`,
+                result: nStart <= rEnd && nEnd >= rStart
+            });
+            
+            // Check for overlap (INCLUSIVE of end dates)
+            // If new rotation starts before existing ends AND new rotation ends after existing starts
+            const overlaps = nStart <= rEnd && nEnd >= rStart;
+            
+            if (overlaps) {
+                console.log('❌ OVERLAP DETECTED with rotation:', r.rotation_id);
+                console.log('   Existing:', rStart.toDateString(), 'to', rEnd.toDateString());
+                console.log('   New:', nStart.toDateString(), 'to', nEnd.toDateString());
+                return true;
+            }
+            
+        } catch (error) {
+            console.error('Error comparing dates for rotation:', r, error);
+            continue;
+        }
+    }
+    
+    // No overlaps found
+    return false;
+};
     
     const hasOverlap = checkForOverlap(
         rotationModal.form.resident_id,
