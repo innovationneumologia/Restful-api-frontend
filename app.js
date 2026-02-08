@@ -784,34 +784,6 @@ const formatRelativeTime = (dateString) => {
     }
 };
 
-                // Test function to verify all APIs are working
-const testAllAPIs = async () => {
-    console.log('🔍 Testing API connections...');
-    
-    const endpoints = [
-        { name: 'Medical Staff', url: '/api/medical-staff?limit=5' },
-        { name: 'Departments', url: '/api/departments' },
-        { name: 'Training Units', url: '/api/training-units' },
-        { name: 'Rotations', url: '/api/rotations?limit=5' },
-        { name: 'On-Call Schedule', url: '/api/oncall/today' },
-        { name: 'Absence Records', url: '/api/absence-records?limit=5' },
-        { name: 'Announcements', url: '/api/announcements' },
-        { name: 'Live Status', url: '/api/live-status/current' },
-        { name: 'System Stats', url: '/api/system-stats' }
-    ];
-    
-    for (const endpoint of endpoints) {
-        try {
-            const response = await API.request(endpoint.url);
-            console.log(`✅ ${endpoint.name}:`, response?.data?.length || response?.length || 'OK');
-        } catch (error) {
-            console.error(`❌ ${endpoint.name}:`, error.message);
-        }
-    }
-    
-    showToast('API Test Complete', 'Check console for results', 'info');
-};
-
                 const communicationsModal = reactive({
                     show: false,
                     activeTab: 'announcement',
