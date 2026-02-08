@@ -6379,7 +6379,7 @@ body {
                 </div>
             </main>
 
-            <!-- ============ MODALS ============ -->
+       <!-- ============ MODALS ============ -->
 <!-- ============ MODAL 1: Dynamic Staff Profile ============ -->
 <div v-if="staffProfileModal.show" class="modal-overlay">
     <div class="modal-container modal-wide">
@@ -6389,7 +6389,7 @@ body {
                 <div>
                     <h3>Medical Staff Profile</h3>
                     <p class="modal-subtitle">
-                        {{ (currentDoctorProfile?.basic_info?.full_name || staffProfileModal.staff?.full_name || 'Loading...') }} • 
+                        {{ (currentDoctorProfile?.header?.full_name || staffProfileModal.staff?.full_name || 'Loading...') }} • 
                         <span :class="getPresenceBadgeClass()">
                             {{ getCurrentPresenceStatus() }}
                         </span>
@@ -6415,15 +6415,15 @@ body {
                     <div class="flex items-start justify-between">
                         <div class="flex items-center gap-6">
                             <div class="profile-avatar-large">
-                                {{ getInitials(currentDoctorProfile?.basic_info?.full_name || staffProfileModal.staff?.full_name || '') }}
+                                {{ getInitials(currentDoctorProfile?.header?.full_name || staffProfileModal.staff?.full_name || '') }}
                             </div>
                             <div>
-                                <h2 class="profile-name">{{ currentDoctorProfile?.basic_info?.full_name || staffProfileModal.staff?.full_name }}</h2>
+                                <h2 class="profile-name">{{ currentDoctorProfile?.header?.full_name || staffProfileModal.staff?.full_name }}</h2>
                                 <div class="profile-title">
-                                    {{ formatStaffType(currentDoctorProfile?.basic_info?.staff_type || staffProfileModal.staff?.staff_type) }}
-                                    <span v-if="currentDoctorProfile?.department?.name" 
+                                    {{ formatStaffType(currentDoctorProfile?.header?.staff_type || staffProfileModal.staff?.staff_type) }}
+                                    <span v-if="currentDoctorProfile?.header?.department" 
                                           class="text-gray-600">
-                                        • {{ currentDoctorProfile.department.name }}
+                                        • {{ currentDoctorProfile.header.department }}
                                     </span>
                                     <span v-else-if="getDepartmentName(staffProfileModal.staff?.department_id)" 
                                           class="text-gray-600">
@@ -6435,7 +6435,7 @@ body {
                                 <div class="profile-meta-row mt-3">
                                     <div class="profile-meta-item">
                                         <i class="fas fa-id-badge"></i>
-                                        <span>{{ currentDoctorProfile?.basic_info?.staff_id || staffProfileModal.staff?.staff_id || 'N/A' }}</span>
+                                        <span>{{ currentDoctorProfile?.header?.staff_id || staffProfileModal.staff?.staff_id || 'N/A' }}</span>
                                     </div>
                                     
                                     <!-- Presence Indicator -->
@@ -6452,14 +6452,14 @@ body {
                                     </div>
                                     
                                     <!-- Certificate Status -->
-                                    <div v-if="currentDoctorProfile?.basic_info?.certificate_status" 
+                                    <div v-if="currentDoctorProfile?.header?.certificate_status" 
                                          class="flex items-center gap-2 px-3 py-1 rounded-full"
-                                         :class="currentDoctorProfile.basic_info.certificate_status === 'current' 
+                                         :class="currentDoctorProfile.header.certificate_status === 'current' 
                                                  ? 'bg-green-100 text-green-800' 
                                                  : 'bg-red-100 text-red-800'">
                                         <i class="fas fa-certificate"></i>
                                         <span class="text-sm font-semibold">
-                                            {{ currentDoctorProfile.basic_info.certificate_status === 'current' ? 'Certified' : 'Expired' }}
+                                            {{ currentDoctorProfile.header.certificate_status === 'current' ? 'Certified' : 'Expired' }}
                                         </span>
                                     </div>
                                 </div>
@@ -6510,7 +6510,7 @@ body {
                                 <i class="fas fa-user-clock"></i>
                                 <h4>Live Presence</h4>
                                 <span class="text-xs text-gray-500">
-                                    Updated: {{ formatRelativeTime(currentDoctorProfile?.live_clinical_data?.presence?.last_seen || staffProfileModal.staff?.updated_at) }}
+                                    Updated: {{ formatRelativeTime(currentDoctorProfile?.status_bar?.last_updated || staffProfileModal.staff?.updated_at) }}
                                 </span>
                             </div>
                             <div class="space-y-3 p-4">
@@ -6527,29 +6527,36 @@ body {
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Last Seen</span>
-                                    <span>{{ formatRelativeTime(currentDoctorProfile?.live_clinical_data?.presence?.last_seen || staffProfileModal.staff?.updated_at) || 'N/A' }}</span>
+                                    <span>{{ formatRelativeTime(currentDoctorProfile?.status_bar?.last_updated || staffProfileModal.staff?.updated_at) || 'N/A' }}</span>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Current Assignment -->
-                        <div class="card" v-if="currentDoctorProfile?.live_clinical_data?.current_assignment">
+                        <!-- Current Rotation -->
+                        <div class="card" v-if="currentDoctorProfile?.scheduled_activities?.rotation">
                             <div class="card-header">
                                 <i class="fas fa-stethoscope"></i>
-                                <h4>Current Assignment</h4>
+                                <h4>Current Rotation</h4>
                             </div>
                             <div class="space-y-3 p-4">
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Clinical Unit</span>
-                                    <span>{{ currentDoctorProfile.live_clinical_data.current_assignment.unit }}</span>
+                                    <span>{{ currentDoctorProfile.scheduled_activities.rotation.unit_name }}</span>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Unit Code</span>
-                                    <span class="font-mono">{{ currentDoctorProfile.live_clinical_data.current_assignment.unit_code }}</span>
+                                    <span class="font-mono">{{ currentDoctorProfile.scheduled_activities.rotation.unit_code }}</span>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-600">Supervisor</span>
-                                    <span>{{ currentDoctorProfile.live_clinical_data.current_assignment.supervisor || 'Not assigned' }}</span>
+                                    <span>{{ currentDoctorProfile.scheduled_activities.rotation.supervisor || 'Not assigned' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Days Remaining</span>
+                                    <span class="font-semibold" 
+                                          :class="currentDoctorProfile.scheduled_activities.rotation.days_remaining <= 7 ? 'text-yellow-600' : 'text-green-600'">
+                                        {{ currentDoctorProfile.scheduled_activities.rotation.days_remaining }} days
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -6563,26 +6570,66 @@ body {
                         </div>
                         <div class="p-4">
                             <!-- Check for today's on-call -->
-                            <div class="flex justify-between items-center mb-4">
-                                <span class="text-gray-600">Current Status</span>
-                                <span v-if="isCurrentlyOnCall()" class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
-                                    ON-CALL NOW
-                                </span>
-                                <span v-else class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-                                    NOT ON-CALL
-                                </span>
+                            <div v-if="currentDoctorProfile?.scheduled_activities?.on_call_today" 
+                                 class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Current Status</span>
+                                    <span v-if="currentDoctorProfile.scheduled_activities.on_call_today.is_active" 
+                                          class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
+                                        ON-CALL NOW
+                                    </span>
+                                    <span v-else class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                                        Scheduled
+                                    </span>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <div class="text-sm text-gray-600">Shift Type</div>
+                                        <div class="font-medium">{{ currentDoctorProfile.scheduled_activities.on_call_today.shift_type }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm text-gray-600">Time</div>
+                                        <div class="font-medium">{{ currentDoctorProfile.scheduled_activities.on_call_today.time }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm text-gray-600">Coverage</div>
+                                        <div class="font-medium">{{ currentDoctorProfile.scheduled_activities.on_call_today.coverage_area }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm text-gray-600">Role</div>
+                                        <div class="font-medium">{{ currentDoctorProfile.scheduled_activities.on_call_today.role }}</div>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <!-- Next On-call Shift -->
-                            <div v-if="getNextOnCallShift()" class="mt-4 p-3 bg-blue-50 rounded-lg">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <div class="font-medium">Next Shift</div>
-                                        <div class="text-sm text-gray-600">{{ formatDate(getNextOnCallShift().date) }}</div>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="font-semibold">{{ getNextOnCallShift().time }}</div>
-                                        <div class="text-xs text-gray-600">{{ getNextOnCallShift().coverage_area }}</div>
+                            <!-- No on-call today -->
+                            <div v-else class="text-center py-4">
+                                <i class="fas fa-calendar-check text-2xl text-gray-400 mb-2"></i>
+                                <p class="text-gray-600">No on-call scheduled today</p>
+                            </div>
+                            
+                            <!-- Upcoming On-call -->
+                            <div v-if="currentDoctorProfile?.upcoming?.on_call_shifts?.length > 0" 
+                                 class="mt-6 pt-4 border-t border-gray-200">
+                                <div class="text-sm font-medium text-gray-700 mb-3">Upcoming Shifts</div>
+                                <div class="space-y-2">
+                                    <div v-for="shift in currentDoctorProfile.upcoming.on_call_shifts.slice(0, 3)" 
+                                         :key="shift.date"
+                                         class="flex justify-between items-center p-2 rounded hover:bg-gray-50">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 text-center">
+                                                <div class="text-xs text-gray-500">{{ shift.day }}</div>
+                                                <div class="font-medium">{{ shift.date.split('-')[2] }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="font-medium">{{ shift.shift_type }} Shift</div>
+                                                <div class="text-xs text-gray-600">{{ shift.coverage }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-sm font-medium">{{ shift.time }}</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -6604,34 +6651,74 @@ body {
                         </div>
                         
                         <div class="space-y-3 p-4">
-                            <div v-if="getScheduleForToday().length > 0">
-                                <div v-for="item in getScheduleForToday()" 
-                                     :key="item.time"
-                                     class="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50">
+                            <!-- On-call Today -->
+                            <div v-if="currentDoctorProfile?.scheduled_activities?.on_call_today" 
+                                 class="p-3 rounded-lg border border-blue-200 bg-blue-50">
+                                <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-2 h-10 rounded-full" 
-                                             :class="item.status === 'completed' ? 'bg-green-500' : 
-                                                     item.status === 'cancelled' ? 'bg-gray-400' : 
-                                                     'bg-blue-500'"></div>
+                                        <i class="fas fa-phone-medical text-blue-600"></i>
                                         <div>
-                                            <div class="font-medium">{{ item.activity }}</div>
-                                            <div class="text-sm text-gray-600">{{ item.location || 'Location not specified' }}</div>
+                                            <div class="font-medium">On-Call Duty</div>
+                                            <div class="text-sm text-gray-600">{{ currentDoctorProfile.scheduled_activities.on_call_today.coverage_area }}</div>
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="font-semibold">{{ item.time }}</div>
+                                        <div class="font-semibold">{{ currentDoctorProfile.scheduled_activities.on_call_today.time }}</div>
                                         <div class="text-xs" 
-                                             :class="item.status === 'completed' ? 'text-green-600' : 
-                                                     item.status === 'cancelled' ? 'text-gray-500' : 
-                                                     'text-blue-600'">
-                                            {{ item.status || 'scheduled' }}
+                                             :class="currentDoctorProfile.scheduled_activities.on_call_today.is_active ? 'text-green-600' : 'text-blue-600'">
+                                            {{ currentDoctorProfile.scheduled_activities.on_call_today.is_active ? 'ACTIVE' : 'SCHEDULED' }}
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div v-else class="text-center py-8 text-gray-500">
+                            
+                            <!-- Current Rotation -->
+                            <div v-if="currentDoctorProfile?.scheduled_activities?.rotation" 
+                                 class="p-3 rounded-lg border border-green-200 bg-green-50">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <i class="fas fa-hospital text-green-600"></i>
+                                        <div>
+                                            <div class="font-medium">Clinical Rotation</div>
+                                            <div class="text-sm text-gray-600">{{ currentDoctorProfile.scheduled_activities.rotation.unit_name }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-semibold">08:00 - 17:00</div>
+                                        <div class="text-xs text-green-600">
+                                            {{ currentDoctorProfile.scheduled_activities.rotation.status }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Current Absence -->
+                            <div v-if="currentDoctorProfile?.scheduled_activities?.absence" 
+                                 class="p-3 rounded-lg border border-yellow-200 bg-yellow-50">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <i class="fas fa-umbrella-beach text-yellow-600"></i>
+                                        <div>
+                                            <div class="font-medium">On Leave</div>
+                                            <div class="text-sm text-gray-600">{{ currentDoctorProfile.scheduled_activities.absence.reason }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-semibold">{{ currentDoctorProfile.scheduled_activities.absence.duration_days }} days</div>
+                                        <div class="text-xs text-yellow-600">
+                                            {{ currentDoctorProfile.scheduled_activities.absence.status }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- No Schedule -->
+                            <div v-if="!currentDoctorProfile?.scheduled_activities?.on_call_today && 
+                                       !currentDoctorProfile?.scheduled_activities?.rotation && 
+                                       !currentDoctorProfile?.scheduled_activities?.absence" 
+                                 class="text-center py-8 text-gray-500">
                                 <i class="fas fa-calendar-times text-3xl mb-3"></i>
-                                <p>No schedule for today</p>
+                                <p>No scheduled activities for today</p>
                             </div>
                         </div>
                     </div>
@@ -6645,20 +6732,38 @@ body {
                             <h4>Academic Information</h4>
                         </div>
                         <div class="space-y-3 p-4">
-                            <div v-if="currentDoctorProfile?.basic_info?.academic_degree" 
-                                 class="flex justify-between items-center">
-                                <span class="text-gray-600">Academic Degree</span>
-                                <span class="font-medium">{{ currentDoctorProfile.basic_info.academic_degree }}</span>
-                            </div>
-                            <div v-if="currentDoctorProfile?.basic_info?.specialization" 
+                            <!-- For residents, show training info -->
+                            <div v-if="currentDoctorProfile?.header?.specialization" 
                                  class="flex justify-between items-center">
                                 <span class="text-gray-600">Specialization</span>
-                                <span class="font-medium">{{ currentDoctorProfile.basic_info.specialization }}</span>
+                                <span class="font-medium">{{ currentDoctorProfile.header.specialization }}</span>
                             </div>
-                            <div v-if="currentDoctorProfile?.basic_info?.training_year" 
+                            
+                            <!-- Training year for residents -->
+                            <div v-if="currentDoctorProfile?.header?.staff_type === 'medical_resident'" 
                                  class="flex justify-between items-center">
-                                <span class="text-gray-600">Training Year</span>
-                                <span class="font-medium">{{ currentDoctorProfile.basic_info.training_year }}</span>
+                                <span class="text-gray-600">Training Level</span>
+                                <span class="font-medium">{{ currentDoctorProfile.header.specialization || 'Resident' }}</span>
+                            </div>
+                            
+                            <!-- Contact Information -->
+                            <div v-if="currentDoctorProfile?.contact_info" 
+                                 class="mt-4 pt-4 border-t border-gray-200">
+                                <div class="text-sm font-medium text-gray-700 mb-3">Contact Information</div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-600">Email</span>
+                                        <span class="font-medium">{{ currentDoctorProfile.contact_info.email || 'Not specified' }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-600">Phone</span>
+                                        <span class="font-medium">{{ currentDoctorProfile.contact_info.phone || 'Not specified' }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-600">Department Head</span>
+                                        <span class="font-medium">{{ currentDoctorProfile.contact_info.department_head || 'Not specified' }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -6672,13 +6777,12 @@ body {
             </button>
             <button class="btn btn-primary" 
                     v-if="hasPermission('medical_staff', 'update')"
-                    @click="editMedicalStaff(currentDoctorProfile?.basic_info || staffProfileModal.staff)">
+                    @click="editMedicalStaff(currentDoctorProfile?.header || staffProfileModal.staff)">
                 <i class="fas fa-edit"></i> Edit Profile
             </button>
         </div>
     </div>
 </div>
-
 
             <!-- MODAL 2: Add/Edit Medical Staff -->
             <div v-if="medicalStaffModal.show" class="modal-overlay">
