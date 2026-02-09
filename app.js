@@ -2606,12 +2606,20 @@ const checkForOverlap = (residentId, newStart, newEnd, excludeRotationId = null)
     return false;
 };
     
-    const hasOverlap = checkForOverlap(
-        rotationModal.form.resident_id,
-        rotationModal.form.rotation_start_date,
-        rotationModal.form.rotation_end_date,
-        rotationModal.mode === 'edit' ? rotationModal.form.id : null
-    );
+  console.log('📅 Calling overlap check with:');
+console.log('  Resident:', rotationModal.form.resident_id, getResidentName(rotationModal.form.resident_id));
+console.log('  Dates:', rotationModal.form.rotation_start_date, 'to', rotationModal.form.rotation_end_date);
+console.log('  Mode:', rotationModal.mode);
+console.log('  Exclude ID:', rotationModal.mode === 'edit' ? rotationModal.form.id : 'none');
+
+const hasOverlap = checkForOverlap(
+    rotationModal.form.resident_id,
+    rotationModal.form.rotation_start_date,
+    rotationModal.form.rotation_end_date,
+    rotationModal.mode === 'edit' ? rotationModal.form.id : null
+);
+
+console.log('Overlap check result:', hasOverlap ? 'TRUE - OVERLAP' : 'FALSE - NO OVERLAP');
     
     if (hasOverlap) {
         // Get the resident name for better error message
