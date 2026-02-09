@@ -1293,40 +1293,6 @@ const API = new ApiService();
                     return 0;
                 };
                 
-                const getRecentActivities = (staffId) => {
-                    const activities = [
-                        { timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), description: 'Admitted new patient', location: 'ER' },
-                        { timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), description: 'Completed discharge summary', location: 'Ward B' },
-                        { timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), description: 'Attended morning report', location: 'Conference Room' },
-                        { timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), description: 'Performed procedure', location: 'Procedure Room' },
-                        { timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), description: 'Teaching session with medical students', location: 'Classroom' }
-                    ];
-                    
-                    return activities;
-                };
-                // ============ STATUS TIMELINE METHODS ============
-const getStatusLocation = (status) => {
-    if (!status || !status.status_text) return 'General Department';
-    
-    // Check if status already has location property
-    if (status.location) return status.location;
-    if (status.department) return status.department;
-    if (status.coverage_area) return status.coverage_area;
-    
-    // Extract from status text (smart parsing)
-    const text = status.status_text.toLowerCase();
-    
-    if (text.includes('er') || text.includes('emergency')) return 'Emergency Department';
-    if (text.includes('icu') || text.includes('intensive care')) return 'Intensive Care Unit';
-    if (text.includes('ward') || text.includes('floor')) return 'General Ward';
-    if (text.includes('surgery') || text.includes('operating room') || text.includes('or')) return 'Surgery';
-    if (text.includes('consult') || text.includes('clinic')) return 'Consultation Clinic';
-    if (text.includes('pulmonology') || text.includes('respiratory') || text.includes('lung')) return 'Pulmonology Department';
-    if (text.includes('cardiac') || text.includes('heart')) return 'Cardiology';
-    if (text.includes('radiology') || text.includes('x-ray') || text.includes('ct') || text.includes('mri')) return 'Radiology';
-    
-    return 'General Department';
-};
 const getRecentActivities = (staffId) => {
     const activities = [
         { timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), description: 'Admitted new patient', location: 'ER' },
@@ -1337,6 +1303,68 @@ const getRecentActivities = (staffId) => {
     ];
     
     return activities;
+};
+
+// ============ PULMONOLOGY STATUS LOCATION PARSER ============
+const getStatusLocation = (status) => {
+    if (!status || !status.status_text) return 'Pulmonology Department';
+    
+    // Check if status already has location property
+    if (status.location) return status.location;
+    if (status.department) return status.department;
+    if (status.coverage_area) return status.coverage_area;
+    
+    // Extract from status text (smart parsing)
+    const text = status.status_text.toLowerCase();
+    
+    // ============ PULMONOLOGY/RESPIRATORY FOCUS ============
+    if (text.includes('icu') || text.includes('intensive care')) return 'Respiratory ICU';
+    if (text.includes('respiratory') || text.includes('pulmonology') || text.includes('lung')) return 'Pulmonology Department';
+    if (text.includes('bronchoscopy') || text.includes('pft') || text.includes('pulmonary function')) return 'Pulmonary Procedure Unit';
+    if (text.includes('sleep') || text.includes('cpap') || text.includes('bipap')) return 'Sleep Medicine Lab';
+    if (text.includes('ventilator') || text.includes('mech vent') || text.includes('respiratory therapy')) return 'Respiratory Therapy Unit';
+    if (text.includes('oxygen') || text.includes('o2') || text.includes('gas exchange')) return 'Oxygen Therapy Unit';
+    if (text.includes('interstitial') || text.includes('ild') || text.includes('pulmonary fibrosis')) return 'Interstitial Lung Disease Clinic';
+    if (text.includes('asthma') || text.includes('copd') || text.includes('chronic obstructive')) return 'Chronic Airways Clinic';
+    if (text.includes('tuberculosis') || text.includes('tb') || text.includes('mycobacterium')) return 'TB/Respiratory Infections Unit';
+    
+    // ============ HOSPITAL-WIDE LOCATIONS (still relevant) ============
+    if (text.includes('er') || text.includes('emergency') || text.includes('triage')) return 'Emergency Department';
+    if (text.includes('ward') || text.includes('floor') || text.includes('bed')) return 'General Ward';
+    if (text.includes('surgery') || text.includes('operating room') || text.includes('or') || text.includes('thoracic')) return 'Thoracic Surgery';
+    if (text.includes('consult') || text.includes('interconsult') || text.includes('clinic')) return 'Consultation Clinic';
+    if (text.includes('cardiac') || text.includes('heart') || text.includes('echocardiogram')) return 'Cardiology';
+    if (text.includes('radiology') || text.includes('x-ray') || text.includes('ct') || text.includes('mri') || text.includes('chest imaging')) return 'Radiology';
+    if (text.includes('oncology') || text.includes('cancer') || text.includes('chemo')) return 'Oncology';
+    if (text.includes('transplant') || text.includes('lung transplant')) return 'Transplant Unit';
+    if (text.includes('rehab') || text.includes('rehabilitation') || text.includes('pulmonary rehab')) return 'Pulmonary Rehabilitation';
+    
+    // ============ CAPACITY/BED RELATED ============
+    if (text.includes('bed') || text.includes('capacity') || text.includes('occupancy')) {
+        if (text.includes('icu')) return 'Respiratory ICU Beds';
+        if (text.includes('ward')) return 'General Ward Beds';
+        return 'Bed Management';
+    }
+    
+    // ============ EQUIPMENT/LOGISTICS ============
+    if (text.includes('ventilator') || text.includes('machine') || text.includes('equipment')) return 'Equipment/Logistics';
+    if (text.includes('medication') || text.includes('drug') || text.includes('pharmacy')) return 'Pharmacy';
+    
+    // ============ ADMINISTRATIVE ============
+    if (text.includes('meeting') || text.includes('conference') || text.includes('round')) return 'Conference Room';
+    if (text.includes('call') || text.includes('on-call') || text.includes('schedule')) return 'On-call Office';
+    
+    return 'Pulmonology Department';
+};
+
+// ============ RECENT STATUSES ============
+const getRecentStatuses = () => {
+    // Return the reactive history data (real data from API)
+    return clinicalStatusHistory.value;
+};
+
+const formatTimeAgo = (dateString) => {
+    return EnhancedUtils.formatRelativeTime(dateString);
 };
 
 // ============ STATUS LOCATION PARSER ============
