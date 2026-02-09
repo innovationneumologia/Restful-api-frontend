@@ -1306,18 +1306,6 @@ const getRecentActivities = (staffId) => {
 };
 
 
-const getRecentActivities = (staffId) => {
-    const activities = [
-        { timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), description: 'Admitted new patient', location: 'ER' },
-        { timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), description: 'Completed discharge summary', location: 'Ward B' },
-        { timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), description: 'Attended morning report', location: 'Conference Room' },
-        { timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), description: 'Performed procedure', location: 'Procedure Room' },
-        { timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), description: 'Teaching session with medical students', location: 'Classroom' }
-    ];
-    
-    return activities;
-};
-
 // ============ PULMONOLOGY STATUS LOCATION PARSER ============
 const getStatusLocation = (status) => {
     if (!status || !status.status_text) return 'Pulmonology Department';
