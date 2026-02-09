@@ -458,7 +458,15 @@ class ApiService {
     async deleteClinicalStatus(id) {
         return await this.request(`/api/live-status/${id}`, { method: 'DELETE' });
     }
-    
+    async getClinicalStatusHistory(limit = 10) {
+    try {
+        const data = await this.request(`/api/live-status/history?limit=${limit}`);
+        return EnhancedUtils.ensureArray(data);
+    } catch (error) {
+        console.error('Clinical status history API error:', error);
+        return [];
+    }
+}
     // ===== SYSTEM STATS ENDPOINT =====
     async getSystemStats() {
         try {
@@ -518,6 +526,7 @@ const API = new ApiService();
                 
                 // 6.5 LIVE STATUS DATA
                 const clinicalStatus = ref(null);
+                const clinicalStatusHistory = ref([]);
                 const newStatusText = ref('');
                 const selectedAuthorId = ref('');
                 const expiryHours = ref(8);
@@ -1318,33 +1327,51 @@ const getStatusLocation = (status) => {
     
     return 'General Department';
 };
-
-const getRecentStatuses = () => {
-    // This should return recent statuses (not expired, not current)
-    // For now, return mock data - you can replace with API call later
-    return [
-        {
-            id: 'status-1',
-            status_text: 'ICU at 85% capacity. Ventilators available: 12/15',
-            author_name: 'Dr. Sarah Johnson',
-            created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-            expires_at: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
-            status: 'recent'
-        },
-        {
-            id: 'status-2',
-            status_text: 'ER busy with 15 patients waiting. Triage ongoing.',
-            author_name: 'Dr. Michael Chen',
-            created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-            expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-            status: 'expired'
-        }
-    ].filter(status => !isStatusExpired(status.expires_at));
+const getRecentActivities = (staffId) => {
+    const activities = [
+        { timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), description: 'Admitted new patient', location: 'ER' },
+        { timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), description: 'Completed discharge summary', location: 'Ward B' },
+        { timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), description: 'Attended morning report', location: 'Conference Room' },
+        { timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), description: 'Performed procedure', location: 'Procedure Room' },
+        { timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), description: 'Teaching session with medical students', location: 'Classroom' }
+    ];
+    
+    return activities;
 };
-                
-                const formatTimeAgo = (dateString) => {
-                    return EnhancedUtils.formatRelativeTime(dateString);
-                };
+
+// ============ STATUS LOCATION PARSER ============
+const getStatusLocation = (status) => {
+    if (!status || !status.status_text) return 'General Department';
+    
+    // Check if status already has location property
+    if (status.location) return status.location;
+    if (status.department) return status.department;
+    if (status.coverage_area) return status.coverage_area;
+    
+    // Extract from status text (smart parsing)
+    const text = status.status_text.toLowerCase();
+    
+    if (text.includes('er') || text.includes('emergency')) return 'Emergency Department';
+    if (text.includes('icu') || text.includes('intensive care')) return 'Intensive Care Unit';
+    if (text.includes('ward') || text.includes('floor')) return 'General Ward';
+    if (text.includes('surgery') || text.includes('operating room') || text.includes('or')) return 'Surgery';
+    if (text.includes('consult') || text.includes('clinic')) return 'Consultation Clinic';
+    if (text.includes('pulmonology') || text.includes('respiratory') || text.includes('lung')) return 'Pulmonology Department';
+    if (text.includes('cardiac') || text.includes('heart')) return 'Cardiology';
+    if (text.includes('radiology') || text.includes('x-ray') || text.includes('ct') || text.includes('mri')) return 'Radiology';
+    
+    return 'General Department';
+};
+
+// ============ RECENT STATUSES ============
+const getRecentStatuses = () => {
+    // Return the reactive history data (real data from API)
+    return clinicalStatusHistory.value;
+};
+
+const formatTimeAgo = (dateString) => {
+    return EnhancedUtils.formatRelativeTime(dateString);
+};
                 
                 // ============ 10. VERSION 2 COMPLETE FUNCTIONS ============
                 
@@ -1478,6 +1505,34 @@ const getRecentStatuses = () => {
                         isLoadingStatus.value = false;
                     }
                 };
+const loadClinicalStatusHistory = async () => {
+    try {
+        const history = await API.getClinicalStatusHistory(20);
+        
+        // Filter out current status and expired ones
+        const currentStatusId = clinicalStatus.value?.id;
+        const now = new Date();
+        
+        clinicalStatusHistory.value = history
+            .filter(status => {
+                if (status.id === currentStatusId) return false;
+                
+                if (status.expires_at) {
+                    try {
+                        const expires = new Date(status.expires_at);
+                        return now < expires;
+                    } catch {
+                        return true;
+                    }
+                }
+                return true;
+            })
+            .slice(0, 5);
+    } catch (error) {
+        console.error('Failed to load clinical status history:', error);
+        clinicalStatusHistory.value = [];
+    }
+};
                 
                 const loadActiveMedicalStaff = async () => {
                     try {
@@ -1501,38 +1556,51 @@ const getRecentStatuses = () => {
                     }
                 };
                 
-                const saveClinicalStatus = async () => {
-                    if (!newStatusText.value.trim() || !selectedAuthorId.value) {
-                        showToast('Error', 'Please fill all required fields', 'error');
-                        return;
-                    }
-                    
-                    isLoadingStatus.value = true;
-                    try {
-                        const response = await API.createClinicalStatus({
-                            status_text: newStatusText.value.trim(),
-                            author_id: selectedAuthorId.value,
-                            expires_in_hours: expiryHours.value
-                        });
-                        
-                        if (response && response.success && response.data) {
-                            clinicalStatus.value = response.data;
-                            newStatusText.value = '';
-                            selectedAuthorId.value = '';
-                            liveStatsEditMode.value = false;
-                            
-                            showToast('Success', 'Live status has been updated for all staff', 'success');
-                            await loadSystemStats();
-                        } else {
-                            throw new Error(response?.error || 'Failed to save status');
-                        }
-                    } catch (error) {
-                        console.error('Failed to save clinical status:', error);
-                        showToast('Error', error.message || 'Could not update status. Please try again.', 'error');
-                    } finally {
-                        isLoadingStatus.value = false;
-                    }
-                };
+           const saveClinicalStatus = async () => {
+    if (!newStatusText.value.trim() || !selectedAuthorId.value) {
+        showToast('Error', 'Please fill all required fields', 'error');
+        return;
+    }
+    
+    isLoadingStatus.value = true;
+    try {
+        console.log('📤 Saving new clinical status...');
+        const response = await API.createClinicalStatus({
+            status_text: newStatusText.value.trim(),
+            author_id: selectedAuthorId.value,
+            expires_in_hours: expiryHours.value
+        });
+        
+        if (response && response.success && response.data) {
+            // Store old status in history before replacing
+            if (clinicalStatus.value) {
+                clinicalStatusHistory.value.unshift(clinicalStatus.value);
+                // Keep only last 5 in history
+                if (clinicalStatusHistory.value.length > 5) {
+                    clinicalStatusHistory.value = clinicalStatusHistory.value.slice(0, 5);
+                }
+            }
+            
+            clinicalStatus.value = response.data;
+            newStatusText.value = '';
+            selectedAuthorId.value = '';
+            liveStatsEditMode.value = false;
+            
+            console.log('✅ Status saved, reloading history...');
+            await loadClinicalStatusHistory();
+            
+            showToast('Success', 'Live status has been updated for all staff', 'success');
+            await loadSystemStats();
+        } else {
+            throw new Error(response?.error || 'Failed to save status');
+        }
+    } catch (error) {
+        console.error('❌ Failed to save clinical status:', error);
+        showToast('Error', error.message || 'Could not update status. Please try again.', 'error');
+    } finally {
+        isLoadingStatus.value = false;
+    }
+};
                 
                 const isStatusExpired = (expiresAt) => {
                     if (!expiresAt) return true;
