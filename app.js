@@ -3096,6 +3096,8 @@ const filteredAbsences = computed(() => {
                     // Version 2 Complete State
                     quickStatus,
                     currentTime,
+                    getStatusLocation,  
+                    getRecentStatuses,  
                     
                     // Dashboard
                     systemStats,
