@@ -1295,6 +1295,52 @@ const API = new ApiService();
                     
                     return activities;
                 };
+                // ============ STATUS TIMELINE METHODS ============
+const getStatusLocation = (status) => {
+    if (!status || !status.status_text) return 'General Department';
+    
+    // Check if status already has location property
+    if (status.location) return status.location;
+    if (status.department) return status.department;
+    if (status.coverage_area) return status.coverage_area;
+    
+    // Extract from status text (smart parsing)
+    const text = status.status_text.toLowerCase();
+    
+    if (text.includes('er') || text.includes('emergency')) return 'Emergency Department';
+    if (text.includes('icu') || text.includes('intensive care')) return 'Intensive Care Unit';
+    if (text.includes('ward') || text.includes('floor')) return 'General Ward';
+    if (text.includes('surgery') || text.includes('operating room') || text.includes('or')) return 'Surgery';
+    if (text.includes('consult') || text.includes('clinic')) return 'Consultation Clinic';
+    if (text.includes('pulmonology') || text.includes('respiratory') || text.includes('lung')) return 'Pulmonology Department';
+    if (text.includes('cardiac') || text.includes('heart')) return 'Cardiology';
+    if (text.includes('radiology') || text.includes('x-ray') || text.includes('ct') || text.includes('mri')) return 'Radiology';
+    
+    return 'General Department';
+};
+
+const getRecentStatuses = () => {
+    // This should return recent statuses (not expired, not current)
+    // For now, return mock data - you can replace with API call later
+    return [
+        {
+            id: 'status-1',
+            status_text: 'ICU at 85% capacity. Ventilators available: 12/15',
+            author_name: 'Dr. Sarah Johnson',
+            created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+            expires_at: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
+            status: 'recent'
+        },
+        {
+            id: 'status-2',
+            status_text: 'ER busy with 15 patients waiting. Triage ongoing.',
+            author_name: 'Dr. Michael Chen',
+            created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+            expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+            status: 'expired'
+        }
+    ].filter(status => !isStatusExpired(status.expires_at));
+};
                 
                 const formatTimeAgo = (dateString) => {
                     return EnhancedUtils.formatRelativeTime(dateString);
