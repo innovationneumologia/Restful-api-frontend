@@ -1305,6 +1305,19 @@ const getRecentActivities = (staffId) => {
     return activities;
 };
 
+
+const getRecentActivities = (staffId) => {
+    const activities = [
+        { timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), description: 'Admitted new patient', location: 'ER' },
+        { timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), description: 'Completed discharge summary', location: 'Ward B' },
+        { timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), description: 'Attended morning report', location: 'Conference Room' },
+        { timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), description: 'Performed procedure', location: 'Procedure Room' },
+        { timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), description: 'Teaching session with medical students', location: 'Classroom' }
+    ];
+    
+    return activities;
+};
+
 // ============ PULMONOLOGY STATUS LOCATION PARSER ============
 const getStatusLocation = (status) => {
     if (!status || !status.status_text) return 'Pulmonology Department';
@@ -1355,40 +1368,6 @@ const getStatusLocation = (status) => {
     if (text.includes('call') || text.includes('on-call') || text.includes('schedule')) return 'On-call Office';
     
     return 'Pulmonology Department';
-};
-
-// ============ RECENT STATUSES ============
-const getRecentStatuses = () => {
-    // Return the reactive history data (real data from API)
-    return clinicalStatusHistory.value;
-};
-
-const formatTimeAgo = (dateString) => {
-    return EnhancedUtils.formatRelativeTime(dateString);
-};
-
-// ============ STATUS LOCATION PARSER ============
-const getStatusLocation = (status) => {
-    if (!status || !status.status_text) return 'General Department';
-    
-    // Check if status already has location property
-    if (status.location) return status.location;
-    if (status.department) return status.department;
-    if (status.coverage_area) return status.coverage_area;
-    
-    // Extract from status text (smart parsing)
-    const text = status.status_text.toLowerCase();
-    
-    if (text.includes('er') || text.includes('emergency')) return 'Emergency Department';
-    if (text.includes('icu') || text.includes('intensive care')) return 'Intensive Care Unit';
-    if (text.includes('ward') || text.includes('floor')) return 'General Ward';
-    if (text.includes('surgery') || text.includes('operating room') || text.includes('or')) return 'Surgery';
-    if (text.includes('consult') || text.includes('clinic')) return 'Consultation Clinic';
-    if (text.includes('pulmonology') || text.includes('respiratory') || text.includes('lung')) return 'Pulmonology Department';
-    if (text.includes('cardiac') || text.includes('heart')) return 'Cardiology';
-    if (text.includes('radiology') || text.includes('x-ray') || text.includes('ct') || text.includes('mri')) return 'Radiology';
-    
-    return 'General Department';
 };
 
 // ============ RECENT STATUSES ============
