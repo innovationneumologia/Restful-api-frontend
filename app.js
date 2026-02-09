@@ -2443,6 +2443,23 @@ const isValidEmail = (email) => {
                 };
                 
                const saveRotation = async () => {
+                    console.log('🔄 SAVE ROTATION STARTED - DEBUG MODE');
+    console.log('Rotation modal data:', JSON.stringify(rotationModal.form, null, 2));
+    console.log('Resident ID:', rotationModal.form.resident_id);
+    console.log('Resident Name:', getResidentName(rotationModal.form.resident_id));
+                   // ============ STEP 2: CHECK ALL ROTATIONS ============
+console.log('📊 ALL ROTATIONS IN SYSTEM:');
+rotations.value.forEach((r, index) => {
+    const staff = medicalStaff.value.find(s => s.id === r.resident_id);
+    console.log(`Rotation ${index + 1}:`, {
+        id: r.id,
+        resident_id: r.resident_id,
+        resident_name: staff?.full_name || 'Unknown',
+        start_date: r.rotation_start_date || r.start_date,
+        end_date: r.rotation_end_date || r.end_date,
+        status: r.rotation_status
+    });
+});
     // ============ 1. VALIDATE REQUIRED FIELDS ============
     if (!rotationModal.form.resident_id) {
         showToast('Error', 'Please select a resident', 'error');
@@ -2508,79 +2525,84 @@ const isValidEmail = (email) => {
     }
     
     // ============ 4. CHECK FOR OVERLAPS (CLIENT-SIDE) ============
+// ============ FIXED OVERLAP CHECK FUNCTION ============
 const checkForOverlap = (residentId, newStart, newEnd, excludeRotationId = null) => {
-    const existingRotations = rotations.value.filter(r => 
-        r.resident_id === residentId && 
-        r.rotation_status !== 'cancelled' &&
-        r.id !== excludeRotationId
-    );
+    console.log('🔍 CHECK FOR OVERLAP FUNCTION CALLED');
+    console.log('Parameters:', { residentId, newStart, newEnd, excludeRotationId });
     
-    // If no existing rotations, no overlap
-    if (existingRotations.length === 0) return false;
+    // 1. Get rotations for this resident
+    const residentRotations = rotations.value.filter(r => r.resident_id === residentId);
+    console.log(`Found ${residentRotations.length} rotations for resident ${residentId}`);
     
-    // Parse the new dates ONCE (not in the loop)
-    let nStart, nEnd;
-    try {
-        nStart = new Date(newStart);
-        nEnd = new Date(newEnd);
-        
-        // Ensure dates are valid
-        if (isNaN(nStart.getTime()) || isNaN(nEnd.getTime())) {
-            console.warn('Invalid date format for new rotation');
-            return false;
-        }
-        
-        // Normalize to date-only (remove time component)
-        nStart.setHours(0, 0, 0, 0);
-        nEnd.setHours(0, 0, 0, 0);
-        
-    } catch (error) {
-        console.error('Error parsing new dates:', error);
+    // 2. Filter out cancelled and excluded rotations
+    const activeRotations = residentRotations.filter(r => {
+        if (r.rotation_status === 'cancelled') return false;
+        if (excludeRotationId && r.id === excludeRotationId) return false;
+        return true;
+    });
+    
+    console.log(`Active rotations after filtering: ${activeRotations.length}`);
+    
+    // 3. If no active rotations, no overlap
+    if (activeRotations.length === 0) {
+        console.log('✅ No active rotations - no overlap possible');
         return false;
     }
     
-    // Check each existing rotation
-    for (const r of existingRotations) {
-        try {
-            // Parse existing rotation dates
-            const rStart = new Date(r.start_date || r.rotation_start_date);
-            const rEnd = new Date(r.end_date || r.rotation_end_date);
-            
-            // Ensure dates are valid
-            if (isNaN(rStart.getTime()) || isNaN(rEnd.getTime())) {
-                console.warn('Invalid date in existing rotation:', r);
-                continue;
-            }
-            
-            // Normalize to date-only
-            rStart.setHours(0, 0, 0, 0);
-            rEnd.setHours(0, 0, 0, 0);
-            
-            console.log('🔍 Date Comparison:', {
-                existing: `${rStart.toISOString().split('T')[0]} to ${rEnd.toISOString().split('T')[0]}`,
-                new: `${nStart.toISOString().split('T')[0]} to ${nEnd.toISOString().split('T')[0]}`,
-                condition: `nStart (${nStart}) <= rEnd (${rEnd}) && nEnd (${nEnd}) >= rStart (${rStart})`,
-                result: nStart <= rEnd && nEnd >= rStart
-            });
-            
-            // Check for overlap (INCLUSIVE of end dates)
-            // If new rotation starts before existing ends AND new rotation ends after existing starts
-            const overlaps = nStart <= rEnd && nEnd >= rStart;
-            
-            if (overlaps) {
-                console.log('❌ OVERLAP DETECTED with rotation:', r.rotation_id);
-                console.log('   Existing:', rStart.toDateString(), 'to', rEnd.toDateString());
-                console.log('   New:', nStart.toDateString(), 'to', nEnd.toDateString());
-                return true;
-            }
-            
-        } catch (error) {
-            console.error('Error comparing dates for rotation:', r, error);
+    // 4. Parse new dates
+    const newStartDate = new Date(newStart);
+    const newEndDate = new Date(newEnd);
+    
+    console.log('New dates parsed:', {
+        newStartDate: newStartDate.toISOString().split('T')[0],
+        newEndDate: newEndDate.toISOString().split('T')[0]
+    });
+    
+    // 5. Check each existing rotation
+    for (const rotation of activeRotations) {
+        console.log(`--- Checking rotation ${rotation.id} ---`);
+        
+        // Get dates from existing rotation
+        const existingStartStr = rotation.rotation_start_date || rotation.start_date;
+        const existingEndStr = rotation.rotation_end_date || rotation.end_date;
+        
+        console.log('Existing rotation dates:', {
+            start: existingStartStr,
+            end: existingEndStr
+        });
+        
+        if (!existingStartStr || !existingEndStr) {
+            console.log('⚠️ Skipping - missing dates');
             continue;
+        }
+        
+        const existingStartDate = new Date(existingStartStr);
+        const existingEndDate = new Date(existingEndStr);
+        
+        console.log('Date comparison:', {
+            newStart: newStartDate.toISOString().split('T')[0],
+            newEnd: newEndDate.toISOString().split('T')[0],
+            existingStart: existingStartDate.toISOString().split('T')[0],
+            existingEnd: existingEndDate.toISOString().split('T')[0]
+        });
+        
+        // 6. CORRECT OVERLAP LOGIC
+        // Two ranges [A,B] and [C,D] overlap if: A <= D AND B >= C
+        const overlaps = newStartDate <= existingEndDate && newEndDate >= existingStartDate;
+        
+        console.log('Overlap check result:', {
+            condition1: `newStart <= existingEnd: ${newStartDate <= existingEndDate}`,
+            condition2: `newEnd >= existingStart: ${newEndDate >= existingStartDate}`,
+            overlaps: overlaps ? 'YES ❌' : 'NO ✅'
+        });
+        
+        if (overlaps) {
+            console.log('❌ OVERLAP FOUND with rotation:', rotation.id);
+            return true;
         }
     }
     
-    // No overlaps found
+    console.log('✅ NO OVERLAPS FOUND');
     return false;
 };
     
