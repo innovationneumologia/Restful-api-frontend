@@ -2667,20 +2667,18 @@ if (isNaN(newStartDate.getTime()) || isNaN(newEndDate.getTime())) {
                 continue;
             }
             
-            // Parse existing dates with time to avoid timezone issues
-            const existingStartDate = new Date(existingStartStr + 'T00:00:00');
-            const existingEndDate = new Date(existingEndStr + 'T23:59:59');
-            
-            console.log('Parsed existing dates:', {
-                start: existingStartDate.toISOString(),
-                end: existingEndDate.toISOString(),
-                isValid: !isNaN(existingStartDate.getTime()) && !isNaN(existingEndDate.getTime())
-            });
-            
-            if (isNaN(existingStartDate.getTime()) || isNaN(existingEndDate.getTime())) {
-                console.log('⚠️ Skipping - invalid dates');
-                continue;
-            }
+          // Parse existing dates
+const existingStartDate = parseDate(existingStartStr);
+const existingEndDate = parseDate(existingEndStr);
+
+// Set end date to end of day
+existingEndDate.setHours(23, 59, 59, 999);
+
+console.log('Parsed existing dates:', {
+    start: existingStartDate.toISOString(),
+    end: existingEndDate.toISOString(),
+    isValid: !isNaN(existingStartDate.getTime()) && !isNaN(existingEndDate.getTime())
+});
             
             // 7. CORRECT OVERLAP LOGIC
             // Two date ranges overlap if:
