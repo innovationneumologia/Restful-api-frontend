@@ -2474,40 +2474,69 @@ const isValidEmail = (email) => {
     }
     
     // ============ 2. VALIDATE AND FORMAT DATES ============
-    const startDateStr = rotationModal.form.rotation_start_date;
-    const endDateStr = rotationModal.form.rotation_end_date;
+// ============ 2. VALIDATE AND FORMAT DATES ============
+const startDateStr = rotationModal.form.rotation_start_date;
+const endDateStr = rotationModal.form.rotation_end_date;
+
+console.log('📅 Raw date inputs:', { startDateStr, endDateStr });
+
+if (!startDateStr || !endDateStr) {
+    showToast('Error', 'Please enter both start and end dates', 'error');
+    return;
+}
+
+// Parse dates - handle DD/MM/YYYY format
+let startDate, endDate;
+try {
+    // Check if date is in DD/MM/YYYY format
+    const isDDMMYYYY = (dateStr) => {
+        return dateStr.includes('/') && dateStr.split('/')[0].length === 2;
+    };
     
-    if (!startDateStr || !endDateStr) {
-        showToast('Error', 'Please enter both start and end dates', 'error');
-        return;
-    }
-    
-    // Parse dates using proper ISO format
-    let startDate, endDate;
-    try {
-        // Handle different date formats (YYYY-MM-DD is expected)
+    if (isDDMMYYYY(startDateStr)) {
+        // Parse DD/MM/YYYY format
+        const [day, month, year] = startDateStr.split('/');
+        startDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`);
+    } else {
         startDate = new Date(startDateStr);
-        endDate = new Date(endDateStr);
-        
-        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-            throw new Error('Invalid date format');
-        }
-        
-        // Convert to ISO string and extract date part only (YYYY-MM-DD)
-        const formatDateToISO = (date) => {
-            return date.toISOString().split('T')[0];
-        };
-        
-        rotationModal.form.rotation_start_date = formatDateToISO(startDate);
-        rotationModal.form.rotation_end_date = formatDateToISO(endDate);
-        
-    } catch (error) {
-        showToast('Error', 
-            'Invalid date format. Please use YYYY-MM-DD format (e.g., 2026-12-12)', 
-            'error'
-        );
-        return;
     }
+    
+    if (isDDMMYYYY(endDateStr)) {
+        // Parse DD/MM/YYYY format
+        const [day, month, year] = endDateStr.split('/');
+        endDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T23:59:59`);
+    } else {
+        endDate = new Date(endDateStr);
+    }
+    
+    console.log('📅 Parsed dates:', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        isValidStart: !isNaN(startDate.getTime()),
+        isValidEnd: !isNaN(endDate.getTime())
+    });
+    
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        throw new Error('Invalid date format');
+    }
+    
+    // Store as YYYY-MM-DD format
+    rotationModal.form.rotation_start_date = startDate.toISOString().split('T')[0];
+    rotationModal.form.rotation_end_date = endDate.toISOString().split('T')[0];
+    
+    console.log('📅 Stored dates (YYYY-MM-DD):', {
+        start: rotationModal.form.rotation_start_date,
+        end: rotationModal.form.rotation_end_date
+    });
+    
+} catch (error) {
+    console.error('Date parsing error:', error);
+    showToast('Error', 
+        'Invalid date format. Please use DD/MM/YYYY format (e.g., 15/04/2026) or YYYY-MM-DD (e.g., 2026-04-15)', 
+        'error'
+    );
+    return;
+}
     
     // ============ 3. VALIDATE DATE LOGIC ============
     if (endDate <= startDate) {
@@ -2574,24 +2603,47 @@ const isValidEmail = (email) => {
             return false;
         }
         
-        // 5. Parse new dates
-        console.log('\nParsing new rotation dates:');
-        const newStartDate = new Date(newStart + 'T00:00:00'); // Add time to avoid timezone issues
-        const newEndDate = new Date(newEnd + 'T23:59:59');
-        
-        console.log('New dates:', {
-            raw: { newStart, newEnd },
-            parsed: {
-                start: newStartDate.toISOString(),
-                end: newEndDate.toISOString()
-            },
-            isValid: !isNaN(newStartDate.getTime()) && !isNaN(newEndDate.getTime())
-        });
-        
-        if (isNaN(newStartDate.getTime()) || isNaN(newEndDate.getTime())) {
-            console.log('❌ Invalid new dates');
-            return false;
-        }
+    // 5. Parse new dates - FIX for DD/MM/YYYY format
+console.log('\nParsing new rotation dates:');
+console.log('Raw dates:', { newStart, newEnd });
+
+// Convert DD/MM/YYYY to YYYY-MM-DD if needed
+const parseDate = (dateStr) => {
+    if (!dateStr) return new Date(NaN);
+    
+    // Check if already YYYY-MM-DD
+    if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return new Date(dateStr + 'T00:00:00');
+    }
+    
+    // Convert DD/MM/YYYY to YYYY-MM-DD
+    if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        const [day, month, year] = dateStr.split('/');
+        const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        console.log(`Converted ${dateStr} to ${isoDate}`);
+        return new Date(isoDate + 'T00:00:00');
+    }
+    
+    // Try as-is (might be other format)
+    return new Date(dateStr);
+};
+
+const newStartDate = parseDate(newStart);
+const newEndDate = parseDate(newEnd);
+
+// Set end date to end of day
+newEndDate.setHours(23, 59, 59, 999);
+
+console.log('Parsed dates:', {
+    start: newStartDate.toISOString(),
+    end: newEndDate.toISOString(),
+    isValid: !isNaN(newStartDate.getTime()) && !isNaN(newEndDate.getTime())
+});
+
+if (isNaN(newStartDate.getTime()) || isNaN(newEndDate.getTime())) {
+    console.log('❌ Invalid new dates');
+    return false;
+}
         
         // 6. Check each existing rotation
         console.log('\nChecking against existing rotations:');
